@@ -1,0 +1,53 @@
+//
+//  TextObjectView.swift
+//  texttool
+//
+//  Created by Flex on 12/11/25.
+//
+
+import SwiftUI
+
+struct TextObjectView: View {
+    let object: TextObject
+    @ObservedObject var viewModel: CanvasViewModel
+    @FocusState private var isFocused: Bool
+    var isSelected: Bool = false
+
+    var body: some View {
+        Group {
+            if object.isEditing {
+                AutoGrowingTextView(
+                    text: binding,
+                    fontSize: object.fontSize,
+                    textColor: object.color,
+                    onFocus: { isFocused = true }
+                )
+                .background(Color.white.opacity(0.8))
+                .cornerRadius(4)
+            } else {
+                Text(object.text.isEmpty ? "Text" : object.text)
+                    .font(.system(size: object.fontSize))
+                    .foregroundColor(object.text.isEmpty ? object.color.opacity(0.5) : object.color)
+                    .fixedSize()
+                    .padding(4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.white.opacity(0.01))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.blue, lineWidth: isSelected ? 2 : 0)
+                            )
+                    )
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .offset(x: object.position.x, y: object.position.y)
+    }
+
+    private var binding: Binding<String> {
+        Binding(
+            get: { object.text },
+            set: { viewModel.updateText(objectId: object.id, text: $0) }
+        )
+    }
+}
