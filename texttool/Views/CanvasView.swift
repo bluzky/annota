@@ -14,6 +14,11 @@ struct CanvasView: View {
     @State private var lastTapTime: Date?
     @State private var lastTapLocation: CGPoint?
 
+    // Marquee selection state
+    @State private var isMarqueeSelecting: Bool = false
+    @State private var marqueeStart: CGPoint?
+    @State private var marqueeEnd: CGPoint?
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -38,7 +43,7 @@ struct CanvasView: View {
                 ForEach(viewModel.rectangleObjects) { rectObj in
                     RectangleObjectView(
                         object: rectObj,
-                        isSelected: viewModel.selectedObjectId == rectObj.id,
+                        isSelected: viewModel.isSelected(rectObj.id),
                         viewModel: viewModel
                     )
                 }
@@ -47,7 +52,7 @@ struct CanvasView: View {
                 ForEach(viewModel.circleObjects) { circleObj in
                     CircleObjectView(
                         object: circleObj,
-                        isSelected: viewModel.selectedObjectId == circleObj.id,
+                        isSelected: viewModel.isSelected(circleObj.id),
                         viewModel: viewModel
                     )
                 }
@@ -57,7 +62,7 @@ struct CanvasView: View {
                     TextObjectView(
                         object: textObj,
                         viewModel: viewModel,
-                        isSelected: viewModel.selectedObjectId == textObj.id
+                        isSelected: viewModel.isSelected(textObj.id)
                     )
                 }
 
@@ -90,6 +95,13 @@ struct CanvasView: View {
                         .frame(width: width, height: height)
                         .position(x: x, y: y)
                 }
+
+                // Marquee selection preview
+                if isMarqueeSelecting,
+                   let start = marqueeStart,
+                   let end = marqueeEnd {
+                    MarqueeView(startPoint: start, currentPoint: end)
+                }
             }
         }
         .contentShape(Rectangle())
@@ -116,24 +128,41 @@ struct CanvasView: View {
                 return
             }
 
-            // Handle dragging selected object
-            if draggedObjectId == nil {
-                // Check if we started drag on a selected object
+            // Check if we're starting a new drag
+            if draggedObjectId == nil && !isMarqueeSelecting {
+                // Check if we started drag on an object
                 if let objectId = viewModel.selectObject(at: value.startLocation) {
+                    // Dragging an object
                     draggedObjectId = objectId
                     lastDragLocation = value.startLocation
+
+                    // If dragging a non-selected object, select it (unless shift is held)
+                    if !viewModel.isSelected(objectId) && !NSEvent.modifierFlags.contains(.shift) {
+                        viewModel.selectObjectOnly(id: objectId)
+                    }
+                } else {
+                    // Started drag in empty space - begin marquee selection
+                    isMarqueeSelecting = true
+                    marqueeStart = value.startLocation
+                    marqueeEnd = value.location
                 }
             }
 
-            if let objectId = draggedObjectId, let lastLocation = lastDragLocation {
+            // Handle object dragging (move all selected objects)
+            if let _ = draggedObjectId, let lastLocation = lastDragLocation {
                 let offset = CGSize(
                     width: value.location.x - lastLocation.x,
                     height: value.location.y - lastLocation.y
                 )
 
-                // Move object using unified method
-                viewModel.moveObject(id: objectId, by: offset)
+                // Move all selected objects
+                viewModel.moveSelectedObjects(by: offset)
                 lastDragLocation = value.location
+            }
+
+            // Handle marquee selection
+            if isMarqueeSelecting {
+                marqueeEnd = value.location
             }
         }
     }
@@ -143,6 +172,29 @@ struct CanvasView: View {
             value.location.x - value.startLocation.x,
             value.location.y - value.startLocation.y
         )
+
+        // Handle marquee selection completion
+        if isMarqueeSelecting {
+            if let start = marqueeStart, let end = marqueeEnd {
+                let rect = normalizedRect(from: start, to: end)
+                let objectsInMarquee = viewModel.objectsInRect(rect)
+
+                let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                if shiftHeld {
+                    // Add to existing selection
+                    viewModel.addMultipleToSelection(ids: objectsInMarquee)
+                } else {
+                    // Replace selection
+                    viewModel.selectMultiple(ids: objectsInMarquee)
+                }
+            }
+
+            // Reset marquee state
+            isMarqueeSelecting = false
+            marqueeStart = nil
+            marqueeEnd = nil
+            return
+        }
 
         // If it's a click (minimal drag)
         if distance < 5 {
@@ -168,9 +220,19 @@ struct CanvasView: View {
         lastDragLocation = nil
     }
 
+    /// Compute normalized rectangle from two points
+    private func normalizedRect(from start: CGPoint, to end: CGPoint) -> CGRect {
+        let x = min(start.x, end.x)
+        let y = min(start.y, end.y)
+        let width = abs(end.x - start.x)
+        let height = abs(end.y - start.y)
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
     private func handleClick(at location: CGPoint) {
         // Check if any object is currently being edited
         let isEditing = viewModel.isAnyObjectEditing
+        let shiftHeld = NSEvent.modifierFlags.contains(.shift)
 
         if viewModel.selectedTool == .text {
             // Check if clicking on existing object
@@ -201,11 +263,22 @@ struct CanvasView: View {
                     viewModel.startEditing(objectId: objectId)
                 }
             } else {
-                // Single click: select object or deselect if clicking empty space
+                // Single click: select or toggle selection
                 if let objectId = viewModel.selectObject(at: location) {
-                    viewModel.selectObjectOnly(id: objectId)
+                    if shiftHeld {
+                        // Shift+click: toggle selection of this object
+                        viewModel.toggleObjectSelection(id: objectId)
+                    } else {
+                        // Normal click: select only this object
+                        viewModel.selectObjectOnly(id: objectId)
+                    }
                 } else {
-                    viewModel.deselectAll()
+                    // Clicked empty space
+                    if !shiftHeld {
+                        // Without shift, clear selection
+                        viewModel.deselectAll()
+                    }
+                    // With shift held, keep existing selection
                 }
             }
         } else {

@@ -26,7 +26,21 @@ class CanvasViewModel: ObservableObject {
             deselectAll()
         }
     }
-    @Published var selectedObjectId: UUID?
+
+    /// Multi-selection state
+    @Published var selectionState = SelectionState()
+
+    /// Backward compatibility: returns the single selected ID if exactly one object is selected
+    var selectedObjectId: UUID? {
+        get { selectionState.singleSelectedId }
+        set {
+            if let id = newValue {
+                selectionState.select(id)
+            } else {
+                selectionState.clear()
+            }
+        }
+    }
     @Published var activeTextSize: CGFloat = 16
     @Published var activeColor: Color = .black
     @Published var autoResizeShapes: Bool = true
@@ -276,7 +290,7 @@ class CanvasViewModel: ObservableObject {
     }
 
     func deselectAll() {
-        selectedObjectId = nil
+        selectionState.clear()
 
         // End any active text editing
         for (index, wrapper) in objects.enumerated() {
@@ -329,7 +343,7 @@ class CanvasViewModel: ObservableObject {
     }
 
     func selectObjectOnly(id: UUID) {
-        selectedObjectId = id
+        selectionState.select(id)
 
         // Deselect any text editing
         for (index, wrapper) in objects.enumerated() {
@@ -343,6 +357,76 @@ class CanvasViewModel: ObservableObject {
                 circleObj.isEditing = false
                 objects[index] = AnyCanvasObject(circleObj)
             }
+        }
+    }
+
+    /// Toggle selection of an object (for shift+click)
+    func toggleObjectSelection(id: UUID) {
+        // End any text editing first
+        endAllEditing()
+        selectionState.toggleSelection(id)
+    }
+
+    /// Add object to current selection (for shift+click on unselected)
+    func addToSelection(id: UUID) {
+        endAllEditing()
+        selectionState.addToSelection(id)
+    }
+
+    /// Select multiple objects (for marquee selection)
+    func selectMultiple(ids: Set<UUID>) {
+        endAllEditing()
+        selectionState.selectMultiple(ids)
+    }
+
+    /// Add multiple objects to selection (for shift+marquee)
+    func addMultipleToSelection(ids: Set<UUID>) {
+        endAllEditing()
+        selectionState.addMultipleToSelection(ids)
+    }
+
+    /// Check if an object is currently selected
+    func isSelected(_ id: UUID) -> Bool {
+        selectionState.isSelected(id)
+    }
+
+    /// Get all selected object IDs
+    var selectedIds: Set<UUID> {
+        selectionState.selectedIds
+    }
+
+    /// End all text editing without clearing selection
+    private func endAllEditing() {
+        for (index, wrapper) in objects.enumerated() {
+            if var textObj = wrapper.asTextObject, textObj.isEditing {
+                textObj.isEditing = false
+                objects[index] = AnyCanvasObject(textObj)
+            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
+                rectObj.isEditing = false
+                objects[index] = AnyCanvasObject(rectObj)
+            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
+                circleObj.isEditing = false
+                objects[index] = AnyCanvasObject(circleObj)
+            }
+        }
+    }
+
+    /// Find all objects within a marquee rectangle
+    func objectsInRect(_ rect: CGRect) -> Set<UUID> {
+        var ids = Set<UUID>()
+        for obj in objects {
+            let bbox = obj.boundingBox()
+            if rect.intersects(bbox) {
+                ids.insert(obj.id)
+            }
+        }
+        return ids
+    }
+
+    /// Move all selected objects by offset
+    func moveSelectedObjects(by offset: CGSize) {
+        for id in selectionState.selectedIds {
+            moveObject(id: id, by: offset)
         }
     }
 
