@@ -89,18 +89,18 @@ struct RectangleObjectView: View {
     }
 
     private func updateHeight() {
-        if let index = viewModel.rectangleObjects.firstIndex(where: { $0.id == object.id }) {
-            let newHeight = calculatedTextHeight + 24
-            if newHeight > object.size.height {
-                viewModel.rectangleObjects[index].size.height = newHeight
+        let newHeight = calculatedTextHeight + 24
+        if newHeight > object.size.height {
+            viewModel.updateRectangleObject(withId: object.id) { rect in
+                rect.size.height = newHeight
             }
         }
     }
 
     private func updateHeightIfNeeded(_ newHeight: CGFloat) {
-        if let index = viewModel.rectangleObjects.firstIndex(where: { $0.id == object.id }) {
-            if newHeight > object.size.height {
-                viewModel.rectangleObjects[index].size.height = newHeight
+        if newHeight > object.size.height {
+            viewModel.updateRectangleObject(withId: object.id) { rect in
+                rect.size.height = newHeight
             }
         }
     }

@@ -10,9 +10,16 @@ import Combine
 
 @MainActor
 class CanvasViewModel: ObservableObject {
-    @Published var textObjects: [TextObject] = []
-    @Published var rectangleObjects: [RectangleObject] = []
-    @Published var circleObjects: [CircleObject] = []
+    // MARK: - Unified Object Storage
+
+    /// Primary storage for all canvas objects, sorted by zIndex
+    @Published private(set) var objects: [AnyCanvasObject] = []
+
+    /// Next available zIndex for new objects
+    private var nextZIndex: Int = 0
+
+    // MARK: - Tool State
+
     @Published var selectedTool: DrawingTool = .select {
         didSet {
             // Exit text editing when switching tools
@@ -24,19 +31,83 @@ class CanvasViewModel: ObservableObject {
     @Published var activeColor: Color = .black
     @Published var autoResizeShapes: Bool = true
 
-    // Transient state for shape dragging
+    // MARK: - Transient Drag State
+
     @Published var dragStartPoint: CGPoint?
     @Published var currentDragPoint: CGPoint?
 
+    // MARK: - Backward Compatibility Computed Properties
+
+    /// Returns all text objects (for view compatibility)
+    var textObjects: [TextObject] {
+        objects.compactMap { $0.asTextObject }
+    }
+
+    /// Returns all rectangle objects (for view compatibility)
+    var rectangleObjects: [RectangleObject] {
+        objects.compactMap { $0.asRectangleObject }
+    }
+
+    /// Returns all circle objects (for view compatibility)
+    var circleObjects: [CircleObject] {
+        objects.compactMap { $0.asCircleObject }
+    }
+
+    /// Check if any object is currently being edited
+    var isAnyObjectEditing: Bool {
+        for wrapper in objects {
+            if let textObj = wrapper.asTextObject, textObj.isEditing {
+                return true
+            } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
+                return true
+            } else if let circleObj = wrapper.asCircleObject, circleObj.isEditing {
+                return true
+            }
+        }
+        return false
+    }
+
+    /// Get the currently editing object's ID and bounds, if any
+    func editingObject() -> (id: UUID, contains: (CGPoint) -> Bool)? {
+        for wrapper in objects {
+            if let textObj = wrapper.asTextObject, textObj.isEditing {
+                return (textObj.id, { textObj.contains($0) })
+            } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
+                return (rectObj.id, { rectObj.contains($0) })
+            } else if let circleObj = wrapper.asCircleObject, circleObj.isEditing {
+                return (circleObj.id, { circleObj.contains($0) })
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Object Retrieval
+
+    /// Find object by ID
+    func object(withId id: UUID) -> AnyCanvasObject? {
+        objects.first { $0.id == id }
+    }
+
+    /// Find object index by ID
+    private func objectIndex(withId id: UUID) -> Int? {
+        objects.firstIndex { $0.id == id }
+    }
+
+    // MARK: - Add Objects
+
     func addTextObject(at position: CGPoint) -> UUID {
-        let textObj = TextObject(
+        var textObj = TextObject(
             position: position,
             text: "",
             fontSize: activeTextSize,
             color: activeColor,
             isEditing: true
         )
-        textObjects.append(textObj)
+        textObj.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(textObj))
+        sortObjectsByZIndex()
         return textObj.id
     }
 
@@ -53,13 +124,17 @@ class CanvasViewModel: ObservableObject {
         // Skip tiny rectangles (likely accidental clicks)
         guard size.width > 1 && size.height > 1 else { return }
 
-        let rectObj = RectangleObject(
+        var rectObj = RectangleObject(
             position: origin,
             size: size,
             color: activeColor,
             autoResizeHeight: autoResizeShapes
         )
-        rectangleObjects.append(rectObj)
+        rectObj.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(rectObj))
+        sortObjectsByZIndex()
     }
 
     func addCircle(from start: CGPoint, to end: CGPoint) {
@@ -75,129 +150,252 @@ class CanvasViewModel: ObservableObject {
         // Skip tiny circles (likely accidental clicks)
         guard size.width > 1 && size.height > 1 else { return }
 
-        let circleObj = CircleObject(
+        var circleObj = CircleObject(
             position: origin,
             size: size,
             color: activeColor,
             autoResizeHeight: autoResizeShapes
         )
-        circleObjects.append(circleObj)
+        circleObj.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(circleObj))
+        sortObjectsByZIndex()
     }
 
+    /// Add any canvas object (generic method for future object types)
+    func addObject<T: CanvasObject>(_ object: T) {
+        var mutableObject = object
+        mutableObject.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(mutableObject))
+        sortObjectsByZIndex()
+    }
+
+    // MARK: - Remove Objects
+
+    /// Remove object by ID
+    func removeObject(withId id: UUID) {
+        objects.removeAll { $0.id == id }
+    }
+
+    /// Remove multiple objects by IDs
+    func removeObjects(withIds ids: Set<UUID>) {
+        objects.removeAll { ids.contains($0.id) }
+    }
+
+    // MARK: - Update Objects
+
+    /// Update a TextObject in place
+    func updateTextObject(withId id: UUID, update: (inout TextObject) -> Void) {
+        guard let index = objectIndex(withId: id),
+              var textObj = objects[index].asTextObject else { return }
+        update(&textObj)
+        objects[index] = AnyCanvasObject(textObj)
+    }
+
+    /// Update a RectangleObject in place
+    func updateRectangleObject(withId id: UUID, update: (inout RectangleObject) -> Void) {
+        guard let index = objectIndex(withId: id),
+              var rectObj = objects[index].asRectangleObject else { return }
+        update(&rectObj)
+        objects[index] = AnyCanvasObject(rectObj)
+    }
+
+    /// Update a CircleObject in place
+    func updateCircleObject(withId id: UUID, update: (inout CircleObject) -> Void) {
+        guard let index = objectIndex(withId: id),
+              var circleObj = objects[index].asCircleObject else { return }
+        update(&circleObj)
+        objects[index] = AnyCanvasObject(circleObj)
+    }
+
+    // MARK: - Hit Testing & Selection
+
     func selectObject(at point: CGPoint) -> UUID? {
-        // Check text objects (in reverse for z-order)
-        for textObj in textObjects.reversed() {
-            if textObj.contains(point) {
-                return textObj.id
+        // Check objects in reverse z-order (highest zIndex first)
+        for obj in objects.reversed() {
+            if obj.contains(point) {
+                return obj.id
             }
         }
+        return nil
+    }
 
-        // Check circle objects (in reverse for z-order)
-        for circleObj in circleObjects.reversed() {
-            if circleObj.contains(point) {
-                return circleObj.id
+    /// Advanced hit test returning detailed information
+    func hitTest(at point: CGPoint, threshold: CGFloat = 8) -> (UUID, HitTestResult)? {
+        for obj in objects.reversed() {
+            if let result = obj.hitTest(point, threshold: threshold) {
+                return (obj.id, result)
             }
         }
-
-        // Check rectangle objects (in reverse for z-order)
-        for rectObj in rectangleObjects.reversed() {
-            if rectObj.contains(point) {
-                return rectObj.id
-            }
-        }
-
         return nil
     }
 
     func startEditing(objectId: UUID) {
-        // First check if it's a text object
-        if let index = textObjects.firstIndex(where: { $0.id == objectId }) {
-            textObjects[index].isEditing = true
+        guard let index = objectIndex(withId: objectId) else { return }
+
+        let wrapper = objects[index]
+
+        // Handle based on object type
+        if var textObj = wrapper.asTextObject {
+            textObj.isEditing = true
+            objects[index] = AnyCanvasObject(textObj)
             selectedObjectId = objectId
-        }
-        // Then check if it's a rectangle object
-        else if let index = rectangleObjects.firstIndex(where: { $0.id == objectId }) {
-            rectangleObjects[index].isEditing = true
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.isEditing = true
+            objects[index] = AnyCanvasObject(rectObj)
             selectedObjectId = objectId
-        }
-        // Then check if it's a circle object
-        else if let index = circleObjects.firstIndex(where: { $0.id == objectId }) {
-            circleObjects[index].isEditing = true
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.isEditing = true
+            objects[index] = AnyCanvasObject(circleObj)
             selectedObjectId = objectId
         }
     }
 
     func updateText(objectId: UUID, text: String) {
-        // Update text object
-        if let index = textObjects.firstIndex(where: { $0.id == objectId }) {
-            textObjects[index].text = text
-        }
-        // Or update rectangle object text
-        else if let index = rectangleObjects.firstIndex(where: { $0.id == objectId }) {
-            rectangleObjects[index].text = text
-        }
-        // Or update circle object text
-        else if let index = circleObjects.firstIndex(where: { $0.id == objectId }) {
-            circleObjects[index].text = text
+        guard let index = objectIndex(withId: objectId) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.text = text
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.text = text
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.text = text
+            objects[index] = AnyCanvasObject(circleObj)
         }
     }
 
     func updateTextObjectSize(objectId: UUID, size: CGSize) {
-        if let index = textObjects.firstIndex(where: { $0.id == objectId }) {
-            textObjects[index].size = size
-        }
+        updateTextObject(withId: objectId) { $0.size = size }
     }
 
     func deselectAll() {
         selectedObjectId = nil
+
         // End any active text editing
-        for index in textObjects.indices {
-            textObjects[index].isEditing = false
-        }
-        // End any active rectangle text editing
-        for index in rectangleObjects.indices {
-            rectangleObjects[index].isEditing = false
-        }
-        // End any active circle text editing
-        for index in circleObjects.indices {
-            circleObjects[index].isEditing = false
+        for (index, wrapper) in objects.enumerated() {
+            if var textObj = wrapper.asTextObject, textObj.isEditing {
+                textObj.isEditing = false
+                objects[index] = AnyCanvasObject(textObj)
+            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
+                rectObj.isEditing = false
+                objects[index] = AnyCanvasObject(rectObj)
+            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
+                circleObj.isEditing = false
+                objects[index] = AnyCanvasObject(circleObj)
+            }
         }
     }
 
-    func moveTextObject(id: UUID, by offset: CGSize) {
-        if let index = textObjects.firstIndex(where: { $0.id == id }) {
-            textObjects[index].position.x += offset.width
-            textObjects[index].position.y += offset.height
+    // MARK: - Move Objects
+
+    func moveObject(id: UUID, by offset: CGSize) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.position.x += offset.width
+            textObj.position.y += offset.height
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.position.x += offset.width
+            rectObj.position.y += offset.height
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.position.x += offset.width
+            circleObj.position.y += offset.height
+            objects[index] = AnyCanvasObject(circleObj)
         }
+    }
+
+    // Backward compatibility methods
+    func moveTextObject(id: UUID, by offset: CGSize) {
+        moveObject(id: id, by: offset)
     }
 
     func moveRectangleObject(id: UUID, by offset: CGSize) {
-        if let index = rectangleObjects.firstIndex(where: { $0.id == id }) {
-            rectangleObjects[index].position.x += offset.width
-            rectangleObjects[index].position.y += offset.height
-        }
+        moveObject(id: id, by: offset)
     }
 
     func moveCircleObject(id: UUID, by offset: CGSize) {
-        if let index = circleObjects.firstIndex(where: { $0.id == id }) {
-            circleObjects[index].position.x += offset.width
-            circleObjects[index].position.y += offset.height
-        }
+        moveObject(id: id, by: offset)
     }
 
     func selectObjectOnly(id: UUID) {
         selectedObjectId = id
+
         // Deselect any text editing
-        for index in textObjects.indices {
-            textObjects[index].isEditing = false
+        for (index, wrapper) in objects.enumerated() {
+            if var textObj = wrapper.asTextObject, textObj.isEditing {
+                textObj.isEditing = false
+                objects[index] = AnyCanvasObject(textObj)
+            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
+                rectObj.isEditing = false
+                objects[index] = AnyCanvasObject(rectObj)
+            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
+                circleObj.isEditing = false
+                objects[index] = AnyCanvasObject(circleObj)
+            }
         }
-        // Deselect any rectangle text editing
-        for index in rectangleObjects.indices {
-            rectangleObjects[index].isEditing = false
+    }
+
+    // MARK: - Z-Order Management
+
+    /// Sort objects array by zIndex
+    private func sortObjectsByZIndex() {
+        objects.sort { $0.zIndex < $1.zIndex }
+    }
+
+    /// Bring object to front (highest zIndex)
+    func bringToFront(id: UUID) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.zIndex = nextZIndex
+            nextZIndex += 1
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.zIndex = nextZIndex
+            nextZIndex += 1
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.zIndex = nextZIndex
+            nextZIndex += 1
+            objects[index] = AnyCanvasObject(circleObj)
         }
-        // Deselect any circle text editing
-        for index in circleObjects.indices {
-            circleObjects[index].isEditing = false
+
+        sortObjectsByZIndex()
+    }
+
+    /// Send object to back (lowest zIndex)
+    func sendToBack(id: UUID) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        // Find minimum zIndex
+        let minZIndex = objects.map { $0.zIndex }.min() ?? 0
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.zIndex = minZIndex - 1
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.zIndex = minZIndex - 1
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.zIndex = minZIndex - 1
+            objects[index] = AnyCanvasObject(circleObj)
         }
+
+        sortObjectsByZIndex()
     }
 }

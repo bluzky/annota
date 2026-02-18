@@ -112,10 +112,7 @@ struct CanvasView: View {
             viewModel.currentDragPoint = value.location
         } else if viewModel.selectedTool == .select {
             // Don't drag if an object is being edited
-            let isEditing = viewModel.textObjects.contains { $0.isEditing } ||
-                            viewModel.rectangleObjects.contains { $0.isEditing } ||
-                            viewModel.circleObjects.contains { $0.isEditing }
-            if isEditing {
+            if viewModel.isAnyObjectEditing {
                 return
             }
 
@@ -134,15 +131,8 @@ struct CanvasView: View {
                     height: value.location.y - lastLocation.y
                 )
 
-                // Check if object is text, rectangle, or circle and move it
-                if viewModel.textObjects.contains(where: { $0.id == objectId }) {
-                    viewModel.moveTextObject(id: objectId, by: offset)
-                } else if viewModel.rectangleObjects.contains(where: { $0.id == objectId }) {
-                    viewModel.moveRectangleObject(id: objectId, by: offset)
-                } else if viewModel.circleObjects.contains(where: { $0.id == objectId }) {
-                    viewModel.moveCircleObject(id: objectId, by: offset)
-                }
-
+                // Move object using unified method
+                viewModel.moveObject(id: objectId, by: offset)
                 lastDragLocation = value.location
             }
         }
@@ -180,9 +170,7 @@ struct CanvasView: View {
 
     private func handleClick(at location: CGPoint) {
         // Check if any object is currently being edited
-        let isEditing = viewModel.textObjects.contains { $0.isEditing } ||
-                        viewModel.rectangleObjects.contains { $0.isEditing } ||
-                        viewModel.circleObjects.contains { $0.isEditing }
+        let isEditing = viewModel.isAnyObjectEditing
 
         if viewModel.selectedTool == .text {
             // Check if clicking on existing object
@@ -199,22 +187,8 @@ struct CanvasView: View {
             }
         } else if viewModel.selectedTool == .select {
             // Check if clicking inside an object that's currently being edited
-            if let editingId = viewModel.textObjects.first(where: { $0.isEditing })?.id,
-               let editingObj = viewModel.textObjects.first(where: { $0.id == editingId }),
-               editingObj.contains(location) {
-                // Click inside editing text - let NSTextView handle it (cursor positioning)
-                return
-            }
-            if let editingId = viewModel.rectangleObjects.first(where: { $0.isEditing })?.id,
-               let editingObj = viewModel.rectangleObjects.first(where: { $0.id == editingId }),
-               editingObj.contains(location) {
-                // Click inside editing rectangle text - let NSTextView handle it
-                return
-            }
-            if let editingId = viewModel.circleObjects.first(where: { $0.isEditing })?.id,
-               let editingObj = viewModel.circleObjects.first(where: { $0.id == editingId }),
-               editingObj.contains(location) {
-                // Click inside editing circle text - let NSTextView handle it
+            if let editing = viewModel.editingObject(), editing.contains(location) {
+                // Click inside editing object - let NSTextView handle it (cursor positioning)
                 return
             }
 

@@ -92,18 +92,18 @@ struct CircleObjectView: View {
     }
 
     private func updateHeight() {
-        if let index = viewModel.circleObjects.firstIndex(where: { $0.id == object.id }) {
-            let newHeight = calculatedTextHeight + 24
-            if newHeight > object.size.height {
-                viewModel.circleObjects[index].size.height = newHeight
+        let newHeight = calculatedTextHeight + 24
+        if newHeight > object.size.height {
+            viewModel.updateCircleObject(withId: object.id) { circle in
+                circle.size.height = newHeight
             }
         }
     }
 
     private func updateHeightIfNeeded(_ newHeight: CGFloat) {
-        if let index = viewModel.circleObjects.firstIndex(where: { $0.id == object.id }) {
-            if newHeight > object.size.height {
-                viewModel.circleObjects[index].size.height = newHeight
+        if newHeight > object.size.height {
+            viewModel.updateCircleObject(withId: object.id) { circle in
+                circle.size.height = newHeight
             }
         }
     }
