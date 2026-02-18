@@ -13,14 +13,13 @@ struct ToolbarView: View {
     var body: some View {
         HStack(spacing: 20) {
             // Tool Selection
-            Picker("Tool", selection: $viewModel.selectedTool) {
-                Label("Select", systemImage: "cursorarrow").tag(DrawingTool.select)
-                Label("Text", systemImage: "textformat").tag(DrawingTool.text)
-                Label("Rectangle", systemImage: "rectangle").tag(DrawingTool.rectangle)
-                Label("Circle", systemImage: "circle").tag(DrawingTool.circle)
+            HStack(spacing: 4) {
+                toolButton(.select, icon: "cursorarrow", tooltip: "Select")
+                toolButton(.hand, icon: "hand.raised", tooltip: "Hand")
+                toolButton(.rectangle, icon: "rectangle", tooltip: "Rectangle")
+                toolButton(.circle, icon: "circle", tooltip: "Circle")
+                toolButton(.text, icon: "textformat", tooltip: "Text")
             }
-            .pickerStyle(.segmented)
-            .frame(width: 360)
 
             Divider()
                 .frame(height: 20)
@@ -55,5 +54,20 @@ struct ToolbarView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
         .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    @ViewBuilder
+    private func toolButton(_ tool: DrawingTool, icon: String, tooltip: String) -> some View {
+        Button(action: {
+            viewModel.selectedTool = tool
+        }) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .background(viewModel.selectedTool == tool ? Color.accentColor.opacity(0.2) : Color.clear)
+        .cornerRadius(6)
+        .help(tooltip)
     }
 }

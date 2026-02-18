@@ -12,4 +12,5 @@ enum DrawingTool {
     case text
     case rectangle
     case circle
+    case hand
 }

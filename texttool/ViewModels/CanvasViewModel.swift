@@ -45,6 +45,10 @@ class CanvasViewModel: ObservableObject {
     @Published var activeColor: Color = .black
     @Published var autoResizeShapes: Bool = true
 
+    // MARK: - Viewport State
+
+    @Published var viewport = ViewportState()
+
     // MARK: - Transient Drag State
 
     @Published var dragStartPoint: CGPoint?
@@ -481,5 +485,86 @@ class CanvasViewModel: ObservableObject {
         }
 
         sortObjectsByZIndex()
+    }
+
+    // MARK: - Viewport Control
+
+    /// Pan the viewport by a delta
+    func panViewport(by delta: CGSize) {
+        viewport.pan(by: delta)
+    }
+
+    /// Zoom the viewport by a factor around a point
+    func zoomViewport(by factor: CGFloat, around anchor: CGPoint) {
+        viewport.zoom(by: factor, around: anchor)
+    }
+
+    /// Zoom in by a fixed step (centered)
+    func zoomIn(center: CGPoint) {
+        viewport.zoom(by: 1.25, around: center)
+    }
+
+    /// Zoom out by a fixed step (centered)
+    func zoomOut(center: CGPoint) {
+        viewport.zoom(by: 0.8, around: center)
+    }
+
+    /// Reset viewport to default
+    func resetViewport() {
+        viewport.reset()
+    }
+
+    /// Set zoom to specific percentage
+    func setZoom(_ percentage: Int, center: CGPoint) {
+        let newScale = CGFloat(percentage) / 100.0
+        viewport.setScale(newScale, around: center)
+    }
+
+    /// Fit all objects in viewport
+    func fitToContent(viewSize: CGSize) {
+        guard !objects.isEmpty else {
+            resetViewport()
+            return
+        }
+
+        // Calculate bounding box of all objects
+        var minX = CGFloat.infinity
+        var minY = CGFloat.infinity
+        var maxX = -CGFloat.infinity
+        var maxY = -CGFloat.infinity
+
+        for obj in objects {
+            let bbox = obj.boundingBox()
+            minX = min(minX, bbox.minX)
+            minY = min(minY, bbox.minY)
+            maxX = max(maxX, bbox.maxX)
+            maxY = max(maxY, bbox.maxY)
+        }
+
+        let contentWidth = maxX - minX
+        let contentHeight = maxY - minY
+
+        guard contentWidth > 0 && contentHeight > 0 else {
+            resetViewport()
+            return
+        }
+
+        // Add padding
+        let padding: CGFloat = 50
+
+        // Calculate scale to fit
+        let scaleX = (viewSize.width - padding * 2) / contentWidth
+        let scaleY = (viewSize.height - padding * 2) / contentHeight
+        let newScale = min(scaleX, scaleY, ViewportState.maxScale)
+
+        // Calculate offset to center content
+        let contentCenterX = (minX + maxX) / 2
+        let contentCenterY = (minY + maxY) / 2
+
+        viewport.scale = max(newScale, ViewportState.minScale)
+        viewport.offset = CGPoint(
+            x: viewSize.width / 2 - contentCenterX * viewport.scale,
+            y: viewSize.height / 2 - contentCenterY * viewport.scale
+        )
     }
 }

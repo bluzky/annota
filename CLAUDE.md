@@ -27,6 +27,8 @@ xcodebuild -scheme texttool clean
 
 ## Architecture
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design, protocols, and implementation phases.
+
 ### State Management
 - `CanvasViewModel.swift`: @MainActor ObservableObject - single source of truth for all canvas state
   - Published arrays: `textObjects`, `rectangleObjects`, `circleObjects`
