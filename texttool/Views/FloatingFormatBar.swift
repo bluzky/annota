@@ -60,7 +60,7 @@ struct FloatingFormatBar: View {
 
             // Color Picker
             ColorPicker("", selection: Binding(
-                get: { currentAttributes.textColor },
+                get: { currentAttributes.color },
                 set: { onColorChange($0) }
             ))
             .labelsHidden()
@@ -75,13 +75,4 @@ struct FloatingFormatBar: View {
     }
 }
 
-struct TextAttributes {
-    var fontSize: CGFloat
-    var isBold: Bool
-    var isItalic: Bool
-    var textColor: Color
-
-    static var `default`: TextAttributes {
-        TextAttributes(fontSize: 16, isBold: false, isItalic: false, textColor: .black)
-    }
-}
+// TextAttributes is now defined in Models/TextAttributes.swift

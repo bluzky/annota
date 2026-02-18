@@ -20,7 +20,10 @@ struct TextObjectView: View {
                     text: binding,
                     fontSize: object.fontSize,
                     textColor: object.color,
-                    onFocus: { isFocused = true }
+                    onFocus: { isFocused = true },
+                    onSizeChange: { size in
+                        viewModel.updateTextObjectSize(objectId: object.id, size: size)
+                    }
                 )
                 .background(Color.white.opacity(0.8))
                 .cornerRadius(4)

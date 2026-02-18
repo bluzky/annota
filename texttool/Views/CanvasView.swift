@@ -17,8 +17,8 @@ struct CanvasView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background - gray canvas
-                Color(red: 0xd8/255, green: 0xd8/255, blue: 0xd8/255)
+                // Background - white canvas
+                Color.white
 
                 // Dot grid pattern
                 Canvas { context, size in
@@ -111,6 +111,14 @@ struct CanvasView: View {
             }
             viewModel.currentDragPoint = value.location
         } else if viewModel.selectedTool == .select {
+            // Don't drag if an object is being edited
+            let isEditing = viewModel.textObjects.contains { $0.isEditing } ||
+                            viewModel.rectangleObjects.contains { $0.isEditing } ||
+                            viewModel.circleObjects.contains { $0.isEditing }
+            if isEditing {
+                return
+            }
+
             // Handle dragging selected object
             if draggedObjectId == nil {
                 // Check if we started drag on a selected object
@@ -190,6 +198,26 @@ struct CanvasView: View {
                 viewModel.startEditing(objectId: newId)
             }
         } else if viewModel.selectedTool == .select {
+            // Check if clicking inside an object that's currently being edited
+            if let editingId = viewModel.textObjects.first(where: { $0.isEditing })?.id,
+               let editingObj = viewModel.textObjects.first(where: { $0.id == editingId }),
+               editingObj.contains(location) {
+                // Click inside editing text - let NSTextView handle it (cursor positioning)
+                return
+            }
+            if let editingId = viewModel.rectangleObjects.first(where: { $0.isEditing })?.id,
+               let editingObj = viewModel.rectangleObjects.first(where: { $0.id == editingId }),
+               editingObj.contains(location) {
+                // Click inside editing rectangle text - let NSTextView handle it
+                return
+            }
+            if let editingId = viewModel.circleObjects.first(where: { $0.isEditing })?.id,
+               let editingObj = viewModel.circleObjects.first(where: { $0.id == editingId }),
+               editingObj.contains(location) {
+                // Click inside editing circle text - let NSTextView handle it
+                return
+            }
+
             // Check for double-click
             let isDoubleClick = isDoubleClickDetected(at: location)
 

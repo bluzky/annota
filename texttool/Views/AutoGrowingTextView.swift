@@ -13,6 +13,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
     var fontSize: CGFloat
     var textColor: Color
     var onFocus: () -> Void
+    var onSizeChange: ((CGSize) -> Void)?
 
     func makeNSView(context: Context) -> NSTextView {
         let textView = NSTextView()
@@ -97,6 +98,18 @@ struct AutoGrowingTextView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+
+            // Report size change
+            if let container = textView.textContainer,
+               let layoutManager = textView.layoutManager {
+                layoutManager.ensureLayout(for: container)
+                let usedRect = layoutManager.usedRect(for: container)
+                let size = CGSize(
+                    width: max(100, usedRect.width + 16),
+                    height: max(parent.fontSize * 1.5, usedRect.height + 16)
+                )
+                parent.onSizeChange?(size)
+            }
         }
 
         func textDidBeginEditing(_ notification: Notification) {

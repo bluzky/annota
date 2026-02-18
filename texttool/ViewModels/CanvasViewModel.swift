@@ -142,6 +142,12 @@ class CanvasViewModel: ObservableObject {
         }
     }
 
+    func updateTextObjectSize(objectId: UUID, size: CGSize) {
+        if let index = textObjects.firstIndex(where: { $0.id == objectId }) {
+            textObjects[index].size = size
+        }
+    }
+
     func deselectAll() {
         selectedObjectId = nil
         // End any active text editing
