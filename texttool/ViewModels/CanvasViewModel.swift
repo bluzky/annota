@@ -351,6 +351,27 @@ class CanvasViewModel: ObservableObject {
         }
     }
 
+    /// Update position and rotation for an object (used by group rotation)
+    func updateObjectPositionAndRotation(id: UUID, position: CGPoint, rotation: CGFloat) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.position = position
+            textObj.rotation = rotation
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.position = position
+            rectObj.rotation = rotation
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.position = position
+            ovalObj.rotation = rotation
+            objects[index] = AnyCanvasObject(ovalObj)
+        }
+    }
+
     /// Update position and size for an object (used by resize)
     func updateObjectFrame(id: UUID, position: CGPoint, size: CGSize) {
         guard let index = objectIndex(withId: id) else { return }

@@ -30,28 +30,24 @@ struct SelectionBoxView: View {
             // Corner handles: larger rotation square with small resize square at its inner corner
             ForEach(Corner.allCases, id: \.self) { corner in
                 // Rotation handle (larger square, offset outward from corner)
-                if selectionBox.isSingleSelection {
-                    let shift = (rotationHandleSize - handleSize) / 2
-                    Rectangle()
-                        .fill(Color.white.opacity(0.01))
-                        .frame(width: rotationHandleSize, height: rotationHandleSize)
-                        .overlay(
-                            Rectangle()
-                                .stroke(selectionColor.opacity(0.4), lineWidth: 1)
-                        )
-                        .position(rotationSquarePosition(for: corner, shift: shift))
-                }
+                let shift = (rotationHandleSize - handleSize) / 2
+                Rectangle()
+                    .fill(Color.white.opacity(0.01))
+                    .frame(width: rotationHandleSize, height: rotationHandleSize)
+                    .overlay(
+                        Rectangle()
+                            .stroke(selectionColor.opacity(0.4), lineWidth: 1)
+                    )
+                    .position(rotationSquarePosition(for: corner, shift: shift))
 
                 // Resize handle (small square, at the actual corner)
                 ResizeHandle(size: handleSize)
                     .position(relativePosition(for: selectionBox.cornerPosition(for: corner)))
             }
 
-            // Edge resize handles (only for single selection) — span between corners
-            if selectionBox.isSingleSelection {
-                ForEach(Edge.allCases, id: \.self) { edge in
-                    edgeHandle(for: edge)
-                }
+            // Edge resize handles — span between corners
+            ForEach(Edge.allCases, id: \.self) { edge in
+                edgeHandle(for: edge)
             }
         }
         .frame(
