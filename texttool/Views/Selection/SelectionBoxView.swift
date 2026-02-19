@@ -119,7 +119,6 @@ struct SelectionBoxView: View {
 
         let sampleBox = SelectionBox(
             bounds: CGRect(x: 100, y: 100, width: 200, height: 150),
-            individualBounds: [:],
             isSingleSelection: true,
             rotation: 0
         )

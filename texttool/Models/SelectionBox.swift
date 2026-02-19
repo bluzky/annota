@@ -12,9 +12,6 @@ struct SelectionBox {
     /// Combined bounding box of all selected objects
     let bounds: CGRect
 
-    /// Individual bounding boxes for each selected object
-    let individualBounds: [UUID: CGRect]
-
     /// Whether this is a single selection (enables rotation and edge handles)
     let isSingleSelection: Bool
 
@@ -179,11 +176,8 @@ struct SelectionBox {
         var maxX = -CGFloat.infinity
         var maxY = -CGFloat.infinity
 
-        var individualBounds: [UUID: CGRect] = [:]
-
         for obj in objects {
             let bbox = obj.boundingBox()
-            individualBounds[obj.id] = bbox
 
             if isSingleSelection {
                 // Single selection: use unrotated bbox (the view rotates visually)
@@ -214,7 +208,6 @@ struct SelectionBox {
 
         return SelectionBox(
             bounds: bounds,
-            individualBounds: individualBounds,
             isSingleSelection: isSingleSelection,
             rotation: rotation
         )
@@ -260,19 +253,8 @@ struct SelectionBox {
             height: screenEnd.y - screenOrigin.y
         )
 
-        var screenIndividualBounds: [UUID: CGRect] = [:]
-        for (id, rect) in individualBounds {
-            let origin = viewport.canvasToScreen(CGPoint(x: rect.minX, y: rect.minY))
-            let end = viewport.canvasToScreen(CGPoint(x: rect.maxX, y: rect.maxY))
-            screenIndividualBounds[id] = CGRect(
-                x: origin.x, y: origin.y,
-                width: end.x - origin.x, height: end.y - origin.y
-            )
-        }
-
         return SelectionBox(
             bounds: screenBounds,
-            individualBounds: screenIndividualBounds,
             isSingleSelection: isSingleSelection,
             rotation: rotation
         )

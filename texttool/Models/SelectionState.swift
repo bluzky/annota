@@ -17,11 +17,6 @@ struct SelectionState: Equatable {
         !selectedIds.isEmpty
     }
 
-    /// Returns the count of selected objects
-    var count: Int {
-        selectedIds.count
-    }
-
     /// Returns true if exactly one object is selected
     var isSingleSelection: Bool {
         selectedIds.count == 1
@@ -51,11 +46,6 @@ struct SelectionState: Equatable {
         selectedIds.insert(id)
     }
 
-    /// Remove an object from the selection
-    mutating func removeFromSelection(_ id: UUID) {
-        selectedIds.remove(id)
-    }
-
     /// Toggle selection state of an object (for shift+click)
     mutating func toggleSelection(_ id: UUID) {
         if selectedIds.contains(id) {
@@ -78,10 +68,5 @@ struct SelectionState: Equatable {
     /// Clear all selection
     mutating func clear() {
         selectedIds.removeAll()
-    }
-
-    /// Replace selection with new set of IDs
-    mutating func replace(with ids: Set<UUID>) {
-        selectedIds = ids
     }
 }

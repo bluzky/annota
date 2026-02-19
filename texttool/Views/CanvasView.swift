@@ -34,7 +34,6 @@ struct CanvasView: View {
     @State private var rotationCenter: CGPoint = .zero
     @State private var initialObjectRotations: [UUID: CGFloat] = [:]
     @State private var initialObjectPositions: [UUID: CGPoint] = [:]
-    @State private var frozenSelectionBox: SelectionBox?
 
     // Current hover position (screen coordinates, relative to CanvasView)
     @State private var currentHoverLocation: CGPoint?
@@ -140,7 +139,7 @@ struct CanvasView: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    handleDragChanged(value, geometry: nil)
+                    handleDragChanged(value)
                 }
                 .onEnded { value in
                     handleDragEnded(value)
@@ -251,7 +250,7 @@ struct CanvasView: View {
         return NSCursor.crosshair
     }()
 
-    private func handleDragChanged(_ value: DragGesture.Value, geometry: GeometryProxy?) {
+    private func handleDragChanged(_ value: DragGesture.Value) {
         // Handle hand tool panning
         if viewModel.selectedTool == .hand {
             if !isPanning {
@@ -311,8 +310,6 @@ struct CanvasView: View {
                         rotationCenter = selectionBox.center
                         initialRotation = selectionBox.rotation
                         rotationStartAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
-                        // Freeze the selection box during rotation drag
-                        frozenSelectionBox = selectionBox
                         // Store initial per-object state for orbit math
                         initialObjectPositions = [:]
                         initialObjectRotations = [:]
@@ -664,7 +661,6 @@ struct CanvasView: View {
         rotationCenter = .zero
         initialObjectRotations = [:]
         initialObjectPositions = [:]
-        frozenSelectionBox = nil
     }
 
     /// Compute normalized rectangle from two points

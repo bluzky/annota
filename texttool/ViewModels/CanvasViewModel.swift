@@ -181,26 +181,11 @@ class CanvasViewModel: ObservableObject {
         sortObjectsByZIndex()
     }
 
-    /// Add any canvas object (generic method for future object types)
-    func addObject<T: CanvasObject>(_ object: T) {
-        var mutableObject = object
-        mutableObject.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(mutableObject))
-        sortObjectsByZIndex()
-    }
-
     // MARK: - Remove Objects
 
     /// Remove object by ID
     func removeObject(withId id: UUID) {
         objects.removeAll { $0.id == id }
-    }
-
-    /// Remove multiple objects by IDs
-    func removeObjects(withIds ids: Set<UUID>) {
-        objects.removeAll { ids.contains($0.id) }
     }
 
     // MARK: - Update Objects
@@ -236,16 +221,6 @@ class CanvasViewModel: ObservableObject {
         for obj in objects.reversed() {
             if obj.contains(point) {
                 return obj.id
-            }
-        }
-        return nil
-    }
-
-    /// Advanced hit test returning detailed information
-    func hitTest(at point: CGPoint, threshold: CGFloat = 8) -> (UUID, HitTestResult)? {
-        for obj in objects.reversed() {
-            if let result = obj.hitTest(point, threshold: threshold) {
-                return (obj.id, result)
             }
         }
         return nil
@@ -393,19 +368,6 @@ class CanvasViewModel: ObservableObject {
         }
     }
 
-    // Backward compatibility methods
-    func moveTextObject(id: UUID, by offset: CGSize) {
-        moveObject(id: id, by: offset)
-    }
-
-    func moveRectangleObject(id: UUID, by offset: CGSize) {
-        moveObject(id: id, by: offset)
-    }
-
-    func moveOvalObject(id: UUID, by offset: CGSize) {
-        moveObject(id: id, by: offset)
-    }
-
     func selectObjectOnly(id: UUID) {
         selectionState.select(id)
 
@@ -429,12 +391,6 @@ class CanvasViewModel: ObservableObject {
         // End any text editing first
         endAllEditing()
         selectionState.toggleSelection(id)
-    }
-
-    /// Add object to current selection (for shift+click on unselected)
-    func addToSelection(id: UUID) {
-        endAllEditing()
-        selectionState.addToSelection(id)
     }
 
     /// Select multiple objects (for marquee selection)
@@ -514,52 +470,6 @@ class CanvasViewModel: ObservableObject {
         objects.sort { $0.zIndex < $1.zIndex }
     }
 
-    /// Bring object to front (highest zIndex)
-    func bringToFront(id: UUID) {
-        guard let index = objectIndex(withId: id) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.zIndex = nextZIndex
-            nextZIndex += 1
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.zIndex = nextZIndex
-            nextZIndex += 1
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.zIndex = nextZIndex
-            nextZIndex += 1
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
-
-        sortObjectsByZIndex()
-    }
-
-    /// Send object to back (lowest zIndex)
-    func sendToBack(id: UUID) {
-        guard let index = objectIndex(withId: id) else { return }
-
-        // Find minimum zIndex
-        let minZIndex = objects.map { $0.zIndex }.min() ?? 0
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.zIndex = minZIndex - 1
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.zIndex = minZIndex - 1
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.zIndex = minZIndex - 1
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
-
-        sortObjectsByZIndex()
-    }
-
     // MARK: - Viewport Control
 
     /// Pan the viewport by a delta
@@ -572,72 +482,8 @@ class CanvasViewModel: ObservableObject {
         viewport.zoom(by: factor, around: anchor)
     }
 
-    /// Zoom in by a fixed step (centered)
-    func zoomIn(center: CGPoint) {
-        viewport.zoom(by: 1.25, around: center)
-    }
-
-    /// Zoom out by a fixed step (centered)
-    func zoomOut(center: CGPoint) {
-        viewport.zoom(by: 0.8, around: center)
-    }
-
     /// Reset viewport to default
     func resetViewport() {
         viewport.reset()
-    }
-
-    /// Set zoom to specific percentage
-    func setZoom(_ percentage: Int, center: CGPoint) {
-        let newScale = CGFloat(percentage) / 100.0
-        viewport.setScale(newScale, around: center)
-    }
-
-    /// Fit all objects in viewport
-    func fitToContent(viewSize: CGSize) {
-        guard !objects.isEmpty else {
-            resetViewport()
-            return
-        }
-
-        // Calculate bounding box of all objects
-        var minX = CGFloat.infinity
-        var minY = CGFloat.infinity
-        var maxX = -CGFloat.infinity
-        var maxY = -CGFloat.infinity
-
-        for obj in objects {
-            let bbox = obj.boundingBox()
-            minX = min(minX, bbox.minX)
-            minY = min(minY, bbox.minY)
-            maxX = max(maxX, bbox.maxX)
-            maxY = max(maxY, bbox.maxY)
-        }
-
-        let contentWidth = maxX - minX
-        let contentHeight = maxY - minY
-
-        guard contentWidth > 0 && contentHeight > 0 else {
-            resetViewport()
-            return
-        }
-
-        // Add padding
-        let padding: CGFloat = 50
-
-        // Calculate scale to fit
-        let scaleX = (viewSize.width - padding * 2) / contentWidth
-        let scaleY = (viewSize.height - padding * 2) / contentHeight
-        let newScale = min(scaleX, scaleY, ViewportState.maxScale)
-
-        // Calculate offset to center content
-        let contentCenterX = (minX + maxX) / 2
-        let contentCenterY = (minY + maxY) / 2
-
-        viewport.scale = max(newScale, ViewportState.minScale)
-        viewport.offset = CGPoint(
-            x: viewSize.width / 2 - contentCenterX * viewport.scale,
-            y: viewSize.height / 2 - contentCenterY * viewport.scale
-        )
     }
 }
