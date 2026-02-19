@@ -17,7 +17,7 @@ struct ToolbarView: View {
                 toolButton(.select, icon: "cursorarrow", tooltip: "Select")
                 toolButton(.hand, icon: "hand.raised", tooltip: "Hand")
                 toolButton(.rectangle, icon: "rectangle", tooltip: "Rectangle")
-                toolButton(.circle, icon: "circle", tooltip: "Circle")
+                toolButton(.oval, icon: "circle", tooltip: "Oval")
                 toolButton(.text, icon: "textformat", tooltip: "Text")
             }
 

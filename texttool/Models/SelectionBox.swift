@@ -12,9 +12,6 @@ struct SelectionBox {
     /// Combined bounding box of all selected objects
     let bounds: CGRect
 
-    /// Individual bounding boxes for each selected object
-    let individualBounds: [UUID: CGRect]
-
     /// Whether this is a single selection (enables rotation and edge handles)
     let isSingleSelection: Bool
 
@@ -109,54 +106,50 @@ struct SelectionBox {
             }
         }
 
-        // Check edge handles (span between corners, only for single selection)
-        if isSingleSelection {
-            let halfH = handleSize / 2
-            for edge in Edge.allCases {
-                let hitRect: CGRect
-                switch edge {
-                case .top:
-                    hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.minY - halfH,
-                                     width: bounds.width - handleSize * 2, height: handleSize)
-                case .bottom:
-                    hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.maxY - halfH,
-                                     width: bounds.width - handleSize * 2, height: handleSize)
-                case .left:
-                    hitRect = CGRect(x: bounds.minX - halfH, y: bounds.minY + handleSize,
-                                     width: handleSize, height: bounds.height - handleSize * 2)
-                case .right:
-                    hitRect = CGRect(x: bounds.maxX - halfH, y: bounds.minY + handleSize,
-                                     width: handleSize, height: bounds.height - handleSize * 2)
-                }
-                if hitRect.contains(localPoint) {
-                    return .edge(edge)
-                }
+        // Check edge handles (span between corners)
+        let halfH = handleSize / 2
+        for edge in Edge.allCases {
+            let hitRect: CGRect
+            switch edge {
+            case .top:
+                hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.minY - halfH,
+                                 width: bounds.width - handleSize * 2, height: handleSize)
+            case .bottom:
+                hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.maxY - halfH,
+                                 width: bounds.width - handleSize * 2, height: handleSize)
+            case .left:
+                hitRect = CGRect(x: bounds.minX - halfH, y: bounds.minY + handleSize,
+                                 width: handleSize, height: bounds.height - handleSize * 2)
+            case .right:
+                hitRect = CGRect(x: bounds.maxX - halfH, y: bounds.minY + handleSize,
+                                 width: handleSize, height: bounds.height - handleSize * 2)
+            }
+            if hitRect.contains(localPoint) {
+                return .edge(edge)
             }
         }
 
-        // Check rotation handles (larger square at corners, shifted outward, only for single selection)
-        if isSingleSelection {
-            let shift = (Self.rotationHandleSize - handleSize) / 2
-            for corner in Corner.allCases {
-                let cornerPos = cornerPosition(for: corner)
-                // Center of the rotation square is shifted outward from corner
-                let cx: CGFloat
-                let cy: CGFloat
-                switch corner {
-                case .topLeft:
-                    cx = cornerPos.x - shift; cy = cornerPos.y - shift
-                case .topRight:
-                    cx = cornerPos.x + shift; cy = cornerPos.y - shift
-                case .bottomLeft:
-                    cx = cornerPos.x - shift; cy = cornerPos.y + shift
-                case .bottomRight:
-                    cx = cornerPos.x + shift; cy = cornerPos.y + shift
-                }
-                let halfSize = Self.rotationHandleSize / 2
-                let hitRect = CGRect(x: cx - halfSize, y: cy - halfSize, width: Self.rotationHandleSize, height: Self.rotationHandleSize)
-                if hitRect.contains(localPoint) {
-                    return .rotation(corner)
-                }
+        // Check rotation handles (larger square at corners, shifted outward)
+        let shift = (Self.rotationHandleSize - handleSize) / 2
+        for corner in Corner.allCases {
+            let cornerPos = cornerPosition(for: corner)
+            // Center of the rotation square is shifted outward from corner
+            let cx: CGFloat
+            let cy: CGFloat
+            switch corner {
+            case .topLeft:
+                cx = cornerPos.x - shift; cy = cornerPos.y - shift
+            case .topRight:
+                cx = cornerPos.x + shift; cy = cornerPos.y - shift
+            case .bottomLeft:
+                cx = cornerPos.x - shift; cy = cornerPos.y + shift
+            case .bottomRight:
+                cx = cornerPos.x + shift; cy = cornerPos.y + shift
+            }
+            let halfSize = Self.rotationHandleSize / 2
+            let hitRect = CGRect(x: cx - halfSize, y: cy - halfSize, width: Self.rotationHandleSize, height: Self.rotationHandleSize)
+            if hitRect.contains(localPoint) {
+                return .rotation(corner)
             }
         }
 
@@ -176,21 +169,32 @@ struct SelectionBox {
     static func from(objects: [AnyCanvasObject]) -> SelectionBox? {
         guard !objects.isEmpty else { return nil }
 
+        let isSingleSelection = objects.count == 1
+
         var minX = CGFloat.infinity
         var minY = CGFloat.infinity
         var maxX = -CGFloat.infinity
         var maxY = -CGFloat.infinity
 
-        var individualBounds: [UUID: CGRect] = [:]
-
         for obj in objects {
             let bbox = obj.boundingBox()
-            individualBounds[obj.id] = bbox
 
-            minX = min(minX, bbox.minX)
-            minY = min(minY, bbox.minY)
-            maxX = max(maxX, bbox.maxX)
-            maxY = max(maxY, bbox.maxY)
+            if isSingleSelection {
+                // Single selection: use unrotated bbox (the view rotates visually)
+                minX = min(minX, bbox.minX)
+                minY = min(minY, bbox.minY)
+                maxX = max(maxX, bbox.maxX)
+                maxY = max(maxY, bbox.maxY)
+            } else {
+                // Multi-selection: compute axis-aligned bounds of rotated corners
+                let corners = rotatedCorners(of: bbox, rotation: obj.rotation)
+                for corner in corners {
+                    minX = min(minX, corner.x)
+                    minY = min(minY, corner.y)
+                    maxX = max(maxX, corner.x)
+                    maxY = max(maxY, corner.y)
+                }
+            }
         }
 
         let bounds = CGRect(
@@ -200,15 +204,40 @@ struct SelectionBox {
             height: maxY - minY
         )
 
-        let isSingleSelection = objects.count == 1
         let rotation = isSingleSelection ? objects[0].rotation : 0
 
         return SelectionBox(
             bounds: bounds,
-            individualBounds: individualBounds,
             isSingleSelection: isSingleSelection,
             rotation: rotation
         )
+    }
+
+    /// Compute the 4 corners of a rect after rotation around its center
+    private static func rotatedCorners(of rect: CGRect, rotation: CGFloat) -> [CGPoint] {
+        guard rotation != 0 else {
+            return [
+                CGPoint(x: rect.minX, y: rect.minY),
+                CGPoint(x: rect.maxX, y: rect.minY),
+                CGPoint(x: rect.maxX, y: rect.maxY),
+                CGPoint(x: rect.minX, y: rect.maxY)
+            ]
+        }
+        let cx = rect.midX
+        let cy = rect.midY
+        let cosR = cos(rotation)
+        let sinR = sin(rotation)
+        let corners = [
+            CGPoint(x: rect.minX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.minY),
+            CGPoint(x: rect.maxX, y: rect.maxY),
+            CGPoint(x: rect.minX, y: rect.maxY)
+        ]
+        return corners.map { pt in
+            let dx = pt.x - cx
+            let dy = pt.y - cy
+            return CGPoint(x: cx + dx * cosR - dy * sinR, y: cy + dx * sinR + dy * cosR)
+        }
     }
 
     // MARK: - Coordinate Conversion
@@ -224,19 +253,8 @@ struct SelectionBox {
             height: screenEnd.y - screenOrigin.y
         )
 
-        var screenIndividualBounds: [UUID: CGRect] = [:]
-        for (id, rect) in individualBounds {
-            let origin = viewport.canvasToScreen(CGPoint(x: rect.minX, y: rect.minY))
-            let end = viewport.canvasToScreen(CGPoint(x: rect.maxX, y: rect.maxY))
-            screenIndividualBounds[id] = CGRect(
-                x: origin.x, y: origin.y,
-                width: end.x - origin.x, height: end.y - origin.y
-            )
-        }
-
         return SelectionBox(
             bounds: screenBounds,
-            individualBounds: screenIndividualBounds,
             isSingleSelection: isSingleSelection,
             rotation: rotation
         )

@@ -32,6 +32,8 @@ struct CanvasView: View {
     @State private var initialRotation: CGFloat = 0
     @State private var rotationStartAngle: CGFloat = 0
     @State private var rotationCenter: CGPoint = .zero
+    @State private var initialObjectRotations: [UUID: CGFloat] = [:]
+    @State private var initialObjectPositions: [UUID: CGPoint] = [:]
 
     // Current hover position (screen coordinates, relative to CanvasView)
     @State private var currentHoverLocation: CGPoint?
@@ -110,7 +112,9 @@ struct CanvasView: View {
                 .offset(x: viewModel.viewport.offset.x, y: viewModel.viewport.offset.y)
 
                 // Selection box overlay (rendered in screen coordinates, not affected by viewport)
-                if let selectionBox = viewModel.selectionBox,
+                // Hidden during active resize or rotation drag
+                if activeHandleZone == nil,
+                   let selectionBox = viewModel.selectionBox,
                    viewModel.selectedTool == .select,
                    !viewModel.isAnyObjectEditing {
                     let screenBox = selectionBox.toScreen(viewport: viewModel.viewport)
@@ -135,7 +139,7 @@ struct CanvasView: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    handleDragChanged(value, geometry: nil)
+                    handleDragChanged(value)
                 }
                 .onEnded { value in
                     handleDragEnded(value)
@@ -246,7 +250,7 @@ struct CanvasView: View {
         return NSCursor.crosshair
     }()
 
-    private func handleDragChanged(_ value: DragGesture.Value, geometry: GeometryProxy?) {
+    private func handleDragChanged(_ value: DragGesture.Value) {
         // Handle hand tool panning
         if viewModel.selectedTool == .hand {
             if !isPanning {
@@ -302,13 +306,20 @@ struct CanvasView: View {
                         cursorForHitZone(hitZone).set()
                     case .rotation:
                         activeHandleZone = hitZone
-                        // Capture the object's center (position + size/2) as the fixed rotation pivot
-                        if let obj = viewModel.selectedObjects.first {
-                            let bbox = obj.boundingBox()
-                            rotationCenter = CGPoint(x: bbox.midX, y: bbox.midY)
-                        }
+                        // Use the selection box center as the rotation pivot
+                        rotationCenter = selectionBox.center
                         initialRotation = selectionBox.rotation
                         rotationStartAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
+                        // Store initial per-object state for orbit math
+                        initialObjectPositions = [:]
+                        initialObjectRotations = [:]
+                        initialObjectFrames = [:]
+                        for obj in viewModel.selectedObjects {
+                            let bbox = obj.boundingBox()
+                            initialObjectPositions[obj.id] = CGPoint(x: bbox.midX, y: bbox.midY)
+                            initialObjectRotations[obj.id] = obj.rotation
+                            initialObjectFrames[obj.id] = bbox
+                        }
                         lastDragLocation = canvasLocation
                     case .move:
                         // Start moving via selection box interior
@@ -341,15 +352,24 @@ struct CanvasView: View {
             // Handle rotation dragging
             if case .rotation = activeHandleZone {
                 let currentAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
-                let angleDelta = currentAngle - rotationStartAngle
-                var newRotation = initialRotation + angleDelta
+                var angleDelta = currentAngle - rotationStartAngle
                 // Shift+rotate snaps to 15° increments
                 if NSEvent.modifierFlags.contains(.shift) {
                     let snapAngle = CGFloat.pi / 12 // 15 degrees
-                    newRotation = (newRotation / snapAngle).rounded() * snapAngle
+                    angleDelta = ((initialRotation + angleDelta) / snapAngle).rounded() * snapAngle - initialRotation
                 }
                 for id in viewModel.selectedIds {
-                    viewModel.updateObjectRotation(id: id, rotation: newRotation)
+                    let objInitialRotation = initialObjectRotations[id] ?? 0
+                    let newRotation = objInitialRotation + angleDelta
+                    // Orbit each object's center around the group center, then convert back to origin
+                    if let initialCenter = initialObjectPositions[id],
+                       let bbox = initialObjectFrames[id] {
+                        let newCenter = rotatePoint(initialCenter, around: rotationCenter, by: angleDelta)
+                        let newOrigin = CGPoint(x: newCenter.x - bbox.width / 2, y: newCenter.y - bbox.height / 2)
+                        viewModel.updateObjectPositionAndRotation(id: id, position: newOrigin, rotation: newRotation)
+                    } else {
+                        viewModel.updateObjectRotation(id: id, rotation: newRotation)
+                    }
                 }
                 return
             }
@@ -639,6 +659,8 @@ struct CanvasView: View {
         initialRotation = 0
         rotationStartAngle = 0
         rotationCenter = .zero
+        initialObjectRotations = [:]
+        initialObjectPositions = [:]
     }
 
     /// Compute normalized rectangle from two points
