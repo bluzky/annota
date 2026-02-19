@@ -336,7 +336,12 @@ struct CanvasView: View {
             if case .rotation = activeHandleZone {
                 let currentAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
                 let angleDelta = currentAngle - rotationStartAngle
-                let newRotation = initialRotation + angleDelta
+                var newRotation = initialRotation + angleDelta
+                // Shift+rotate snaps to 15° increments
+                if NSEvent.modifierFlags.contains(.shift) {
+                    let snapAngle = CGFloat.pi / 12 // 15 degrees
+                    newRotation = (newRotation / snapAngle).rounded() * snapAngle
+                }
                 for id in viewModel.selectedIds {
                     viewModel.updateObjectRotation(id: id, rotation: newRotation)
                 }
@@ -430,12 +435,18 @@ struct CanvasView: View {
 
             let newWidth: CGFloat
             let newHeight: CGFloat
-            if absDx / aspectRatio > absDy {
-                newWidth = max(absDx, 10)
-                newHeight = newWidth / aspectRatio
+            // Shift+drag keeps aspect ratio; default is free resize
+            if NSEvent.modifierFlags.contains(.shift) {
+                if absDx / aspectRatio > absDy {
+                    newWidth = max(absDx, 10)
+                    newHeight = newWidth / aspectRatio
+                } else {
+                    newHeight = max(absDy, 10)
+                    newWidth = newHeight * aspectRatio
+                }
             } else {
+                newWidth = max(absDx, 10)
                 newHeight = max(absDy, 10)
-                newWidth = newHeight * aspectRatio
             }
 
             if signX > 0 {
