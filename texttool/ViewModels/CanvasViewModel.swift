@@ -66,9 +66,9 @@ class CanvasViewModel: ObservableObject {
         objects.compactMap { $0.asRectangleObject }
     }
 
-    /// Returns all circle objects (for view compatibility)
-    var circleObjects: [CircleObject] {
-        objects.compactMap { $0.asCircleObject }
+    /// Returns all oval objects (for view compatibility)
+    var ovalObjects: [OvalObject] {
+        objects.compactMap { $0.asOvalObject }
     }
 
     /// Check if any object is currently being edited
@@ -78,7 +78,7 @@ class CanvasViewModel: ObservableObject {
                 return true
             } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
                 return true
-            } else if let circleObj = wrapper.asCircleObject, circleObj.isEditing {
+            } else if let ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
                 return true
             }
         }
@@ -92,8 +92,8 @@ class CanvasViewModel: ObservableObject {
                 return (textObj.id, { textObj.contains($0) })
             } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
                 return (rectObj.id, { rectObj.contains($0) })
-            } else if let circleObj = wrapper.asCircleObject, circleObj.isEditing {
-                return (circleObj.id, { circleObj.contains($0) })
+            } else if let ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
+                return (ovalObj.id, { ovalObj.contains($0) })
             }
         }
         return nil
@@ -155,7 +155,7 @@ class CanvasViewModel: ObservableObject {
         sortObjectsByZIndex()
     }
 
-    func addCircle(from start: CGPoint, to end: CGPoint) {
+    func addOval(from start: CGPoint, to end: CGPoint) {
         let origin = CGPoint(
             x: min(start.x, end.x),
             y: min(start.y, end.y)
@@ -165,19 +165,19 @@ class CanvasViewModel: ObservableObject {
             height: abs(end.y - start.y)
         )
 
-        // Skip tiny circles (likely accidental clicks)
+        // Skip tiny ovals (likely accidental clicks)
         guard size.width > 1 && size.height > 1 else { return }
 
-        var circleObj = CircleObject(
+        var ovalObj = OvalObject(
             position: origin,
             size: size,
             color: activeColor,
             autoResizeHeight: autoResizeShapes
         )
-        circleObj.zIndex = nextZIndex
+        ovalObj.zIndex = nextZIndex
         nextZIndex += 1
 
-        objects.append(AnyCanvasObject(circleObj))
+        objects.append(AnyCanvasObject(ovalObj))
         sortObjectsByZIndex()
     }
 
@@ -221,12 +221,12 @@ class CanvasViewModel: ObservableObject {
         objects[index] = AnyCanvasObject(rectObj)
     }
 
-    /// Update a CircleObject in place
-    func updateCircleObject(withId id: UUID, update: (inout CircleObject) -> Void) {
+    /// Update a OvalObject in place
+    func updateOvalObject(withId id: UUID, update: (inout OvalObject) -> Void) {
         guard let index = objectIndex(withId: id),
-              var circleObj = objects[index].asCircleObject else { return }
-        update(&circleObj)
-        objects[index] = AnyCanvasObject(circleObj)
+              var ovalObj = objects[index].asOvalObject else { return }
+        update(&ovalObj)
+        objects[index] = AnyCanvasObject(ovalObj)
     }
 
     // MARK: - Hit Testing & Selection
@@ -265,9 +265,9 @@ class CanvasViewModel: ObservableObject {
             rectObj.isEditing = true
             objects[index] = AnyCanvasObject(rectObj)
             selectedObjectId = objectId
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.isEditing = true
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.isEditing = true
+            objects[index] = AnyCanvasObject(ovalObj)
             selectedObjectId = objectId
         }
     }
@@ -283,9 +283,9 @@ class CanvasViewModel: ObservableObject {
         } else if var rectObj = wrapper.asRectangleObject {
             rectObj.text = text
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.text = text
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.text = text
+            objects[index] = AnyCanvasObject(ovalObj)
         }
     }
 
@@ -304,9 +304,9 @@ class CanvasViewModel: ObservableObject {
             } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
                 rectObj.isEditing = false
                 objects[index] = AnyCanvasObject(rectObj)
-            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
-                circleObj.isEditing = false
-                objects[index] = AnyCanvasObject(circleObj)
+            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
+                ovalObj.isEditing = false
+                objects[index] = AnyCanvasObject(ovalObj)
             }
         }
     }
@@ -326,10 +326,10 @@ class CanvasViewModel: ObservableObject {
             rectObj.position.x += offset.width
             rectObj.position.y += offset.height
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.position.x += offset.width
-            circleObj.position.y += offset.height
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.position.x += offset.width
+            ovalObj.position.y += offset.height
+            objects[index] = AnyCanvasObject(ovalObj)
         }
     }
 
@@ -345,9 +345,9 @@ class CanvasViewModel: ObservableObject {
         } else if var rectObj = wrapper.asRectangleObject {
             rectObj.rotation = rotation
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.rotation = rotation
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.rotation = rotation
+            objects[index] = AnyCanvasObject(ovalObj)
         }
     }
 
@@ -365,10 +365,10 @@ class CanvasViewModel: ObservableObject {
             rectObj.position = position
             rectObj.size = size
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.position = position
-            circleObj.size = size
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.position = position
+            ovalObj.size = size
+            objects[index] = AnyCanvasObject(ovalObj)
         }
     }
 
@@ -381,7 +381,7 @@ class CanvasViewModel: ObservableObject {
         moveObject(id: id, by: offset)
     }
 
-    func moveCircleObject(id: UUID, by offset: CGSize) {
+    func moveOvalObject(id: UUID, by offset: CGSize) {
         moveObject(id: id, by: offset)
     }
 
@@ -396,9 +396,9 @@ class CanvasViewModel: ObservableObject {
             } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
                 rectObj.isEditing = false
                 objects[index] = AnyCanvasObject(rectObj)
-            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
-                circleObj.isEditing = false
-                objects[index] = AnyCanvasObject(circleObj)
+            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
+                ovalObj.isEditing = false
+                objects[index] = AnyCanvasObject(ovalObj)
             }
         }
     }
@@ -460,9 +460,9 @@ class CanvasViewModel: ObservableObject {
             } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
                 rectObj.isEditing = false
                 objects[index] = AnyCanvasObject(rectObj)
-            } else if var circleObj = wrapper.asCircleObject, circleObj.isEditing {
-                circleObj.isEditing = false
-                objects[index] = AnyCanvasObject(circleObj)
+            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
+                ovalObj.isEditing = false
+                objects[index] = AnyCanvasObject(ovalObj)
             }
         }
     }
@@ -507,10 +507,10 @@ class CanvasViewModel: ObservableObject {
             rectObj.zIndex = nextZIndex
             nextZIndex += 1
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.zIndex = nextZIndex
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.zIndex = nextZIndex
             nextZIndex += 1
-            objects[index] = AnyCanvasObject(circleObj)
+            objects[index] = AnyCanvasObject(ovalObj)
         }
 
         sortObjectsByZIndex()
@@ -531,9 +531,9 @@ class CanvasViewModel: ObservableObject {
         } else if var rectObj = wrapper.asRectangleObject {
             rectObj.zIndex = minZIndex - 1
             objects[index] = AnyCanvasObject(rectObj)
-        } else if var circleObj = wrapper.asCircleObject {
-            circleObj.zIndex = minZIndex - 1
-            objects[index] = AnyCanvasObject(circleObj)
+        } else if var ovalObj = wrapper.asOvalObject {
+            ovalObj.zIndex = minZIndex - 1
+            objects[index] = AnyCanvasObject(ovalObj)
         }
 
         sortObjectsByZIndex()

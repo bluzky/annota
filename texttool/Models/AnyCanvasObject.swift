@@ -35,7 +35,7 @@ struct AnyCanvasObject: Identifiable {
     enum ObjectType {
         case text
         case rectangle
-        case circle
+        case oval
         case line
         case arrow
         case pencil
@@ -60,8 +60,8 @@ struct AnyCanvasObject: Identifiable {
             self.objectType = .text
         case is RectangleObject:
             self.objectType = .rectangle
-        case is CircleObject:
-            self.objectType = .circle
+        case is OvalObject:
+            self.objectType = .oval
         default:
             self.objectType = .unknown
         }
@@ -142,9 +142,9 @@ struct AnyCanvasObject: Identifiable {
         _object as? RectangleObject
     }
 
-    /// Get as CircleObject if applicable
-    var asCircleObject: CircleObject? {
-        _object as? CircleObject
+    /// Get as OvalObject if applicable
+    var asOvalObject: OvalObject? {
+        _object as? OvalObject
     }
 
     // MARK: - Protocol Checks

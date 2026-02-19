@@ -1,5 +1,5 @@
 //
-//  CircleObjectView.swift
+//  OvalObjectView.swift
 //  texttool
 //
 //  Created by Flex on 12/11/25.
@@ -8,24 +8,24 @@
 import SwiftUI
 import AppKit
 
-struct CircleObjectView: View {
-    let object: CircleObject
+struct OvalObjectView: View {
+    let object: OvalObject
     var isSelected: Bool = false
     @ObservedObject var viewModel: CanvasViewModel
     @FocusState private var isFocused: Bool
 
     var body: some View {
         ZStack {
-            // Circle shape
-            Circle()
+            // Oval shape
+            Ellipse()
                 .stroke(object.color, lineWidth: 2)
                 .background(
-                    Circle()
+                    Ellipse()
                         .fill(object.color.opacity(0.1))
                 )
                 .frame(width: object.size.width, height: effectiveHeight)
 
-            // Text content (centered inside circle)
+            // Text content (centered inside oval)
             if object.isEditing {
                 ConstrainedAutoGrowingTextView(
                     text: binding,
@@ -86,16 +86,16 @@ struct CircleObjectView: View {
     private func updateHeight() {
         let newHeight = calculatedTextHeight + 24
         if newHeight > object.size.height {
-            viewModel.updateCircleObject(withId: object.id) { circle in
-                circle.size.height = newHeight
+            viewModel.updateOvalObject(withId: object.id) { oval in
+                oval.size.height = newHeight
             }
         }
     }
 
     private func updateHeightIfNeeded(_ newHeight: CGFloat) {
         if newHeight > object.size.height {
-            viewModel.updateCircleObject(withId: object.id) { circle in
-                circle.size.height = newHeight
+            viewModel.updateOvalObject(withId: object.id) { oval in
+                oval.size.height = newHeight
             }
         }
     }

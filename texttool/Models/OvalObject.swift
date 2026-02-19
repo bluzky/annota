@@ -1,5 +1,5 @@
 //
-//  CircleObject.swift
+//  OvalObject.swift
 //  texttool
 //
 //  Created by Flex on 12/11/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct CircleObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
+struct OvalObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
     // MARK: - CanvasObject Properties
     let id: UUID
     var position: CGPoint
@@ -30,7 +30,7 @@ struct CircleObject: CanvasObject, TextContentObject, StrokableObject, FillableO
     var textAttributes: TextAttributes
     var isEditing: Bool
 
-    // MARK: - CircleObject Specific
+    // MARK: - OvalObject Specific
     var autoResizeHeight: Bool
 
     // MARK: - Backward Compatibility

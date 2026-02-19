@@ -54,11 +54,11 @@ struct CanvasView: View {
                         )
                     }
 
-                    // Render circle objects
-                    ForEach(viewModel.circleObjects) { circleObj in
-                        CircleObjectView(
-                            object: circleObj,
-                            isSelected: viewModel.isSelected(circleObj.id),
+                    // Render oval objects
+                    ForEach(viewModel.ovalObjects) { ovalObj in
+                        OvalObjectView(
+                            object: ovalObj,
+                            isSelected: viewModel.isSelected(ovalObj.id),
                             viewModel: viewModel
                         )
                     }
@@ -87,16 +87,19 @@ struct CanvasView: View {
                             .position(x: x, y: y)
                     }
 
-                    // Circle drag preview
-                    if viewModel.selectedTool == .circle,
+                    // Oval drag preview
+                    if viewModel.selectedTool == .oval,
                        let start = viewModel.dragStartPoint,
                        let current = viewModel.currentDragPoint {
-                        let width = abs(current.x - start.x)
-                        let height = abs(current.y - start.y)
+                        let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                        let rawWidth = abs(current.x - start.x)
+                        let rawHeight = abs(current.y - start.y)
+                        let width = shiftHeld ? max(rawWidth, rawHeight) : rawWidth
+                        let height = shiftHeld ? max(rawWidth, rawHeight) : rawHeight
                         let x = min(start.x, current.x) + width / 2
                         let y = min(start.y, current.y) + height / 2
 
-                        Circle()
+                        Ellipse()
                             .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
                             .frame(width: width, height: height)
                             .position(x: x, y: y)
@@ -172,15 +175,18 @@ struct CanvasView: View {
         case .active(let screenLocation):
             if viewModel.selectedTool == .hand || isPanning {
                 NSCursor.openHand.set()
+            } else if viewModel.isAnyObjectEditing {
+                NSCursor.iBeam.set()
             } else if viewModel.selectedTool == .select,
-                      let selectionBox = viewModel.selectionBox,
-                      !viewModel.isAnyObjectEditing {
+                      let selectionBox = viewModel.selectionBox {
                 let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
                 if let hitZone = selectionBox.hitTest(canvasPoint) {
                     cursorForHitZone(hitZone).set()
                 } else {
                     NSCursor.arrow.set()
                 }
+            } else if viewModel.selectedTool == .text {
+                NSCursor.iBeam.set()
             } else {
                 NSCursor.arrow.set()
             }
@@ -264,7 +270,7 @@ struct CanvasView: View {
         let canvasStart = viewModel.viewport.screenToCanvas(value.startLocation)
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
-        if viewModel.selectedTool == .rectangle || viewModel.selectedTool == .circle {
+        if viewModel.selectedTool == .rectangle || viewModel.selectedTool == .oval {
             if viewModel.dragStartPoint == nil {
                 viewModel.dragStartPoint = canvasStart
             }
@@ -603,12 +609,23 @@ struct CanvasView: View {
                 from: viewModel.dragStartPoint ?? canvasStart,
                 to: canvasLocation
             )
-        } else if viewModel.selectedTool == .circle {
-            // It's a drag for circle (use canvas coordinates)
-            viewModel.addCircle(
-                from: viewModel.dragStartPoint ?? canvasStart,
-                to: canvasLocation
-            )
+        } else if viewModel.selectedTool == .oval {
+            // It's a drag for oval (use canvas coordinates)
+            let start = viewModel.dragStartPoint ?? canvasStart
+            let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+            let end: CGPoint
+            if shiftHeld {
+                let rawWidth = abs(canvasLocation.x - start.x)
+                let rawHeight = abs(canvasLocation.y - start.y)
+                let side = max(rawWidth, rawHeight)
+                end = CGPoint(
+                    x: start.x + (canvasLocation.x >= start.x ? side : -side),
+                    y: start.y + (canvasLocation.y >= start.y ? side : -side)
+                )
+            } else {
+                end = canvasLocation
+            }
+            viewModel.addOval(from: start, to: end)
         }
 
         // Reset drag state
