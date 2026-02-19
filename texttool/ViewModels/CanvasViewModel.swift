@@ -333,6 +333,45 @@ class CanvasViewModel: ObservableObject {
         }
     }
 
+    /// Update rotation for an object
+    func updateObjectRotation(id: UUID, rotation: CGFloat) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.rotation = rotation
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.rotation = rotation
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.rotation = rotation
+            objects[index] = AnyCanvasObject(circleObj)
+        }
+    }
+
+    /// Update position and size for an object (used by resize)
+    func updateObjectFrame(id: UUID, position: CGPoint, size: CGSize) {
+        guard let index = objectIndex(withId: id) else { return }
+
+        let wrapper = objects[index]
+
+        if var textObj = wrapper.asTextObject {
+            textObj.position = position
+            textObj.size = size
+            objects[index] = AnyCanvasObject(textObj)
+        } else if var rectObj = wrapper.asRectangleObject {
+            rectObj.position = position
+            rectObj.size = size
+            objects[index] = AnyCanvasObject(rectObj)
+        } else if var circleObj = wrapper.asCircleObject {
+            circleObj.position = position
+            circleObj.size = size
+            objects[index] = AnyCanvasObject(circleObj)
+        }
+    }
+
     // Backward compatibility methods
     func moveTextObject(id: UUID, by offset: CGSize) {
         moveObject(id: id, by: offset)
@@ -397,6 +436,19 @@ class CanvasViewModel: ObservableObject {
     /// Get all selected object IDs
     var selectedIds: Set<UUID> {
         selectionState.selectedIds
+    }
+
+    /// Get the selection box for currently selected objects
+    var selectionBox: SelectionBox? {
+        guard selectionState.hasSelection else { return nil }
+
+        let selectedObjects = objects.filter { selectionState.isSelected($0.id) }
+        return SelectionBox.from(objects: selectedObjects)
+    }
+
+    /// Get selected objects as an array
+    var selectedObjects: [AnyCanvasObject] {
+        objects.filter { selectionState.isSelected($0.id) }
     }
 
     /// End all text editing without clearing selection

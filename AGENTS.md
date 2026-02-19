@@ -1,22 +1,168 @@
 # Repository Guidelines
 
+## Project Overview
+This is a native macOS canvas drawing application built with SwiftUI, providing a FigJam-like interface for drawing text, rectangles, and circles on an infinite canvas. The app uses the Swift Testing framework (not XCTest) for unit tests.
+
 ## Project Structure & Module Organization
-The SwiftUI entry point lives in `texttool/texttoolApp.swift`, with feature code split between `Models/` (shape definitions), `ViewModels/` (`CanvasViewModel` state machine), and `Views/` (SwiftUI surfaces such as `CanvasView` and `ToolbarView`). Assets are stored in `texttool/Assets.xcassets`, while previews and sample types (for example `Item.swift`) stay beside the feature they exercise. Unit targets reside under `texttoolTests/` and UI automation fixtures under `texttoolUITests/`; keep new test helpers in those directories to avoid leaking into the shipping target.
+The SwiftUI entry point lives in `texttool/texttoolApp.swift`, with feature code split between:
+- `Models/` - Data models and protocols (`TextObject`, `RectangleObject`, `CircleObject`, `CanvasObject` protocol)
+- `ViewModels/` - State management (`CanvasViewModel` as @MainActor ObservableObject)
+- `Views/` - SwiftUI surfaces (`CanvasView`, `ToolbarView`, object rendering views)
+- `Models/Protocols/` - Protocol definitions (`CanvasObject`, `TextContentObject`, `FillableObject`, `StrokableObject`)
+
+Assets are stored in `texttool/Assets.xcassets`, while previews and sample types (e.g., `Item.swift`) stay beside the feature they exercise. Unit targets reside under `texttoolTests/` and UI automation fixtures under `texttoolUITests/`.
 
 ## Build, Test, and Development Commands
-Use Xcode 15+ for day-to-day iteration: `xed texttool.xcodeproj` opens the project with the correct schemes. Automated builds and CI can rely on `xcodebuild -scheme texttool -destination "platform=iOS Simulator,name=iPhone 15" build`. Run all tests through `xcodebuild test -scheme texttool -destination "platform=iOS Simulator,name=iPhone 15"`, or target just the async unit suite with `xcodebuild test -only-testing:texttoolTests`.
+
+### Building
+```bash
+# Open in Xcode 15+
+xed texttool.xcodeproj
+
+# Debug build
+xcodebuild -scheme texttool -configuration Debug build
+
+# Clean build artifacts
+xcodebuild -scheme texttool clean
+
+# Release build
+xcodebuild -scheme texttool -configuration Release build
+```
+
+### Running Tests (Swift Testing Framework)
+```bash
+# Run all tests
+xcodebuild test -scheme texttool
+
+# Run only unit tests (exclude UI tests)
+xcodebuild test -scheme texttool -only-testing:texttoolTests
+
+# Run specific test file
+xcodebuild test -scheme texttool -only-testing:texttoolTests/ViewportStateTests
+
+# Run specific test function
+xcodebuild test -scheme texttool -only-testing:texttoolTests/ViewportStateTests/defaultState
+
+# Run UI tests only
+xcodebuild test -scheme texttool -only-testing:texttoolUITests
+```
+
+### Testing Guidelines
+Tests use Swift Testing framework (not XCTest):
+```swift
+import Testing
+@testable import texttool
+
+struct ExampleTests {
+    @Test func specificBehavior() async throws {
+        #expect(condition)
+    }
+}
+```
+
+Unit tests use `@Test` functions with `#expect` for assertions. UI tests use XCTest (`texttoolUITests/`). Strive for meaningful test names like `testAddingRectangleShowsHandles` or `screenToCanvasWithOffset` and maintain coverage on core Canvas interactions.
 
 ## Coding Style & Naming Conventions
-Adopt Swift 5.9+ defaults: four-space indentation, `camelCase` for properties/functions, `UpperCamelCase` for types, and descriptive enum cases (see `DrawingTool`). Prefer value types for view state, keep SwiftUI `View` bodies declarative, and document non-trivial helpers with a single-line comment. Observable models should stay `@MainActor`, expose `@Published` properties, and never mutate view state from background threads.
 
-## Testing Guidelines
-Unit tests use the new `Testing` package, so wrap scenarios in `@Test` functions and assert via `#expect`. UI smoke tests continue to rely on XCTest (`texttoolUITests/`): add app flows under `texttoolUITests.swift` and performance probes in `texttoolUITestsLaunchTests.swift`. Strive for meaningful names like `testAddingRectangleShowsHandles` and maintain high-level coverage on Canvas interactions before merging.
+### Formatting & Indentation
+- Four-space indentation (no tabs)
+- Swift 5.9+ language features
+- Maximum line length: ~100 characters (soft limit, readability-focused)
+- Trailing commas in multi-line arrays/dictionaries
+
+### Naming Conventions
+- `camelCase` for properties, functions, and variables
+- `UpperCamelCase` for types (structs, classes, enums, protocols)
+- Descriptive enum cases (e.g., `.select`, `.rectangle`, `.circle` from `DrawingTool`)
+- Boolean properties use `is` prefix (e.g., `isEditing`, `isSelected`, `isLocked`)
+- Computed properties should read naturally (e.g., `selectedIds`, `isAnyObjectEditing`)
+
+### Type System
+- Prefer value types (structs) for data models
+- Use classes only when reference semantics are required (ViewModels)
+- Protocol-oriented design: `CanvasObject` protocol with default implementations
+- Use `@MainActor` for all ObservableObject ViewModels
+- Models should conform to `Identifiable` for SwiftUI `ForEach` compatibility
+
+### Import Organization
+- Group imports: standard library, third-party, local modules
+- Sort alphabetically within groups
+- Example:
+```swift
+import SwiftUI
+import CoreGraphics
+import Combine
+@testable import texttool
+```
+
+### Error Handling
+- Use `guard` statements for early returns with descriptive messages
+- Return optionals for non-critical failures
+- Avoid force unwrapping (`!`) - use optional binding or `guard let` instead
+- For async operations, use Swift concurrency (`async/await`)
+
+### SwiftUI Conventions
+- Keep View bodies declarative - avoid imperative logic
+- Use `@State`, `@Binding`, `@ObservedObject`, and `@StateObject` appropriately
+- Extract complex views into separate view structs
+- Use modifiers at point of use - avoid custom modifier proliferation for simple transforms
+- Gesture handling: single `DragGesture(minimumDistance: 0)` with distance checks inside handlers
+
+### State Management
+- `CanvasViewModel` is the single source of truth for canvas state
+- Expose state via `@Published` properties
+- Object updates: modify struct via array index assignment (e.g., `objects[index] = AnyCanvasObject(updated)`)
+- Never mutate `@Published` properties from background threads (use `@MainActor`)
+- Transient state (drag previews): use `@Published` properties on ViewModel
+
+### Code Comments
+- Document non-trivial logic with single-line comments
+- No doc comments for obvious public APIs
+- Comments should explain "why" not "what"
+- Protocol documentation should describe intent and usage
+
+### Protocol-Based Design
+- `CanvasObject`: base protocol for all canvas objects with `contains()`, `boundingBox()`, `hitTest()`
+- Use protocol extensions for default implementations
+- Feature protocols compose with base (e.g., `TextContentObject`, `FillableObject`)
 
 ## Commit & Pull Request Guidelines
 Git history currently contains a single conventional subject line ("Initial Commit"), so continue using short, imperative summaries (e.g., "Add circle drag preview"). Group related file changes per commit, reference ticket IDs when available, and avoid WIP commits in shared branches. Pull requests should outline the motivation, list user-visible changes, call out testing evidence/`xcodebuild test` output, and attach screenshots or short clips when UI changes affect Canvas rendering.
 
 ## Architecture & State Management
 The app follows a lightweight MVVM split where `CanvasViewModel` orchestrates editing state and view structs focus on rendering. Add new tools or formatting controls by extending the model first, then threading bindings into `ToolbarView` and the relevant object views to keep gesture handling centralized in `CanvasView`.
+
+## Key Implementation Patterns
+
+### Gesture Handling
+- Single `DragGesture(minimumDistance: 0)` handles both clicks and drags
+- Distance check (`hypot`) distinguishes clicks (< 5pts) from drags
+- Tool-based filtering in gesture handlers
+- Screen-to-canvas coordinate transformation via `ViewportState`
+
+### Object Hit Testing
+- Hit test objects in reverse z-order (highest zIndex first)
+- Use `contains()` for point-in-object checks
+- Use `hitTest()` for detailed corner/edge detection
+- Threshold parameter allows hit testing slightly outside object bounds
+
+### Coordinate Systems
+- Canvas coordinates: absolute CGPoint positions on infinite canvas
+- Screen coordinates: SwiftUI view-relative points
+- `ViewportState` transforms between systems with offset and scale
+- All drawing operations use canvas coordinates; gestures start in screen coordinates
+
+### Text in Shapes
+- Rectangles and circles support embedded text
+- Auto-resize height when `autoResizeHeight` is true
+- Text editing uses same `isEditing` pattern as `TextObject`
+- `TextContentObject` protocol provides shared text attributes
+
+### Multi-Selection
+- `SelectionState` manages selected object IDs as a Set
+- Shift+click toggles selection, regular click replaces selection
+- Marquee selection (drag in empty space) selects objects in rectangle
+- `SelectionBox` calculates bounding box of all selected objects
 
 ## Landing the Plane (Session Completion)
 

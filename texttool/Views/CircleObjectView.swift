@@ -51,16 +51,8 @@ struct CircleObjectView: View {
                     .padding(8)
             }
 
-            // Selection indicator
-            if isSelected {
-                Circle()
-                    .stroke(Color.blue, lineWidth: 2)
-                    .frame(
-                        width: object.size.width + 8,
-                        height: effectiveHeight + 8
-                    )
-            }
         }
+        .rotationEffect(.radians(object.rotation))
         .position(
             x: object.position.x + object.size.width / 2,
             y: object.position.y + effectiveHeight / 2

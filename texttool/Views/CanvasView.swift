@@ -23,6 +23,16 @@ struct CanvasView: View {
     @State private var isPanning: Bool = false
     @State private var lastPanLocation: CGPoint?
 
+    // Resize handle state
+    @State private var activeHandleZone: SelectionBox.HitZone?
+    @State private var resizeAnchor: CGPoint?
+    @State private var initialObjectFrames: [UUID: CGRect] = [:]
+
+    // Rotation state
+    @State private var initialRotation: CGFloat = 0
+    @State private var rotationStartAngle: CGFloat = 0
+    @State private var rotationCenter: CGPoint = .zero
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -87,9 +97,21 @@ struct CanvasView: View {
                             .frame(width: width, height: height)
                             .position(x: x, y: y)
                     }
+
                 }
                 .scaleEffect(viewModel.viewport.scale, anchor: .topLeading)
                 .offset(x: viewModel.viewport.offset.x, y: viewModel.viewport.offset.y)
+
+                // Selection box overlay (rendered in screen coordinates, not affected by viewport)
+                if let selectionBox = viewModel.selectionBox,
+                   viewModel.selectedTool == .select,
+                   !viewModel.isAnyObjectEditing {
+                    let screenBox = selectionBox.toScreen(viewport: viewModel.viewport)
+                    SelectionBoxView(
+                        selectionBox: screenBox,
+                        viewModel: viewModel
+                    )
+                }
 
                 // Marquee selection preview (not affected by viewport transform)
                 if isMarqueeSelecting,
@@ -130,9 +152,18 @@ struct CanvasView: View {
 
     private func updateCursor(for phase: HoverPhase) {
         switch phase {
-        case .active:
+        case .active(let screenLocation):
             if viewModel.selectedTool == .hand || isPanning {
                 NSCursor.openHand.set()
+            } else if viewModel.selectedTool == .select,
+                      let selectionBox = viewModel.selectionBox,
+                      !viewModel.isAnyObjectEditing {
+                let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
+                if let hitZone = selectionBox.hitTest(canvasPoint) {
+                    cursorForHitZone(hitZone).set()
+                } else {
+                    NSCursor.arrow.set()
+                }
             } else {
                 NSCursor.arrow.set()
             }
@@ -140,6 +171,57 @@ struct CanvasView: View {
             NSCursor.arrow.set()
         }
     }
+
+    private func cursorForHitZone(_ zone: SelectionBox.HitZone) -> NSCursor {
+        switch zone {
+        case .move:
+            return NSCursor.openHand
+        case .corner(let corner):
+            switch corner {
+            case .topLeft, .bottomRight:
+                return Self.nwseResizeCursor
+            case .topRight, .bottomLeft:
+                return Self.neswResizeCursor
+            }
+        case .edge(let edge):
+            switch edge {
+            case .top, .bottom:
+                return NSCursor.resizeUpDown
+            case .left, .right:
+                return NSCursor.resizeLeftRight
+            }
+        case .rotation:
+            return Self.rotateCursor
+        }
+    }
+
+    // Diagonal resize cursors (macOS doesn't provide these built-in)
+    private static let nwseResizeCursor: NSCursor = {
+        if let image = NSImage(systemSymbolName: "arrow.up.left.and.arrow.down.right", accessibilityDescription: "Resize NW-SE") {
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+            let configured = image.withSymbolConfiguration(config) ?? image
+            return NSCursor(image: configured, hotSpot: NSPoint(x: 8, y: 8))
+        }
+        return NSCursor.crosshair
+    }()
+
+    private static let neswResizeCursor: NSCursor = {
+        if let image = NSImage(systemSymbolName: "arrow.down.left.and.arrow.up.right", accessibilityDescription: "Resize NE-SW") {
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+            let configured = image.withSymbolConfiguration(config) ?? image
+            return NSCursor(image: configured, hotSpot: NSPoint(x: 8, y: 8))
+        }
+        return NSCursor.crosshair
+    }()
+
+    private static let rotateCursor: NSCursor = {
+        if let image = NSImage(systemSymbolName: "arrow.trianglehead.2.counterclockwise.rotate.90", accessibilityDescription: "Rotate") {
+            let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+            let configured = image.withSymbolConfiguration(config) ?? image
+            return NSCursor(image: configured, hotSpot: NSPoint(x: 8, y: 8))
+        }
+        return NSCursor.crosshair
+    }()
 
     private func handleDragChanged(_ value: DragGesture.Value, geometry: GeometryProxy?) {
         // Handle hand tool panning
@@ -177,9 +259,40 @@ struct CanvasView: View {
             }
 
             // Check if we're starting a new drag
-            if draggedObjectId == nil && !isMarqueeSelecting {
-                // Check if we started drag on an object (using canvas coordinates)
-                if let objectId = viewModel.selectObject(at: canvasStart) {
+            if draggedObjectId == nil && !isMarqueeSelecting && activeHandleZone == nil {
+                // First check if we started drag on a selection box handle
+                if let selectionBox = viewModel.selectionBox,
+                   let hitZone = selectionBox.hitTest(canvasStart) {
+                    switch hitZone {
+                    case .corner, .edge:
+                        // Start resize
+                        activeHandleZone = hitZone
+                        resizeAnchor = anchorPoint(for: hitZone, in: selectionBox)
+                        initialRotation = selectionBox.rotation
+                        rotationCenter = selectionBox.center
+                        // Store initial frames for all selected objects
+                        initialObjectFrames = [:]
+                        for obj in viewModel.selectedObjects {
+                            initialObjectFrames[obj.id] = obj.boundingBox()
+                        }
+                        lastDragLocation = canvasLocation
+                        cursorForHitZone(hitZone).set()
+                    case .rotation:
+                        activeHandleZone = hitZone
+                        // Capture the object's center (position + size/2) as the fixed rotation pivot
+                        if let obj = viewModel.selectedObjects.first {
+                            let bbox = obj.boundingBox()
+                            rotationCenter = CGPoint(x: bbox.midX, y: bbox.midY)
+                        }
+                        initialRotation = selectionBox.rotation
+                        rotationStartAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
+                        lastDragLocation = canvasLocation
+                    case .move:
+                        // Start moving via selection box interior
+                        draggedObjectId = viewModel.selectedIds.first
+                        lastDragLocation = canvasLocation
+                    }
+                } else if let objectId = viewModel.selectObject(at: canvasStart) {
                     // Dragging an object
                     draggedObjectId = objectId
                     lastDragLocation = canvasLocation
@@ -194,6 +307,23 @@ struct CanvasView: View {
                     marqueeStart = value.startLocation  // Keep in screen coords for visual
                     marqueeEnd = value.location
                 }
+            }
+
+            // Handle resize dragging
+            if let handleZone = activeHandleZone, let anchor = resizeAnchor {
+                handleResize(zone: handleZone, canvasLocation: canvasLocation, anchor: anchor)
+                return
+            }
+
+            // Handle rotation dragging
+            if case .rotation = activeHandleZone {
+                let currentAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
+                let angleDelta = currentAngle - rotationStartAngle
+                let newRotation = initialRotation + angleDelta
+                for id in viewModel.selectedIds {
+                    viewModel.updateObjectRotation(id: id, rotation: newRotation)
+                }
+                return
             }
 
             // Handle object dragging (move all selected objects)
@@ -214,6 +344,176 @@ struct CanvasView: View {
                 marqueeEnd = value.location
             }
         }
+    }
+
+    // MARK: - Resize Logic
+
+    /// Get the anchor point (opposite corner/edge) for a resize operation
+    private func anchorPoint(for zone: SelectionBox.HitZone, in selectionBox: SelectionBox) -> CGPoint {
+        switch zone {
+        case .corner(let corner):
+            return selectionBox.cornerPosition(for: corner.opposite)
+        case .edge(let edge):
+            return selectionBox.edgePosition(for: edge.opposite)
+        default:
+            return selectionBox.center
+        }
+    }
+
+    /// Handle resize by computing new frames for all selected objects
+    private func handleResize(zone: SelectionBox.HitZone, canvasLocation: CGPoint, anchor: CGPoint) {
+        guard !initialObjectFrames.isEmpty else { return }
+
+        // Compute the original bounding box of all selected objects
+        var origMinX = CGFloat.infinity, origMinY = CGFloat.infinity
+        var origMaxX = -CGFloat.infinity, origMaxY = -CGFloat.infinity
+        for (_, frame) in initialObjectFrames {
+            origMinX = min(origMinX, frame.minX)
+            origMinY = min(origMinY, frame.minY)
+            origMaxX = max(origMaxX, frame.maxX)
+            origMaxY = max(origMaxY, frame.maxY)
+        }
+        let origWidth = origMaxX - origMinX
+        let origHeight = origMaxY - origMinY
+
+        guard origWidth > 0 && origHeight > 0 else { return }
+
+        // For rotated objects, un-rotate the drag point into local space around the object center
+        let localDragPoint: CGPoint
+        if initialRotation != 0 {
+            let cx = rotationCenter.x
+            let cy = rotationCenter.y
+            let dx = canvasLocation.x - cx
+            let dy = canvasLocation.y - cy
+            let cosR = cos(-initialRotation)
+            let sinR = sin(-initialRotation)
+            localDragPoint = CGPoint(
+                x: cx + dx * cosR - dy * sinR,
+                y: cy + dx * sinR + dy * cosR
+            )
+        } else {
+            localDragPoint = canvasLocation
+        }
+
+        // Compute new bounding box based on anchor + drag point
+        var newMinX: CGFloat, newMinY: CGFloat, newMaxX: CGFloat, newMaxY: CGFloat
+
+        let aspectRatio = origWidth / origHeight
+
+        switch zone {
+        case .corner(let corner):
+            let dx = localDragPoint.x - anchor.x
+            let dy = localDragPoint.y - anchor.y
+
+            let signX: CGFloat = (corner == .topRight || corner == .bottomRight) ? 1 : -1
+            let signY: CGFloat = (corner == .bottomLeft || corner == .bottomRight) ? 1 : -1
+
+            let absDx = abs(dx)
+            let absDy = abs(dy)
+
+            let newWidth: CGFloat
+            let newHeight: CGFloat
+            if absDx / aspectRatio > absDy {
+                newWidth = max(absDx, 10)
+                newHeight = newWidth / aspectRatio
+            } else {
+                newHeight = max(absDy, 10)
+                newWidth = newHeight * aspectRatio
+            }
+
+            if signX > 0 {
+                newMinX = anchor.x
+                newMaxX = anchor.x + newWidth
+            } else {
+                newMinX = anchor.x - newWidth
+                newMaxX = anchor.x
+            }
+            if signY > 0 {
+                newMinY = anchor.y
+                newMaxY = anchor.y + newHeight
+            } else {
+                newMinY = anchor.y - newHeight
+                newMaxY = anchor.y
+            }
+        case .edge(let edge):
+            switch edge {
+            case .left, .right:
+                newMinX = min(anchor.x, localDragPoint.x)
+                newMaxX = max(anchor.x, localDragPoint.x)
+                newMinY = origMinY
+                newMaxY = origMaxY
+            case .top, .bottom:
+                newMinX = origMinX
+                newMaxX = origMaxX
+                newMinY = min(anchor.y, localDragPoint.y)
+                newMaxY = max(anchor.y, localDragPoint.y)
+            }
+        default:
+            return
+        }
+
+        let newWidth = newMaxX - newMinX
+        let newHeight = newMaxY - newMinY
+
+        guard newWidth > 5 && newHeight > 5 else { return }  // Minimum size
+
+        // Apply scaled position and size to each selected object
+        for (id, origFrame) in initialObjectFrames {
+            let relX = (origFrame.minX - origMinX) / origWidth
+            let relY = (origFrame.minY - origMinY) / origHeight
+            let relW = origFrame.width / origWidth
+            let relH = origFrame.height / origHeight
+
+            var newObjX = newMinX + relX * newWidth
+            var newObjY = newMinY + relY * newHeight
+            let newObjW = relW * newWidth
+            let newObjH = relH * newHeight
+
+            guard newObjW > 1 && newObjH > 1 else { continue }
+
+            // For rotated objects, adjust position so the anchor stays fixed in world space.
+            // The anchor point is in local (unrotated) space. We need its world-space position
+            // (rotated around the object center) to remain the same after the resize.
+            if initialRotation != 0 {
+                let oldCenter = CGPoint(
+                    x: origFrame.minX + origFrame.width / 2,
+                    y: origFrame.minY + origFrame.height / 2
+                )
+                let newCenter = CGPoint(
+                    x: newObjX + newObjW / 2,
+                    y: newObjY + newObjH / 2
+                )
+
+                // The anchor in local space relative to old object
+                let localAnchor = anchor
+                // Anchor's world position with old frame
+                let oldAnchorWorld = rotatePoint(localAnchor, around: oldCenter, by: initialRotation)
+                // Anchor's world position with new frame
+                let newAnchorWorld = rotatePoint(localAnchor, around: newCenter, by: initialRotation)
+
+                // Shift new position to compensate
+                newObjX += oldAnchorWorld.x - newAnchorWorld.x
+                newObjY += oldAnchorWorld.y - newAnchorWorld.y
+            }
+
+            viewModel.updateObjectFrame(
+                id: id,
+                position: CGPoint(x: newObjX, y: newObjY),
+                size: CGSize(width: newObjW, height: newObjH)
+            )
+        }
+    }
+
+    /// Rotate a point around a center by an angle (radians)
+    private func rotatePoint(_ point: CGPoint, around center: CGPoint, by angle: CGFloat) -> CGPoint {
+        let dx = point.x - center.x
+        let dy = point.y - center.y
+        let cosA = cos(angle)
+        let sinA = sin(angle)
+        return CGPoint(
+            x: center.x + dx * cosA - dy * sinA,
+            y: center.y + dx * sinA + dy * cosA
+        )
     }
 
     private func handleDragEnded(_ value: DragGesture.Value) {
@@ -288,6 +588,12 @@ struct CanvasView: View {
         viewModel.currentDragPoint = nil
         draggedObjectId = nil
         lastDragLocation = nil
+        activeHandleZone = nil
+        resizeAnchor = nil
+        initialObjectFrames = [:]
+        initialRotation = 0
+        rotationStartAngle = 0
+        rotationCenter = .zero
     }
 
     /// Compute normalized rectangle from two points

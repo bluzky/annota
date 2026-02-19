@@ -36,13 +36,10 @@ struct TextObjectView: View {
                     .background(
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.white.opacity(0.01))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.blue, lineWidth: isSelected ? 2 : 0)
-                            )
                     )
             }
         }
+        .rotationEffect(.radians(object.rotation))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .offset(x: object.position.x, y: object.position.y)
     }
