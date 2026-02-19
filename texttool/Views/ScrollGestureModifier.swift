@@ -12,6 +12,7 @@ import AppKit
 class ScrollCaptureNSView: NSView {
     var onScroll: ((CGPoint) -> Void)?
     var onMagnify: ((CGFloat, CGPoint) -> Void)?
+    var onScrollZoom: ((CGFloat, CGPoint) -> Void)?
 
     private var scrollMonitor: Any?
     private var magnifyMonitor: Any?
@@ -35,6 +36,13 @@ class ScrollCaptureNSView: NSView {
                 return event
             }
 
+            // Cmd+scroll or Ctrl+scroll = zoom
+            if event.modifierFlags.contains(.command) || event.modifierFlags.contains(.control) {
+                let zoomDelta = event.scrollingDeltaY * 0.01
+                self.onScrollZoom?(zoomDelta, .zero)
+                return event
+            }
+
             let delta = CGPoint(
                 x: event.scrollingDeltaX,
                 y: event.scrollingDeltaY
@@ -51,9 +59,7 @@ class ScrollCaptureNSView: NSView {
                 return event
             }
 
-            let locationInWindow = event.locationInWindow
-            let locationInView = self.convert(locationInWindow, from: nil)
-            self.onMagnify?(event.magnification, locationInView)
+            self.onMagnify?(event.magnification, .zero)
             return event
         }
     }
@@ -78,17 +84,20 @@ class ScrollCaptureNSView: NSView {
 struct ScrollCaptureView: NSViewRepresentable {
     let onScroll: (CGPoint) -> Void
     let onMagnify: ((CGFloat, CGPoint) -> Void)?
+    let onScrollZoom: ((CGFloat, CGPoint) -> Void)?
 
     func makeNSView(context: Context) -> ScrollCaptureNSView {
         let view = ScrollCaptureNSView()
         view.onScroll = onScroll
         view.onMagnify = onMagnify
+        view.onScrollZoom = onScrollZoom
         return view
     }
 
     func updateNSView(_ nsView: ScrollCaptureNSView, context: Context) {
         nsView.onScroll = onScroll
         nsView.onMagnify = onMagnify
+        nsView.onScrollZoom = onScrollZoom
     }
 }
 
@@ -96,12 +105,13 @@ struct ScrollCaptureView: NSViewRepresentable {
 struct ScrollGestureModifier: ViewModifier {
     let onScroll: (CGPoint) -> Void
     let onMagnify: ((CGFloat, CGPoint) -> Void)?
+    let onScrollZoom: ((CGFloat, CGPoint) -> Void)?
 
     func body(content: Content) -> some View {
         content
-            .background(
-                ScrollCaptureView(onScroll: onScroll, onMagnify: onMagnify)
-                    .frame(width: 0, height: 0)
+            .overlay(
+                ScrollCaptureView(onScroll: onScroll, onMagnify: onMagnify, onScrollZoom: onScrollZoom)
+                    .allowsHitTesting(false)
             )
     }
 }
@@ -110,8 +120,9 @@ extension View {
     /// Add scroll and magnification gesture handlers for two-finger trackpad
     func onScrollGesture(
         scroll: @escaping (CGPoint) -> Void,
-        magnify: ((CGFloat, CGPoint) -> Void)? = nil
+        magnify: ((CGFloat, CGPoint) -> Void)? = nil,
+        scrollZoom: ((CGFloat, CGPoint) -> Void)? = nil
     ) -> some View {
-        modifier(ScrollGestureModifier(onScroll: scroll, onMagnify: magnify))
+        modifier(ScrollGestureModifier(onScroll: scroll, onMagnify: magnify, onScrollZoom: scrollZoom))
     }
 }

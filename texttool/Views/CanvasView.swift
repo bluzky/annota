@@ -33,6 +33,10 @@ struct CanvasView: View {
     @State private var rotationStartAngle: CGFloat = 0
     @State private var rotationCenter: CGPoint = .zero
 
+    // Current hover position (screen coordinates, relative to CanvasView)
+    @State private var currentHoverLocation: CGPoint?
+    @State private var canvasSize: CGSize = .zero
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -121,6 +125,8 @@ struct CanvasView: View {
                 }
             }
             .clipped()
+            .onAppear { canvasSize = geometry.size }
+            .onChange(of: geometry.size) { canvasSize = $0 }
         }
         .contentShape(Rectangle())
         .gesture(
@@ -137,13 +143,24 @@ struct CanvasView: View {
                 // Two-finger trackpad scroll to pan
                 viewModel.panViewport(by: CGSize(width: delta.x, height: delta.y))
             },
-            magnify: { magnification, location in
-                // Pinch-to-zoom around the gesture location
+            magnify: { magnification, _ in
+                let anchor = currentHoverLocation ?? CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
                 let factor = 1.0 + magnification
-                viewModel.zoomViewport(by: factor, around: location)
+                viewModel.zoomViewport(by: factor, around: anchor)
+            },
+            scrollZoom: { zoomDelta, _ in
+                let anchor = currentHoverLocation ?? CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                let factor = 1.0 + zoomDelta
+                viewModel.zoomViewport(by: factor, around: anchor)
             }
         )
         .onContinuousHover { phase in
+            switch phase {
+            case .active(let location):
+                currentHoverLocation = location
+            case .ended:
+                currentHoverLocation = nil
+            }
             updateCursor(for: phase)
         }
     }
