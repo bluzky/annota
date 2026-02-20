@@ -9,6 +9,7 @@ import Foundation
 enum CodableCanvasObject: Codable {
     case text(TextObject)
     case shape(ShapeObject)
+    case image(ImageObject)
 
     /// Extract from an AnyCanvasObject
     static func from(_ anyObject: AnyCanvasObject) -> CodableCanvasObject? {
@@ -16,6 +17,8 @@ enum CodableCanvasObject: Codable {
             return .text(textObj)
         } else if let shapeObj = anyObject.asShapeObject {
             return .shape(shapeObj)
+        } else if let imageObj = anyObject.asImageObject {
+            return .image(imageObj)
         }
         return nil
     }
@@ -27,6 +30,8 @@ enum CodableCanvasObject: Codable {
             return AnyCanvasObject(textObj.copied(newId: newId, zIndex: zIndex, offset: offset))
         case .shape(let shapeObj):
             return AnyCanvasObject(shapeObj.copied(newId: newId, zIndex: zIndex, offset: offset))
+        case .image(let imageObj):
+            return AnyCanvasObject(imageObj.copied(newId: newId, zIndex: zIndex, offset: offset))
         }
     }
 }

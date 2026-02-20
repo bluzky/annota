@@ -50,21 +50,12 @@ struct CanvasView: View {
 
                 // Canvas content with viewport transform
                 ZStack {
-                    // Render shape objects (rectangle, oval, triangle, diamond, etc.)
-                    ForEach(viewModel.shapeObjects) { shapeObj in
-                        ShapeObjectView(
-                            object: shapeObj,
-                            isSelected: viewModel.isSelected(shapeObj.id),
+                    // Render all objects in zIndex order via CanvasObjectView dispatcher
+                    ForEach(viewModel.objects) { obj in
+                        CanvasObjectView(
+                            object: obj,
+                            isSelected: viewModel.isSelected(obj.id),
                             viewModel: viewModel
-                        )
-                    }
-
-                    // Render text objects
-                    ForEach(viewModel.textObjects) { textObj in
-                        TextObjectView(
-                            object: textObj,
-                            viewModel: viewModel,
-                            isSelected: viewModel.isSelected(textObj.id)
                         )
                     }
 
