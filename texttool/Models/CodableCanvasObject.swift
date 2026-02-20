@@ -10,6 +10,7 @@ enum CodableCanvasObject: Codable {
     case text(TextObject)
     case shape(ShapeObject)
     case image(ImageObject)
+    case line(LineObject)
 
     /// Extract from an AnyCanvasObject
     static func from(_ anyObject: AnyCanvasObject) -> CodableCanvasObject? {
@@ -17,6 +18,8 @@ enum CodableCanvasObject: Codable {
             return .text(textObj)
         } else if let shapeObj = anyObject.asShapeObject {
             return .shape(shapeObj)
+        } else if let lineObj = anyObject.asLineObject {
+            return .line(lineObj)
         } else if let imageObj = anyObject.asImageObject {
             return .image(imageObj)
         }
@@ -32,6 +35,8 @@ enum CodableCanvasObject: Codable {
             return AnyCanvasObject(shapeObj.copied(newId: newId, zIndex: zIndex, offset: offset))
         case .image(let imageObj):
             return AnyCanvasObject(imageObj.copied(newId: newId, zIndex: zIndex, offset: offset))
+        case .line(let lineObj):
+            return AnyCanvasObject(lineObj.copied(newId: newId, zIndex: zIndex, offset: offset))
         }
     }
 }

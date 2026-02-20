@@ -36,6 +36,8 @@ private struct CanvasObjectExportView: View {
             ExportImageObjectView(object: imageObj)
         } else if let shapeObj = object.asShapeObject {
             ExportShapeObjectView(object: shapeObj)
+        } else if let lineObj = object.asLineObject {
+            ExportLineObjectView(object: lineObj)
         } else if let textObj = object.asTextObject {
             ExportTextObjectView(object: textObj)
         }
@@ -107,6 +109,66 @@ private struct ExportShapeObjectView: View {
             x: object.position.x + object.size.width / 2,
             y: object.position.y + effectiveHeight / 2
         )
+    }
+}
+
+// MARK: - Line
+
+private struct ExportLineObjectView: View {
+    let object: LineObject
+    private let arrowHeadLength: CGFloat = 14
+
+    var body: some View {
+        ZStack {
+            Path { path in
+                path.move(to: object.startPoint)
+                path.addLine(to: object.endPoint)
+            }
+            .stroke(object.strokeColor, style: object.swiftUIStrokeStyle)
+
+            if object.startArrowHead == .filled {
+                let angle = atan2(object.startPoint.y - object.endPoint.y,
+                                  object.startPoint.x - object.endPoint.x)
+                Path { path in
+                    path.move(to: object.startPoint)
+                    path.addLine(to: CGPoint(
+                        x: object.startPoint.x - arrowHeadLength * cos(angle - .pi / 6),
+                        y: object.startPoint.y - arrowHeadLength * sin(angle - .pi / 6)
+                    ))
+                    path.addLine(to: CGPoint(
+                        x: object.startPoint.x - arrowHeadLength * cos(angle + .pi / 6),
+                        y: object.startPoint.y - arrowHeadLength * sin(angle + .pi / 6)
+                    ))
+                    path.closeSubpath()
+                }
+                .fill(object.strokeColor)
+            }
+
+            if object.endArrowHead == .filled {
+                let angle = atan2(object.endPoint.y - object.startPoint.y,
+                                  object.endPoint.x - object.startPoint.x)
+                Path { path in
+                    path.move(to: object.endPoint)
+                    path.addLine(to: CGPoint(
+                        x: object.endPoint.x - arrowHeadLength * cos(angle - .pi / 6),
+                        y: object.endPoint.y - arrowHeadLength * sin(angle - .pi / 6)
+                    ))
+                    path.addLine(to: CGPoint(
+                        x: object.endPoint.x - arrowHeadLength * cos(angle + .pi / 6),
+                        y: object.endPoint.y - arrowHeadLength * sin(angle + .pi / 6)
+                    ))
+                    path.closeSubpath()
+                }
+                .fill(object.strokeColor)
+            }
+
+            if !object.label.isEmpty {
+                Text(object.label)
+                    .font(object.labelAttributes.font)
+                    .foregroundColor(object.labelAttributes.color)
+                    .position(object.midPoint)
+            }
+        }
     }
 }
 

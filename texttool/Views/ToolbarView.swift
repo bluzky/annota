@@ -21,6 +21,9 @@ struct ToolbarView: View {
                 // Shape tool — single button opens shape picker popover
                 shapePickerButton
 
+                toolButton(.line, icon: "line.diagonal", tooltip: "Line")
+                toolButton(.arrow, icon: "arrow.right", tooltip: "Arrow")
+
                 toolButton(.text, icon: "textformat", tooltip: "Text")
             }
 

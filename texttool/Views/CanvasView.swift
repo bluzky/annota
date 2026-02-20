@@ -35,6 +35,10 @@ struct CanvasView: View {
     @State private var initialObjectRotations: [UUID: CGFloat] = [:]
     @State private var initialObjectPositions: [UUID: CGPoint] = [:]
 
+    // Line control point drag state
+    @State private var draggingControlPointIndex: Int?
+    @State private var draggingControlPointObjectId: UUID?
+
     // Current hover position (screen coordinates, relative to CanvasView)
     @State private var currentHoverLocation: CGPoint?
     @State private var canvasSize: CGSize = .zero
@@ -80,16 +84,48 @@ struct CanvasView: View {
                             .position(x: x, y: y)
                     }
 
+                    // Line/arrow drag preview
+                    if viewModel.selectedTool.isLineTool,
+                       let start = viewModel.dragStartPoint,
+                       let current = viewModel.currentDragPoint {
+                        let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                        let end = shiftHeld ? constrainToAngle(from: start, to: current) : current
+                        Path { path in
+                            path.move(to: start)
+                            path.addLine(to: end)
+                        }
+                        .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
+
+                        // Arrow head preview (open V to match final render)
+                        if viewModel.selectedTool == .arrow {
+                            let angle = atan2(end.y - start.y, end.x - start.x)
+                            let headLength: CGFloat = 14
+                            Path { path in
+                                path.move(to: CGPoint(
+                                    x: end.x - headLength * cos(angle - .pi / 6),
+                                    y: end.y - headLength * sin(angle - .pi / 6)
+                                ))
+                                path.addLine(to: end)
+                                path.addLine(to: CGPoint(
+                                    x: end.x - headLength * cos(angle + .pi / 6),
+                                    y: end.y - headLength * sin(angle + .pi / 6)
+                                ))
+                            }
+                            .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
+                        }
+                    }
+
                 }
                 .scaleEffect(viewModel.viewport.scale, anchor: .topLeading)
                 .offset(x: viewModel.viewport.offset.x, y: viewModel.viewport.offset.y)
 
                 // Selection box overlay (rendered in screen coordinates, not affected by viewport)
-                // Hidden during active resize or rotation drag
+                // Hidden during active resize or rotation drag, and for line-only selections
                 if activeHandleZone == nil,
                    let selectionBox = viewModel.selectionBox,
                    viewModel.selectedTool == .select,
-                   !viewModel.isAnyObjectEditing {
+                   !viewModel.isAnyObjectEditing,
+                   !viewModel.isLineOnlySelection {
                     let screenBox = selectionBox.toScreen(viewport: viewModel.viewport)
                     SelectionBoxView(
                         selectionBox: screenBox,
@@ -164,6 +200,16 @@ struct CanvasView: View {
             } else if viewModel.isAnyObjectEditing {
                 NSCursor.iBeam.set()
             } else if viewModel.selectedTool == .select,
+                      viewModel.isLineOnlySelection {
+                let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
+                if hitTestLineControlPoint(at: canvasPoint) != nil {
+                    NSCursor.arrow.set()
+                } else if hitTestLineBody(at: canvasPoint) {
+                    NSCursor.openHand.set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            } else if viewModel.selectedTool == .select,
                       let selectionBox = viewModel.selectionBox {
                 let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
                 if let hitZone = selectionBox.hitTest(canvasPoint) {
@@ -173,6 +219,8 @@ struct CanvasView: View {
                 }
             } else if viewModel.selectedTool == .text {
                 NSCursor.iBeam.set()
+            } else if viewModel.selectedTool.isLineTool {
+                NSCursor.crosshair.set()
             } else {
                 NSCursor.arrow.set()
             }
@@ -256,7 +304,7 @@ struct CanvasView: View {
         let canvasStart = viewModel.viewport.screenToCanvas(value.startLocation)
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
-        if viewModel.selectedTool.isShapeTool {
+        if viewModel.selectedTool.isShapeTool || viewModel.selectedTool.isLineTool {
             if viewModel.dragStartPoint == nil {
                 viewModel.dragStartPoint = canvasStart
             }
@@ -268,9 +316,19 @@ struct CanvasView: View {
             }
 
             // Check if we're starting a new drag
-            if draggedObjectId == nil && !isMarqueeSelecting && activeHandleZone == nil {
-                // First check if we started drag on a selection box handle
-                if let selectionBox = viewModel.selectionBox,
+            if draggedObjectId == nil && !isMarqueeSelecting && activeHandleZone == nil && draggingControlPointIndex == nil {
+                // First check if we hit a line object's control point
+                if let (lineId, cpIndex) = hitTestLineControlPoint(at: canvasStart) {
+                    draggingControlPointObjectId = lineId
+                    draggingControlPointIndex = cpIndex
+                    if !viewModel.isSelected(lineId) {
+                        viewModel.selectObjectOnly(id: lineId)
+                    }
+                    lastDragLocation = canvasLocation
+                }
+                // Then check if we started drag on a selection box handle (skip for line-only selections)
+                else if !viewModel.isLineOnlySelection,
+                   let selectionBox = viewModel.selectionBox,
                    let hitZone = selectionBox.hitTest(canvasStart) {
                     switch hitZone {
                     case .corner, .edge:
@@ -323,6 +381,27 @@ struct CanvasView: View {
                     marqueeStart = value.startLocation  // Keep in screen coords for visual
                     marqueeEnd = value.location
                 }
+            }
+
+            // Handle line control point dragging
+            if let cpIndex = draggingControlPointIndex,
+               let objId = draggingControlPointObjectId {
+                let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                viewModel.updateLineObject(withId: objId) { line in
+                    let newPoint: CGPoint
+                    if shiftHeld {
+                        let anchor = cpIndex == 0 ? line.endPoint : line.startPoint
+                        newPoint = constrainToAngle(from: anchor, to: canvasLocation)
+                    } else {
+                        newPoint = canvasLocation
+                    }
+                    if cpIndex == 0 {
+                        line.startPoint = newPoint
+                    } else {
+                        line.endPoint = newPoint
+                    }
+                }
+                return
             }
 
             // Handle resize dragging
@@ -431,12 +510,13 @@ struct CanvasView: View {
         let aspectRatio = origWidth / origHeight
 
         switch zone {
-        case .corner(let corner):
+        case .corner:
             let dx = localDragPoint.x - anchor.x
             let dy = localDragPoint.y - anchor.y
 
-            let signX: CGFloat = (corner == .topRight || corner == .bottomRight) ? 1 : -1
-            let signY: CGFloat = (corner == .bottomLeft || corner == .bottomRight) ? 1 : -1
+            // Determine sign from actual drag direction so flipping works
+            let signX: CGFloat = dx >= 0 ? 1 : -1
+            let signY: CGFloat = dy >= 0 ? 1 : -1
 
             let absDx = abs(dx)
             let absDy = abs(dy)
@@ -622,6 +702,17 @@ struct CanvasView: View {
                 end = canvasLocation
             }
             viewModel.addShape(preset: preset, from: start, to: end)
+        } else if viewModel.selectedTool.isLineTool {
+            let start = viewModel.dragStartPoint ?? canvasStart
+            let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+            let end: CGPoint
+            if shiftHeld {
+                // Shift+drag constrains to 45-degree angles
+                end = constrainToAngle(from: start, to: canvasLocation)
+            } else {
+                end = canvasLocation
+            }
+            viewModel.addLine(from: start, to: end, asArrow: viewModel.selectedTool == .arrow)
         }
 
         // Reset drag state
@@ -631,6 +722,8 @@ struct CanvasView: View {
         lastDragLocation = nil
         activeHandleZone = nil
         resizeAnchor = nil
+        draggingControlPointIndex = nil
+        draggingControlPointObjectId = nil
         initialObjectFrames = [:]
         initialRotation = 0
         rotationStartAngle = 0
@@ -774,6 +867,51 @@ struct CanvasView: View {
 
             return event
         }
+    }
+
+    // MARK: - Line Control Point Hit Testing
+
+    /// Check if a canvas point hits a control point on any selected line object
+    /// Returns (objectId, controlPointIndex) or nil
+    private func hitTestLineControlPoint(at point: CGPoint, threshold: CGFloat = 8) -> (UUID, Int)? {
+        for obj in viewModel.selectedObjects {
+            guard let line = obj.asLineObject else { continue }
+            if hypot(point.x - line.startPoint.x, point.y - line.startPoint.y) <= threshold {
+                return (line.id, 0)
+            }
+            if hypot(point.x - line.endPoint.x, point.y - line.endPoint.y) <= threshold {
+                return (line.id, 1)
+            }
+        }
+        return nil
+    }
+
+    /// Check if a canvas point is near the body of any selected line object
+    private func hitTestLineBody(at point: CGPoint, threshold: CGFloat = 8) -> Bool {
+        for obj in viewModel.selectedObjects {
+            guard let line = obj.asLineObject else { continue }
+            if line.contains(point) {
+                return true
+            }
+        }
+        return false
+    }
+
+    // MARK: - Line Angle Constraint
+
+    /// Constrain endpoint to nearest 45-degree angle from start
+    private func constrainToAngle(from start: CGPoint, to end: CGPoint) -> CGPoint {
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let distance = hypot(dx, dy)
+        let angle = atan2(dy, dx)
+        // Snap to nearest 15-degree (pi/12)
+        let snapAngle = CGFloat.pi / 12
+        let snappedAngle = (angle / snapAngle).rounded() * snapAngle
+        return CGPoint(
+            x: start.x + distance * cos(snappedAngle),
+            y: start.y + distance * sin(snappedAngle)
+        )
     }
 
     // MARK: - Magnification (Pinch-to-Zoom)

@@ -71,6 +71,11 @@ class CanvasViewModel: ObservableObject {
         objects.compactMap { $0.asImageObject }
     }
 
+    /// Returns all line objects
+    var lineObjects: [LineObject] {
+        objects.compactMap { $0.asLineObject }
+    }
+
     /// Check if any object is currently being edited
     var isAnyObjectEditing: Bool {
         objects.contains { $0.isEditing }
@@ -172,6 +177,29 @@ class CanvasViewModel: ObservableObject {
 
         objects.append(AnyCanvasObject(shape))
         sortObjectsByZIndex()
+    }
+
+    func addLine(from start: CGPoint, to end: CGPoint, asArrow: Bool = false) {
+        // Skip tiny lines (likely accidental clicks)
+        let length = hypot(end.x - start.x, end.y - start.y)
+        guard length > 3 else { return }
+
+        var line = LineObject(
+            startPoint: start,
+            endPoint: end,
+            strokeColor: activeColor,
+            endArrowHead: asArrow ? .open : .none
+        )
+        line.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(line))
+        sortObjectsByZIndex()
+    }
+
+    /// Update a LineObject in place
+    func updateLineObject(withId id: UUID, update: (inout LineObject) -> Void) {
+        updateObject(withId: id, as: LineObject.self, update: update)
     }
 
     // MARK: - Remove Objects
@@ -318,6 +346,12 @@ class CanvasViewModel: ObservableObject {
     /// Get selected objects as an array
     var selectedObjects: [AnyCanvasObject] {
         objects.filter { selectionState.isSelected($0.id) }
+    }
+
+    /// Whether all selected objects are line objects (no selection box needed)
+    var isLineOnlySelection: Bool {
+        guard selectionState.hasSelection else { return false }
+        return selectedObjects.allSatisfy { $0.asLineObject != nil }
     }
 
     /// End all text editing without clearing selection

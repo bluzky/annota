@@ -26,6 +26,12 @@ struct CanvasObjectView: View {
                 isSelected: isSelected,
                 viewModel: viewModel
             )
+        } else if let lineObj = object.asLineObject {
+            LineObjectView(
+                object: lineObj,
+                isSelected: isSelected,
+                viewModel: viewModel
+            )
         } else if let textObj = object.asTextObject {
             TextObjectView(
                 object: textObj,

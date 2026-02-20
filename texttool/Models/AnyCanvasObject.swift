@@ -68,6 +68,8 @@ struct AnyCanvasObject: Identifiable {
             self.objectType = .text
         case is ShapeObject:
             self.objectType = .shape
+        case let lineObj as LineObject:
+            self.objectType = lineObj.isArrow ? .arrow : .line
         case is ImageObject:
             self.objectType = .image
         default:
@@ -196,6 +198,11 @@ struct AnyCanvasObject: Identifiable {
     /// Get as ImageObject if applicable
     var asImageObject: ImageObject? {
         _object as? ImageObject
+    }
+
+    /// Get as LineObject if applicable
+    var asLineObject: LineObject? {
+        _object as? LineObject
     }
 
     // MARK: - Protocol Checks
