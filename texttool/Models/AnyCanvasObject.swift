@@ -94,11 +94,20 @@ struct AnyCanvasObject: Identifiable {
         self._hitTest = { mutableObject.hitTest($0, threshold: $1) }
 
         // TextContentObject closures — set only when the underlying type conforms
-        if var textContent = object as? any TextContentObject {
-            self._getIsEditing = { textContent.isEditing }
-            self._setIsEditing = { textContent.isEditing = $0 }
-            self._getText = { textContent.text }
-            self._setText = { textContent.text = $0 }
+        // IMPORTANT: Closures must mutate mutableObject, not a separate copy
+        if mutableObject is any TextContentObject {
+            self._getIsEditing = { (mutableObject as! any TextContentObject).isEditing }
+            self._setIsEditing = { newValue in
+                var textContent = mutableObject as! any TextContentObject
+                textContent.isEditing = newValue
+                mutableObject = textContent as! T
+            }
+            self._getText = { (mutableObject as! any TextContentObject).text }
+            self._setText = { newValue in
+                var textContent = mutableObject as! any TextContentObject
+                textContent.text = newValue
+                mutableObject = textContent as! T
+            }
         } else {
             self._getIsEditing = nil
             self._setIsEditing = nil
@@ -223,12 +232,13 @@ struct AnyCanvasObject: Identifiable {
 extension AnyCanvasObject: Equatable {
     static func == (lhs: AnyCanvasObject, rhs: AnyCanvasObject) -> Bool {
         guard lhs.id == rhs.id else { return false }
-        // Compare geometric state so SwiftUI re-renders when position/size/rotation changes
+        // Compare geometric state and text content so SwiftUI re-renders when anything changes
         return lhs.position == rhs.position
             && lhs.size == rhs.size
             && lhs.rotation == rhs.rotation
             && lhs.zIndex == rhs.zIndex
             && lhs.isEditing == rhs.isEditing
+            && lhs.text == rhs.text
     }
 }
 

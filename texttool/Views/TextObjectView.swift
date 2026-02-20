@@ -25,8 +25,13 @@ struct TextObjectView: View {
                         viewModel.updateTextObjectSize(objectId: object.id, size: size)
                     }
                 )
-                .background(Color.white.opacity(0.8))
+                .id(object.id) // Keep same view instance while editing
+                .background(Color.white.opacity(0.95))
                 .cornerRadius(4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                )
             } else {
                 Text(object.text.isEmpty ? "Text" : object.text)
                     .font(.system(size: object.fontSize))

@@ -57,9 +57,20 @@ struct AutoGrowingTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ textView: NSTextView, context: Context) {
-        if textView.string != text {
-            textView.string = text
+        // NEVER update text while editing - this causes race conditions and lost keystrokes
+        // The NSTextView is already updating itself via textDidChange
+        if !context.coordinator.isEditing {
+            // Only update text if it actually differs (e.g., external change)
+            if textView.string != text {
+                let selectedRange = textView.selectedRange()
+                textView.string = text
+                // Restore cursor position if valid
+                if selectedRange.location <= text.count {
+                    textView.setSelectedRange(selectedRange)
+                }
+            }
         }
+
         textView.font = NSFont.systemFont(ofSize: fontSize)
         textView.textColor = NSColor(textColor)
 
@@ -79,16 +90,18 @@ struct AutoGrowingTextView: NSViewRepresentable {
            let layoutManager = textView.layoutManager {
             let usedRect = layoutManager.usedRect(for: container)
             return CGSize(
-                width: max(100, usedRect.width + 8),
+                width: usedRect.width + 8,
                 height: max(fontSize * 1.5, usedRect.height + 8)
             )
         }
 
-        return CGSize(width: 100, height: fontSize * 1.5)
+        return CGSize(width: 10, height: fontSize * 1.5)
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: AutoGrowingTextView
+        var isEditing = false
+        var lastReportedSize: CGSize = .zero
 
         init(_ parent: AutoGrowingTextView) {
             self.parent = parent
@@ -97,18 +110,33 @@ struct AutoGrowingTextView: NSViewRepresentable {
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+
+            // Set editing flag to prevent updateNSView from interfering
+            isEditing = true
+
+            // Update binding - this triggers SwiftUI update
             parent.text = textView.string
 
-            // Report size change
+            // Clear editing flag after a short delay to allow the update to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
+                self?.isEditing = false
+            }
+
+            // Report size change only if it actually changed significantly
             if let container = textView.textContainer,
                let layoutManager = textView.layoutManager {
                 layoutManager.ensureLayout(for: container)
                 let usedRect = layoutManager.usedRect(for: container)
                 let size = CGSize(
-                    width: max(100, usedRect.width + 16),
+                    width: usedRect.width + 16,
                     height: max(parent.fontSize * 1.5, usedRect.height + 16)
                 )
-                parent.onSizeChange?(size)
+                // Only report if size changed by more than 1 point
+                if abs(size.width - lastReportedSize.width) > 1 ||
+                   abs(size.height - lastReportedSize.height) > 1 {
+                    lastReportedSize = size
+                    parent.onSizeChange?(size)
+                }
             }
         }
 
