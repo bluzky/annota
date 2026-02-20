@@ -28,9 +28,10 @@ struct RotationMathTests {
     // MARK: - CanvasObject.transformToLocal (inverse rotation)
 
     @Test func transformToLocalIdentityAtZeroRotation() async throws {
-        var rect = RectangleObject(
+        var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
+            preset: .rectangle,
             color: .blue
         )
         rect.rotation = 0
@@ -44,9 +45,10 @@ struct RotationMathTests {
 
     @Test func transformToLocalQuarterTurnRotatesAroundCenter() async throws {
         // Object centered at (200, 150)
-        var rect = RectangleObject(
+        var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
+            preset: .rectangle,
             color: .blue
         )
         rect.rotation = .pi / 2  // 90°
@@ -63,9 +65,10 @@ struct RotationMathTests {
     }
 
     @Test func transformToLocalHalfTurnReflectsAroundCenter() async throws {
-        var rect = RectangleObject(
+        var rect = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .blue
         )
         rect.rotation = .pi  // 180°
@@ -83,9 +86,10 @@ struct RotationMathTests {
     }
 
     @Test func transformToCanvasIsInverseOfTransformToLocal() async throws {
-        var rect = RectangleObject(
+        var rect = ShapeObject(
             position: CGPoint(x: 50, y: 75),
             size: CGSize(width: 150, height: 80),
+            preset: .rectangle,
             color: .blue
         )
         rect.rotation = CGFloat.pi / 6  // 30°
@@ -102,9 +106,10 @@ struct RotationMathTests {
         let point = CGPoint(x: 300, y: 200)
 
         for angle in angles {
-            var rect = RectangleObject(
+            var rect = ShapeObject(
                 position: CGPoint(x: 100, y: 100),
                 size: CGSize(width: 200, height: 100),
+                preset: .rectangle,
                 color: .blue
             )
             rect.rotation = angle
@@ -117,9 +122,10 @@ struct RotationMathTests {
 
     @Test func transformToCanvasForwardRotationQuarterTurn() async throws {
         // Object centered at (200, 150)
-        var rect = RectangleObject(
+        var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
+            preset: .rectangle,
             color: .blue
         )
         rect.rotation = .pi / 2  // 90°
@@ -292,15 +298,17 @@ struct RotationMathTests {
 
     @Test func rotatedCornersOfAxisAlignedRectAtZeroAreOriginalCorners() async throws {
         // A non-rotated object's selection box corners from multi-select
-        let rect1 = RectangleObject(
+        let rect1 = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .blue,
             rotation: 0
         )
-        let rect2 = RectangleObject(
+        let rect2 = ShapeObject(
             position: CGPoint(x: 200, y: 0),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .red,
             rotation: 0
         )
@@ -316,16 +324,18 @@ struct RotationMathTests {
     @Test func rotatedCornersOfSquareAt45DegreesExpandAABB() async throws {
         // A square at 45° rotation should have larger AABB than original square
         // Square: 100x100 centered at (150, 150)
-        let rect = RectangleObject(
+        let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .blue,
             rotation: .pi / 4  // 45°
         )
         // Second object at far corner to force multi-select path
-        let anchor = RectangleObject(
+        let anchor = ShapeObject(
             position: CGPoint(x: 500, y: 500),
             size: CGSize(width: 1, height: 1),
+            preset: .rectangle,
             color: .red
         )
         let box = SelectionBox.from(objects: [AnyCanvasObject(rect), AnyCanvasObject(anchor)])!

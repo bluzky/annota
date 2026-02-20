@@ -29,13 +29,21 @@ struct AnyCanvasObject: Identifiable {
     private let _boundingBox: () -> CGRect
     private let _hitTest: (CGPoint, CGFloat) -> HitTestResult?
 
+    // TextContentObject closures (nil when underlying type doesn't conform)
+    private let _getIsEditing: (() -> Bool)?
+    private let _setIsEditing: ((Bool) -> Void)?
+    private let _getText: (() -> String)?
+    private let _setText: ((String) -> Void)?
+
+    // Rebuild closure: extracts the mutated underlying object back into a new AnyCanvasObject
+    private let _rebuild: () -> AnyCanvasObject
+
     // Type information
     let objectType: ObjectType
 
     enum ObjectType {
         case text
-        case rectangle
-        case oval
+        case shape
         case line
         case arrow
         case pencil
@@ -58,10 +66,8 @@ struct AnyCanvasObject: Identifiable {
         switch object {
         case is TextObject:
             self.objectType = .text
-        case is RectangleObject:
-            self.objectType = .rectangle
-        case is OvalObject:
-            self.objectType = .oval
+        case is ShapeObject:
+            self.objectType = .shape
         default:
             self.objectType = .unknown
         }
@@ -82,6 +88,21 @@ struct AnyCanvasObject: Identifiable {
         self._contains = { mutableObject.contains($0) }
         self._boundingBox = { mutableObject.boundingBox() }
         self._hitTest = { mutableObject.hitTest($0, threshold: $1) }
+
+        // TextContentObject closures — set only when the underlying type conforms
+        if var textContent = object as? any TextContentObject {
+            self._getIsEditing = { textContent.isEditing }
+            self._setIsEditing = { textContent.isEditing = $0 }
+            self._getText = { textContent.text }
+            self._setText = { textContent.text = $0 }
+        } else {
+            self._getIsEditing = nil
+            self._setIsEditing = nil
+            self._getText = nil
+            self._setText = nil
+        }
+
+        self._rebuild = { AnyCanvasObject(mutableObject) }
     }
 
     // MARK: - CanvasObject Properties
@@ -125,6 +146,34 @@ struct AnyCanvasObject: Identifiable {
         _hitTest(point, threshold)
     }
 
+    // MARK: - TextContentObject Properties
+
+    /// Whether the object is currently being edited (nil if not a TextContentObject)
+    var isEditing: Bool {
+        get { _getIsEditing?() ?? false }
+        nonmutating set { _setIsEditing?(newValue) }
+    }
+
+    /// The text content (empty string if not a TextContentObject)
+    var text: String {
+        get { _getText?() ?? "" }
+        nonmutating set { _setText?(newValue) }
+    }
+
+    /// Whether the underlying object supports text editing
+    var hasTextContent: Bool {
+        _getIsEditing != nil
+    }
+
+    // MARK: - Snapshot
+
+    /// Returns a new AnyCanvasObject reflecting any mutations made via nonmutating setters.
+    /// Call this after mutating through the type-erased properties to persist changes
+    /// back into the `objects` array (which stores value types).
+    func rebuilt() -> AnyCanvasObject {
+        _rebuild()
+    }
+
     // MARK: - Type Casting
 
     /// Attempt to get the underlying object as a specific type
@@ -137,22 +186,12 @@ struct AnyCanvasObject: Identifiable {
         _object as? TextObject
     }
 
-    /// Get as RectangleObject if applicable
-    var asRectangleObject: RectangleObject? {
-        _object as? RectangleObject
-    }
-
-    /// Get as OvalObject if applicable
-    var asOvalObject: OvalObject? {
-        _object as? OvalObject
+    /// Get as ShapeObject if applicable
+    var asShapeObject: ShapeObject? {
+        _object as? ShapeObject
     }
 
     // MARK: - Protocol Checks
-
-    /// Check if underlying object conforms to TextContentObject
-    var hasTextContent: Bool {
-        _object is any TextContentObject
-    }
 
     /// Check if underlying object conforms to StrokableObject
     var isStrokable: Bool {

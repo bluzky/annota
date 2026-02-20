@@ -1,0 +1,157 @@
+//
+//  ShapeObject.swift
+//  texttool
+//
+
+import SwiftUI
+import SVGPath
+
+struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
+    // MARK: - CanvasObject
+    let id: UUID
+    var position: CGPoint
+    var size: CGSize
+    var rotation: CGFloat = 0
+    var isLocked: Bool = false
+    var zIndex: Int = 0
+
+    // MARK: - StrokableObject
+    var strokeColor: Color
+    var strokeWidth: CGFloat = 2
+    var strokeStyle: StrokeStyleType = .solid
+
+    // MARK: - FillableObject
+    var fillColor: Color
+    var fillOpacity: CGFloat = 0.1
+
+    // MARK: - TextContentObject
+    var text: String = ""
+    var textAttributes: TextAttributes = .default
+    var isEditing: Bool = false
+
+    // MARK: - Shape-specific
+    var preset: ShapePreset
+    var autoResizeHeight: Bool = false
+
+    // MARK: - Backward Compatibility
+
+    /// Convenience accessor for color (maps to strokeColor/fillColor)
+    var color: Color {
+        get { strokeColor }
+        set {
+            strokeColor = newValue
+            fillColor = newValue
+        }
+    }
+
+    // MARK: - Init
+
+    init(
+        id: UUID = UUID(),
+        position: CGPoint,
+        size: CGSize,
+        preset: ShapePreset = .rectangle,
+        color: Color = .black,
+        strokeWidth: CGFloat = 2,
+        strokeStyle: StrokeStyleType = .solid,
+        fillOpacity: CGFloat = 0.1,
+        text: String = "",
+        isEditing: Bool = false,
+        autoResizeHeight: Bool = false,
+        rotation: CGFloat = 0,
+        isLocked: Bool = false,
+        zIndex: Int = 0
+    ) {
+        self.id = id
+        self.position = position
+        self.size = size
+        self.preset = preset
+        self.strokeColor = color
+        self.fillColor = color
+        self.strokeWidth = strokeWidth
+        self.strokeStyle = strokeStyle
+        self.fillOpacity = fillOpacity
+        self.text = text
+        self.isEditing = isEditing
+        self.autoResizeHeight = autoResizeHeight
+        self.rotation = rotation
+        self.isLocked = isLocked
+        self.zIndex = zIndex
+    }
+
+    // MARK: - CanvasObject
+
+    func contains(_ point: CGPoint) -> Bool {
+        let localPoint = rotation != 0 ? transformToLocal(point) : point
+        return preset.cgPath(in: boundingBox()).contains(localPoint)
+    }
+
+    func boundingBox() -> CGRect {
+        CGRect(origin: position, size: size)
+    }
+
+    func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+        let localPoint = rotation != 0 ? transformToLocal(point) : point
+        let bounds = boundingBox()
+
+        // Quick-reject: outside expanded bounding box
+        guard bounds.insetBy(dx: -threshold, dy: -threshold).contains(localPoint) else {
+            return nil
+        }
+
+        // Corners: always the four bounding-box corners (resize handles are rectangular)
+        if let corner = hitTestCorner(point: localPoint, bounds: bounds, threshold: threshold) {
+            return .corner(corner)
+        }
+
+        // Edge: stroke the CGPath — shape-agnostic, handles curves and polygons
+        let path = preset.cgPath(in: bounds)
+        let strokedPath = path.copy(
+            strokingWithWidth: threshold * 2,
+            lineCap: .round,
+            lineJoin: .round,
+            miterLimit: 1
+        )
+        if strokedPath.contains(localPoint) {
+            return .edge(edgeForPoint(localPoint, in: bounds))
+        }
+
+        // Body: interior of the shape path
+        if path.contains(localPoint) {
+            return .body
+        }
+
+        return nil
+    }
+}
+
+// MARK: - Private Helpers
+
+private extension ShapeObject {
+    func hitTestCorner(point: CGPoint, bounds: CGRect, threshold: CGFloat) -> Corner? {
+        let corners: [(Corner, CGPoint)] = [
+            (.topLeft,     CGPoint(x: bounds.minX, y: bounds.minY)),
+            (.topRight,    CGPoint(x: bounds.maxX, y: bounds.minY)),
+            (.bottomLeft,  CGPoint(x: bounds.minX, y: bounds.maxY)),
+            (.bottomRight, CGPoint(x: bounds.maxX, y: bounds.maxY)),
+        ]
+        for (corner, cp) in corners {
+            if hypot(point.x - cp.x, point.y - cp.y) <= threshold { return corner }
+        }
+        return nil
+    }
+
+    /// Classify a point near the shape boundary into the nearest cardinal edge.
+    /// Normalises by half-extents so aspect ratio doesn't bias the result.
+    func edgeForPoint(_ point: CGPoint, in bounds: CGRect) -> Edge {
+        let dx = point.x - bounds.midX
+        let dy = point.y - bounds.midY
+        let nx = dx / (bounds.width  / 2)
+        let ny = dy / (bounds.height / 2)
+        if abs(nx) >= abs(ny) {
+            return nx >= 0 ? .right : .left
+        } else {
+            return ny >= 0 ? .bottom : .top
+        }
+    }
+}

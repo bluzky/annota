@@ -126,8 +126,28 @@ import Combine
 - Use protocol extensions for default implementations
 - Feature protocols compose with base (e.g., `TextContentObject`, `FillableObject`)
 
+## Task Management with bd (bead)
+
+This project uses **bd** as the canonical task list. Always use it to track work items — do not rely on in-session memory or TODO comments alone.
+
+```bash
+bd status                                    # overview
+bd list                                      # open issues
+bd ready                                     # unblocked issues ready to start
+
+bd q "Fix oval hit-test edge case"           # quick-capture (outputs ID only)
+bd update <id> --status in_progress          # claim a task
+bd close <id> --reason "done in Foo.swift"   # mark complete
+
+bd dep add <blocked-id> <blocker-id>         # record ordering dependency
+```
+
+Reference issue IDs in commit messages: `git commit -m "Add ShapeObject (texttool-g4y)"`
+
+`bd sync` is part of the mandatory session-end push — see **Landing the Plane** below.
+
 ## Commit & Pull Request Guidelines
-Git history currently contains a single conventional subject line ("Initial Commit"), so continue using short, imperative summaries (e.g., "Add circle drag preview"). Group related file changes per commit, reference ticket IDs when available, and avoid WIP commits in shared branches. Pull requests should outline the motivation, list user-visible changes, call out testing evidence/`xcodebuild test` output, and attach screenshots or short clips when UI changes affect Canvas rendering.
+Git history currently contains a single conventional subject line ("Initial Commit"), so continue using short, imperative summaries (e.g., "Add circle drag preview"). Group related file changes per commit, reference issue IDs from `bd` when available (e.g., `texttool-g4y`), and avoid WIP commits in shared branches. Pull requests should outline the motivation, list user-visible changes, call out testing evidence/`xcodebuild test` output, and attach screenshots or short clips when UI changes affect Canvas rendering.
 
 ## Architecture & State Management
 The app follows a lightweight MVVM split where `CanvasViewModel` orchestrates editing state and view structs focus on rendering. Add new tools or formatting controls by extending the model first, then threading bindings into `ToolbarView` and the relevant object views to keep gesture handling centralized in `CanvasView`.

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
+    @State private var showShapePicker = false
 
     var body: some View {
         HStack(spacing: 20) {
@@ -16,8 +17,10 @@ struct ToolbarView: View {
             HStack(spacing: 4) {
                 toolButton(.select, icon: "cursorarrow", tooltip: "Select")
                 toolButton(.hand, icon: "hand.raised", tooltip: "Hand")
-                toolButton(.rectangle, icon: "rectangle", tooltip: "Rectangle")
-                toolButton(.oval, icon: "circle", tooltip: "Oval")
+
+                // Shape tool — single button opens shape picker popover
+                shapePickerButton
+
                 toolButton(.text, icon: "textformat", tooltip: "Text")
             }
 
@@ -54,6 +57,29 @@ struct ToolbarView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
         .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    /// A single toolbar button that shows the active shape's icon (or a generic squares icon
+    /// when no shape tool is selected) and opens the shape picker popover on tap.
+    @ViewBuilder
+    private var shapePickerButton: some View {
+        let isShapeActive = viewModel.selectedTool.isShapeTool
+        let icon = viewModel.selectedTool.shapePreset?.sfSymbol ?? "square.on.square"
+
+        Button(action: {
+            showShapePicker.toggle()
+        }) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .background(isShapeActive ? Color.accentColor.opacity(0.2) : Color.clear)
+        .cornerRadius(6)
+        .help("Shapes")
+        .popover(isPresented: $showShapePicker, arrowEdge: .bottom) {
+            ShapePickerView(viewModel: viewModel, isPresented: $showShapePicker)
+        }
     }
 
     @ViewBuilder

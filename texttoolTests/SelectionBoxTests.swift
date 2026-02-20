@@ -21,9 +21,10 @@ struct SelectionBoxTests {
     }
 
     @Test func fromSingleObjectCreatesSingleSelection() async throws {
-        let rect = RectangleObject(
+        let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 150),
+            preset: .rectangle,
             color: .blue
         )
         let objects = [AnyCanvasObject(rect)]
@@ -36,14 +37,16 @@ struct SelectionBoxTests {
     }
 
     @Test func fromMultipleObjectsCreatesMultiSelection() async throws {
-        let rect1 = RectangleObject(
+        let rect1 = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .blue
         )
-        let rect2 = RectangleObject(
+        let rect2 = ShapeObject(
             position: CGPoint(x: 200, y: 150),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .red
         )
         let objects = [AnyCanvasObject(rect1), AnyCanvasObject(rect2)]
@@ -218,9 +221,10 @@ struct SelectionBoxTests {
 
     @Test func rotatedSingleSelectionBoundsMatch() async throws {
         // A rotated single object: selection box bounds use unrotated bbox
-        let rect = RectangleObject(
+        let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
+            preset: .rectangle,
             color: .blue,
             rotation: .pi / 4  // 45 degrees
         )
@@ -237,16 +241,18 @@ struct SelectionBoxTests {
 
     @Test func rotatedMultiSelectionExpandsBoundsToFitRotatedCorners() async throws {
         // A 45-degree rotated square's AABB should be larger than the square
-        let rect = RectangleObject(
+        let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100),
+            preset: .rectangle,
             color: .blue,
             rotation: .pi / 4  // 45 degrees
         )
         // Need two objects for multi-selection
-        let rect2 = RectangleObject(
+        let rect2 = ShapeObject(
             position: CGPoint(x: 300, y: 300),
             size: CGSize(width: 10, height: 10),
+            preset: .rectangle,
             color: .red
         )
         let objects = [AnyCanvasObject(rect), AnyCanvasObject(rect2)]

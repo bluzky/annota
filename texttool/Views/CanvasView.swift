@@ -47,20 +47,11 @@ struct CanvasView: View {
 
                 // Canvas content with viewport transform
                 ZStack {
-                    // Render rectangle objects
-                    ForEach(viewModel.rectangleObjects) { rectObj in
-                        RectangleObjectView(
-                            object: rectObj,
-                            isSelected: viewModel.isSelected(rectObj.id),
-                            viewModel: viewModel
-                        )
-                    }
-
-                    // Render oval objects
-                    ForEach(viewModel.ovalObjects) { ovalObj in
-                        OvalObjectView(
-                            object: ovalObj,
-                            isSelected: viewModel.isSelected(ovalObj.id),
+                    // Render shape objects (rectangle, oval, triangle, diamond, etc.)
+                    ForEach(viewModel.shapeObjects) { shapeObj in
+                        ShapeObjectView(
+                            object: shapeObj,
+                            isSelected: viewModel.isSelected(shapeObj.id),
                             viewModel: viewModel
                         )
                     }
@@ -74,34 +65,22 @@ struct CanvasView: View {
                         )
                     }
 
-                    // Rectangle drag preview
-                    if viewModel.selectedTool == .rectangle,
-                       let start = viewModel.dragStartPoint,
-                       let current = viewModel.currentDragPoint {
-                        let width = abs(current.x - start.x)
-                        let height = abs(current.y - start.y)
-                        let x = min(start.x, current.x) + width / 2
-                        let y = min(start.y, current.y) + height / 2
-
-                        Rectangle()
-                            .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-                            .frame(width: width, height: height)
-                            .position(x: x, y: y)
-                    }
-
-                    // Oval drag preview
-                    if viewModel.selectedTool == .oval,
+                    // Shape drag preview
+                    if let preset = viewModel.selectedTool.shapePreset,
                        let start = viewModel.dragStartPoint,
                        let current = viewModel.currentDragPoint {
                         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
                         let rawWidth = abs(current.x - start.x)
                         let rawHeight = abs(current.y - start.y)
-                        let width = shiftHeld ? max(rawWidth, rawHeight) : rawWidth
-                        let height = shiftHeld ? max(rawWidth, rawHeight) : rawHeight
+                        // Shift+drag constrains to square for all shape tools
+                        let constrain = shiftHeld
+                        let width = constrain ? max(rawWidth, rawHeight) : rawWidth
+                        let height = constrain ? max(rawWidth, rawHeight) : rawHeight
                         let x = min(start.x, current.x) + width / 2
                         let y = min(start.y, current.y) + height / 2
+                        let previewRect = CGRect(origin: .zero, size: CGSize(width: width, height: height))
 
-                        Ellipse()
+                        preset.path(in: previewRect)
                             .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
                             .frame(width: width, height: height)
                             .position(x: x, y: y)
@@ -274,7 +253,7 @@ struct CanvasView: View {
         let canvasStart = viewModel.viewport.screenToCanvas(value.startLocation)
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
-        if viewModel.selectedTool == .rectangle || viewModel.selectedTool == .oval {
+        if viewModel.selectedTool.isShapeTool {
             if viewModel.dragStartPoint == nil {
                 viewModel.dragStartPoint = canvasStart
             }
@@ -623,14 +602,8 @@ struct CanvasView: View {
         // If it's a click (minimal drag)
         if distance < 5 {
             handleClick(at: value.location)
-        } else if viewModel.selectedTool == .rectangle {
-            // It's a drag for rectangle (use canvas coordinates)
-            viewModel.addRectangle(
-                from: viewModel.dragStartPoint ?? canvasStart,
-                to: canvasLocation
-            )
-        } else if viewModel.selectedTool == .oval {
-            // It's a drag for oval (use canvas coordinates)
+        } else if let preset = viewModel.selectedTool.shapePreset {
+            // It's a drag for a shape tool — apply shift-constrain for all shape tools
             let start = viewModel.dragStartPoint ?? canvasStart
             let shiftHeld = NSEvent.modifierFlags.contains(.shift)
             let end: CGPoint
@@ -645,7 +618,7 @@ struct CanvasView: View {
             } else {
                 end = canvasLocation
             }
-            viewModel.addOval(from: start, to: end)
+            viewModel.addShape(preset: preset, from: start, to: end)
         }
 
         // Reset drag state
