@@ -307,6 +307,72 @@ class CanvasViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Clipboard Operations
+
+    func copySelection() {
+        let selected = selectedObjects
+        guard !selected.isEmpty else { return }
+        let codable = selected.compactMap { CodableCanvasObject.from($0) }
+        ClipboardService.copyObjects(codable)
+    }
+
+    func cutSelection() {
+        copySelection()
+        deleteSelected()
+    }
+
+    func pasteFromClipboard(viewportSize: CGSize = .zero) {
+        guard let codableObjects = ClipboardService.pasteObjects(), !codableObjects.isEmpty else { return }
+
+        // Compute the offset to center pasted objects in the current viewport
+        let pasteOffset: CGPoint
+        if viewportSize.width > 0 && viewportSize.height > 0 {
+            // Find the center of the visible canvas area
+            let screenCenter = CGPoint(x: viewportSize.width / 2, y: viewportSize.height / 2)
+            let canvasCenter = viewport.screenToCanvas(screenCenter)
+
+            // Build temporary objects to find their group bounding box
+            var tempObjects: [AnyCanvasObject] = []
+            for codable in codableObjects {
+                tempObjects.append(codable.toAnyCanvasObject(newId: UUID(), zIndex: 0, offset: .zero))
+            }
+            var minX = CGFloat.infinity, minY = CGFloat.infinity
+            var maxX = -CGFloat.infinity, maxY = -CGFloat.infinity
+            for obj in tempObjects {
+                let bbox = obj.boundingBox()
+                minX = min(minX, bbox.minX)
+                minY = min(minY, bbox.minY)
+                maxX = max(maxX, bbox.maxX)
+                maxY = max(maxY, bbox.maxY)
+            }
+            let groupCenter = CGPoint(x: (minX + maxX) / 2, y: (minY + maxY) / 2)
+            pasteOffset = CGPoint(x: canvasCenter.x - groupCenter.x, y: canvasCenter.y - groupCenter.y)
+        } else {
+            pasteOffset = CGPoint(x: 20, y: 20)
+        }
+
+        var pastedIds = Set<UUID>()
+
+        for codable in codableObjects {
+            let newId = UUID()
+            let newObj = codable.toAnyCanvasObject(newId: newId, zIndex: nextZIndex, offset: pasteOffset)
+            nextZIndex += 1
+            objects.append(newObj)
+            pastedIds.insert(newId)
+        }
+
+        sortObjectsByZIndex()
+        endAllEditing()
+        selectionState.selectMultiple(pastedIds)
+    }
+
+    func deleteSelected() {
+        let idsToRemove = selectionState.selectedIds
+        guard !idsToRemove.isEmpty else { return }
+        objects.removeAll { idsToRemove.contains($0.id) }
+        selectionState.clear()
+    }
+
     // MARK: - Z-Order Management
 
     /// Sort objects array by zIndex
