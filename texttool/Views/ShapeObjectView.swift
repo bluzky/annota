@@ -1,32 +1,32 @@
 //
-//  RectangleObjectView.swift
+//  ShapeObjectView.swift
 //  texttool
-//
-//  Created by Flex on 12/11/25.
 //
 
 import SwiftUI
 import AppKit
 
-struct RectangleObjectView: View {
-    let object: RectangleObject
+struct ShapeObjectView: View {
+    let object: ShapeObject
     var isSelected: Bool = false
     @ObservedObject var viewModel: CanvasViewModel
-    @FocusState private var isFocused: Bool
 
     var body: some View {
         ZStack {
-            // Rectangle shape
-            Rectangle()
-                .stroke(object.color, lineWidth: 2)
-                .background(object.color.opacity(0.1))
+            let shapeRect = CGRect(origin: .zero, size: CGSize(width: object.size.width, height: effectiveHeight))
+            // Shape fill + stroke — both framed identically so they overlap exactly
+            object.preset.path(in: shapeRect)
+                .fill(object.fillColor.opacity(object.fillOpacity))
+                .frame(width: object.size.width, height: effectiveHeight)
+            object.preset.path(in: shapeRect)
+                .stroke(object.strokeColor, lineWidth: object.strokeWidth)
                 .frame(width: object.size.width, height: effectiveHeight)
 
-            // Text content (centered inside rectangle)
+            // Text content (centered inside shape)
             if object.isEditing {
                 ConstrainedAutoGrowingTextView(
                     text: binding,
-                    fontSize: 16,
+                    fontSize: object.textAttributes.fontSize,
                     textColor: .black,
                     maxWidth: object.size.width - 16,
                     alignment: .center,
@@ -47,7 +47,6 @@ struct RectangleObjectView: View {
                     .frame(width: object.size.width - 16)
                     .padding(8)
             }
-
         }
         .rotationEffect(.radians(object.rotation))
         .position(
@@ -60,6 +59,8 @@ struct RectangleObjectView: View {
             }
         }
     }
+
+    // MARK: - Height Helpers
 
     private var effectiveHeight: CGFloat {
         if object.autoResizeHeight && !object.text.isEmpty {
@@ -83,16 +84,16 @@ struct RectangleObjectView: View {
     private func updateHeight() {
         let newHeight = calculatedTextHeight + 24
         if newHeight > object.size.height {
-            viewModel.updateRectangleObject(withId: object.id) { rect in
-                rect.size.height = newHeight
+            viewModel.updateShapeObject(withId: object.id) { shape in
+                shape.size.height = newHeight
             }
         }
     }
 
     private func updateHeightIfNeeded(_ newHeight: CGFloat) {
         if newHeight > object.size.height {
-            viewModel.updateRectangleObject(withId: object.id) { rect in
-                rect.size.height = newHeight
+            viewModel.updateShapeObject(withId: object.id) { shape in
+                shape.size.height = newHeight
             }
         }
     }

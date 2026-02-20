@@ -40,11 +40,3 @@ extension FillableObject {
     static var defaultFillOpacity: CGFloat { 1.0 }
 }
 
-// MARK: - Combined Protocol
-
-/// Protocol for objects that can have both stroke and fill
-/// This is a convenience typealias for the common case
-typealias ShapeObject = StrokableObject & FillableObject
-
-/// Protocol for shape objects that also contain text
-typealias TextShapeObject = TextContentObject & StrokableObject & FillableObject

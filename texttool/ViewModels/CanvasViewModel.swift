@@ -54,49 +54,27 @@ class CanvasViewModel: ObservableObject {
     @Published var dragStartPoint: CGPoint?
     @Published var currentDragPoint: CGPoint?
 
-    // MARK: - Backward Compatibility Computed Properties
+    // MARK: - Computed Properties
 
-    /// Returns all text objects (for view compatibility)
+    /// Returns all text objects
     var textObjects: [TextObject] {
         objects.compactMap { $0.asTextObject }
     }
 
-    /// Returns all rectangle objects (for view compatibility)
-    var rectangleObjects: [RectangleObject] {
-        objects.compactMap { $0.asRectangleObject }
-    }
-
-    /// Returns all oval objects (for view compatibility)
-    var ovalObjects: [OvalObject] {
-        objects.compactMap { $0.asOvalObject }
+    /// Returns all shape objects
+    var shapeObjects: [ShapeObject] {
+        objects.compactMap { $0.asShapeObject }
     }
 
     /// Check if any object is currently being edited
     var isAnyObjectEditing: Bool {
-        for wrapper in objects {
-            if let textObj = wrapper.asTextObject, textObj.isEditing {
-                return true
-            } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
-                return true
-            } else if let ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
-                return true
-            }
-        }
-        return false
+        objects.contains { $0.isEditing }
     }
 
-    /// Get the currently editing object's ID and bounds, if any
+    /// Get the currently editing object's ID and contains closure, if any
     func editingObject() -> (id: UUID, contains: (CGPoint) -> Bool)? {
-        for wrapper in objects {
-            if let textObj = wrapper.asTextObject, textObj.isEditing {
-                return (textObj.id, { textObj.contains($0) })
-            } else if let rectObj = wrapper.asRectangleObject, rectObj.isEditing {
-                return (rectObj.id, { rectObj.contains($0) })
-            } else if let ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
-                return (ovalObj.id, { ovalObj.contains($0) })
-            }
-        }
-        return nil
+        guard let wrapper = objects.first(where: { $0.isEditing }) else { return nil }
+        return (wrapper.id, { wrapper.contains($0) })
     }
 
     // MARK: - Object Retrieval
@@ -129,7 +107,7 @@ class CanvasViewModel: ObservableObject {
         return textObj.id
     }
 
-    func addRectangle(from start: CGPoint, to end: CGPoint) {
+    func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) {
         let origin = CGPoint(
             x: min(start.x, end.x),
             y: min(start.y, end.y)
@@ -139,45 +117,20 @@ class CanvasViewModel: ObservableObject {
             height: abs(end.y - start.y)
         )
 
-        // Skip tiny rectangles (likely accidental clicks)
+        // Skip tiny shapes (likely accidental clicks)
         guard size.width > 1 && size.height > 1 else { return }
 
-        var rectObj = RectangleObject(
+        var shape = ShapeObject(
             position: origin,
             size: size,
+            preset: preset,
             color: activeColor,
             autoResizeHeight: autoResizeShapes
         )
-        rectObj.zIndex = nextZIndex
+        shape.zIndex = nextZIndex
         nextZIndex += 1
 
-        objects.append(AnyCanvasObject(rectObj))
-        sortObjectsByZIndex()
-    }
-
-    func addOval(from start: CGPoint, to end: CGPoint) {
-        let origin = CGPoint(
-            x: min(start.x, end.x),
-            y: min(start.y, end.y)
-        )
-        let size = CGSize(
-            width: abs(end.x - start.x),
-            height: abs(end.y - start.y)
-        )
-
-        // Skip tiny ovals (likely accidental clicks)
-        guard size.width > 1 && size.height > 1 else { return }
-
-        var ovalObj = OvalObject(
-            position: origin,
-            size: size,
-            color: activeColor,
-            autoResizeHeight: autoResizeShapes
-        )
-        ovalObj.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(ovalObj))
+        objects.append(AnyCanvasObject(shape))
         sortObjectsByZIndex()
     }
 
@@ -190,28 +143,26 @@ class CanvasViewModel: ObservableObject {
 
     // MARK: - Update Objects
 
+    /// Generic update: extracts an object of type T, applies mutation, and stores it back
+    private func updateObject<T: CanvasObject>(
+        withId id: UUID,
+        as _: T.Type,
+        update: (inout T) -> Void
+    ) {
+        guard let index = objectIndex(withId: id),
+              var obj = objects[index].asType(T.self) else { return }
+        update(&obj)
+        objects[index] = AnyCanvasObject(obj)
+    }
+
     /// Update a TextObject in place
     func updateTextObject(withId id: UUID, update: (inout TextObject) -> Void) {
-        guard let index = objectIndex(withId: id),
-              var textObj = objects[index].asTextObject else { return }
-        update(&textObj)
-        objects[index] = AnyCanvasObject(textObj)
+        updateObject(withId: id, as: TextObject.self, update: update)
     }
 
-    /// Update a RectangleObject in place
-    func updateRectangleObject(withId id: UUID, update: (inout RectangleObject) -> Void) {
-        guard let index = objectIndex(withId: id),
-              var rectObj = objects[index].asRectangleObject else { return }
-        update(&rectObj)
-        objects[index] = AnyCanvasObject(rectObj)
-    }
-
-    /// Update a OvalObject in place
-    func updateOvalObject(withId id: UUID, update: (inout OvalObject) -> Void) {
-        guard let index = objectIndex(withId: id),
-              var ovalObj = objects[index].asOvalObject else { return }
-        update(&ovalObj)
-        objects[index] = AnyCanvasObject(ovalObj)
+    /// Update a ShapeObject in place
+    func updateShapeObject(withId id: UUID, update: (inout ShapeObject) -> Void) {
+        updateObject(withId: id, as: ShapeObject.self, update: update)
     }
 
     // MARK: - Hit Testing & Selection
@@ -228,40 +179,17 @@ class CanvasViewModel: ObservableObject {
 
     func startEditing(objectId: UUID) {
         guard let index = objectIndex(withId: objectId) else { return }
-
-        let wrapper = objects[index]
-
-        // Handle based on object type
-        if var textObj = wrapper.asTextObject {
-            textObj.isEditing = true
-            objects[index] = AnyCanvasObject(textObj)
-            selectedObjectId = objectId
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.isEditing = true
-            objects[index] = AnyCanvasObject(rectObj)
-            selectedObjectId = objectId
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.isEditing = true
-            objects[index] = AnyCanvasObject(ovalObj)
-            selectedObjectId = objectId
-        }
+        guard objects[index].hasTextContent else { return }
+        objects[index].isEditing = true
+        objects[index] = objects[index].rebuilt()
+        selectedObjectId = objectId
     }
 
     func updateText(objectId: UUID, text: String) {
         guard let index = objectIndex(withId: objectId) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.text = text
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.text = text
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.text = text
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
+        guard objects[index].hasTextContent else { return }
+        objects[index].text = text
+        objects[index] = objects[index].rebuilt()
     }
 
     func updateTextObjectSize(objectId: UUID, size: CGSize) {
@@ -270,120 +198,44 @@ class CanvasViewModel: ObservableObject {
 
     func deselectAll() {
         selectionState.clear()
-
-        // End any active text editing
-        for (index, wrapper) in objects.enumerated() {
-            if var textObj = wrapper.asTextObject, textObj.isEditing {
-                textObj.isEditing = false
-                objects[index] = AnyCanvasObject(textObj)
-            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
-                rectObj.isEditing = false
-                objects[index] = AnyCanvasObject(rectObj)
-            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
-                ovalObj.isEditing = false
-                objects[index] = AnyCanvasObject(ovalObj)
-            }
-        }
+        endAllEditing()
     }
 
     // MARK: - Move Objects
 
     func moveObject(id: UUID, by offset: CGSize) {
         guard let index = objectIndex(withId: id) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.position.x += offset.width
-            textObj.position.y += offset.height
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.position.x += offset.width
-            rectObj.position.y += offset.height
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.position.x += offset.width
-            ovalObj.position.y += offset.height
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
+        objects[index].position.x += offset.width
+        objects[index].position.y += offset.height
+        objects[index] = objects[index].rebuilt()
     }
 
     /// Update rotation for an object
     func updateObjectRotation(id: UUID, rotation: CGFloat) {
         guard let index = objectIndex(withId: id) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.rotation = rotation
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.rotation = rotation
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.rotation = rotation
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
+        objects[index].rotation = rotation
+        objects[index] = objects[index].rebuilt()
     }
 
     /// Update position and rotation for an object (used by group rotation)
     func updateObjectPositionAndRotation(id: UUID, position: CGPoint, rotation: CGFloat) {
         guard let index = objectIndex(withId: id) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.position = position
-            textObj.rotation = rotation
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.position = position
-            rectObj.rotation = rotation
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.position = position
-            ovalObj.rotation = rotation
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
+        objects[index].position = position
+        objects[index].rotation = rotation
+        objects[index] = objects[index].rebuilt()
     }
 
     /// Update position and size for an object (used by resize)
     func updateObjectFrame(id: UUID, position: CGPoint, size: CGSize) {
         guard let index = objectIndex(withId: id) else { return }
-
-        let wrapper = objects[index]
-
-        if var textObj = wrapper.asTextObject {
-            textObj.position = position
-            textObj.size = size
-            objects[index] = AnyCanvasObject(textObj)
-        } else if var rectObj = wrapper.asRectangleObject {
-            rectObj.position = position
-            rectObj.size = size
-            objects[index] = AnyCanvasObject(rectObj)
-        } else if var ovalObj = wrapper.asOvalObject {
-            ovalObj.position = position
-            ovalObj.size = size
-            objects[index] = AnyCanvasObject(ovalObj)
-        }
+        objects[index].position = position
+        objects[index].size = size
+        objects[index] = objects[index].rebuilt()
     }
 
     func selectObjectOnly(id: UUID) {
         selectionState.select(id)
-
-        // Deselect any text editing
-        for (index, wrapper) in objects.enumerated() {
-            if var textObj = wrapper.asTextObject, textObj.isEditing {
-                textObj.isEditing = false
-                objects[index] = AnyCanvasObject(textObj)
-            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
-                rectObj.isEditing = false
-                objects[index] = AnyCanvasObject(rectObj)
-            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
-                ovalObj.isEditing = false
-                objects[index] = AnyCanvasObject(ovalObj)
-            }
-        }
+        endAllEditing()
     }
 
     /// Toggle selection of an object (for shift+click)
@@ -430,17 +282,9 @@ class CanvasViewModel: ObservableObject {
 
     /// End all text editing without clearing selection
     private func endAllEditing() {
-        for (index, wrapper) in objects.enumerated() {
-            if var textObj = wrapper.asTextObject, textObj.isEditing {
-                textObj.isEditing = false
-                objects[index] = AnyCanvasObject(textObj)
-            } else if var rectObj = wrapper.asRectangleObject, rectObj.isEditing {
-                rectObj.isEditing = false
-                objects[index] = AnyCanvasObject(rectObj)
-            } else if var ovalObj = wrapper.asOvalObject, ovalObj.isEditing {
-                ovalObj.isEditing = false
-                objects[index] = AnyCanvasObject(ovalObj)
-            }
+        for index in objects.indices where objects[index].isEditing {
+            objects[index].isEditing = false
+            objects[index] = objects[index].rebuilt()
         }
     }
 

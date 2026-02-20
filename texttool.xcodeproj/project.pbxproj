@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FF0B65001EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65011EABCDEF00310EBB /* SVGPath */; };
+		FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65031EABCDEF00310EBB /* SVGPath */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		FF0B34492EEABCA500310EBB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF0B65001EABCDEF00310EBB /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +65,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,7 @@
 			);
 			name = texttool;
 			packageProductDependencies = (
+				FF0B65011EABCDEF00310EBB /* SVGPath */,
 			);
 			productName = texttool;
 			productReference = FF0B34392EEABCA300310EBB /* texttool.app */;
@@ -135,6 +143,7 @@
 			);
 			name = texttoolTests;
 			packageProductDependencies = (
+				FF0B65031EABCDEF00310EBB /* SVGPath */,
 			);
 			productName = texttoolTests;
 			productReference = FF0B34482EEABCA500310EBB /* texttoolTests.xctest */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = FF0B34302EEABCA300310EBB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FF0B343A2EEABCA300310EBB /* Products */;
 			projectDirPath = "";
@@ -573,6 +585,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/SVGPath.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FF0B65011EABCDEF00310EBB /* SVGPath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
+			productName = SVGPath;
+		};
+		FF0B65031EABCDEF00310EBB /* SVGPath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
+			productName = SVGPath;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FF0B34312EEABCA300310EBB /* Project object */;
 }
