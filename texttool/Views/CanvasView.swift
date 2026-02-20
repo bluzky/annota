@@ -39,6 +39,9 @@ struct CanvasView: View {
     @State private var currentHoverLocation: CGPoint?
     @State private var canvasSize: CGSize = .zero
 
+    // Keyboard event monitor
+    @State private var keyMonitor: Any?
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -111,7 +114,16 @@ struct CanvasView: View {
                 }
             }
             .clipped()
-            .onAppear { canvasSize = geometry.size }
+            .onAppear {
+                canvasSize = geometry.size
+                installKeyMonitor()
+            }
+            .onDisappear {
+                if let monitor = keyMonitor {
+                    NSEvent.removeMonitor(monitor)
+                    keyMonitor = nil
+                }
+            }
             .onChange(of: geometry.size) { canvasSize = $0 }
         }
         .contentShape(Rectangle())
@@ -730,6 +742,47 @@ struct CanvasView: View {
         let distance = hypot(location.x - lastLocation.x, location.y - lastLocation.y)
 
         return timeDiff < doubleClickThreshold && distance < distanceThreshold
+    }
+
+    // MARK: - Keyboard Shortcuts
+
+    private func installKeyMonitor() {
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Let text fields handle their own keyboard input
+            if viewModel.isAnyObjectEditing {
+                return event
+            }
+
+            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+            // Cmd+C: Copy
+            if modifiers == .command && event.charactersIgnoringModifiers == "c" {
+                viewModel.copySelection()
+                return nil
+            }
+
+            // Cmd+X: Cut
+            if modifiers == .command && event.charactersIgnoringModifiers == "x" {
+                viewModel.cutSelection()
+                return nil
+            }
+
+            // Cmd+V: Paste
+            if modifiers == .command && event.charactersIgnoringModifiers == "v" {
+                viewModel.pasteFromClipboard(viewportSize: canvasSize)
+                return nil
+            }
+
+            // Delete (keyCode 51) or Forward Delete (keyCode 117)
+            if modifiers.isEmpty && (event.keyCode == 51 || event.keyCode == 117) {
+                if viewModel.selectionState.hasSelection {
+                    viewModel.deleteSelected()
+                    return nil
+                }
+            }
+
+            return event
+        }
     }
 
     // MARK: - Magnification (Pinch-to-Zoom)

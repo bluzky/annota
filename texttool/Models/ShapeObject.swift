@@ -6,7 +6,7 @@
 import SwiftUI
 import SVGPath
 
-struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
+struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject, Codable {
     // MARK: - CanvasObject
     let id: UUID
     var position: CGPoint
@@ -77,6 +77,81 @@ struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableOb
         self.rotation = rotation
         self.isLocked = isLocked
         self.zIndex = zIndex
+    }
+
+    // MARK: - Codable
+
+    private enum CodingKeys: String, CodingKey {
+        case id, position, size, rotation, isLocked, zIndex
+        case strokeColor, strokeWidth, strokeStyle
+        case fillColor, fillOpacity
+        case text, textAttributes
+        case preset, autoResizeHeight
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        position = try container.decode(CGPoint.self, forKey: .position)
+        size = try container.decode(CGSize.self, forKey: .size)
+        rotation = try container.decodeIfPresent(CGFloat.self, forKey: .rotation) ?? 0
+        isLocked = try container.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
+        zIndex = try container.decodeIfPresent(Int.self, forKey: .zIndex) ?? 0
+        let codableStroke = try container.decode(CodableColor.self, forKey: .strokeColor)
+        strokeColor = codableStroke.color
+        strokeWidth = try container.decodeIfPresent(CGFloat.self, forKey: .strokeWidth) ?? 2
+        strokeStyle = try container.decodeIfPresent(StrokeStyleType.self, forKey: .strokeStyle) ?? .solid
+        let codableFill = try container.decode(CodableColor.self, forKey: .fillColor)
+        fillColor = codableFill.color
+        fillOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .fillOpacity) ?? 0.1
+        text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
+        textAttributes = try container.decodeIfPresent(TextAttributes.self, forKey: .textAttributes) ?? .default
+        preset = try container.decode(ShapePreset.self, forKey: .preset)
+        autoResizeHeight = try container.decodeIfPresent(Bool.self, forKey: .autoResizeHeight) ?? false
+        isEditing = false
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(position, forKey: .position)
+        try container.encode(size, forKey: .size)
+        try container.encode(rotation, forKey: .rotation)
+        try container.encode(isLocked, forKey: .isLocked)
+        try container.encode(zIndex, forKey: .zIndex)
+        try container.encode(CodableColor(strokeColor), forKey: .strokeColor)
+        try container.encode(strokeWidth, forKey: .strokeWidth)
+        try container.encode(strokeStyle, forKey: .strokeStyle)
+        try container.encode(CodableColor(fillColor), forKey: .fillColor)
+        try container.encode(fillOpacity, forKey: .fillOpacity)
+        try container.encode(text, forKey: .text)
+        try container.encode(textAttributes, forKey: .textAttributes)
+        try container.encode(preset, forKey: .preset)
+        try container.encode(autoResizeHeight, forKey: .autoResizeHeight)
+    }
+
+    // MARK: - Copy
+
+    func copied(newId: UUID, zIndex: Int, offset: CGPoint) -> ShapeObject {
+        var copy = ShapeObject(
+            id: newId,
+            position: CGPoint(x: position.x + offset.x, y: position.y + offset.y),
+            size: size,
+            preset: preset,
+            color: strokeColor,
+            strokeWidth: strokeWidth,
+            strokeStyle: strokeStyle,
+            fillOpacity: fillOpacity,
+            text: text,
+            isEditing: false,
+            autoResizeHeight: autoResizeHeight,
+            rotation: rotation,
+            isLocked: false,
+            zIndex: zIndex
+        )
+        copy.fillColor = fillColor
+        copy.textAttributes = textAttributes
+        return copy
     }
 
     // MARK: - CanvasObject

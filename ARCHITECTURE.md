@@ -22,25 +22,46 @@ This document outlines the architecture for extending the existing canvas applic
 
 ## 1. Current State Analysis
 
-### Existing Capabilities
-- Single-selection only
-- Four tools: Select, Text, Rectangle, Circle
-- Basic hit testing
-- Text editing in shapes
-- Drag-to-create shapes
-- Color and font size customization
+### Existing Capabilities ✅
+- ✅ **Unified object protocol system** (`CanvasObject`, `TextContentObject`, `StrokableObject`, `FillableObject`)
+- ✅ **Type-erased wrapper** (`AnyCanvasObject`) for heterogeneous collections
+- ✅ **Multi-selection** with Shift+Click and marquee selection
+- ✅ **Resize/rotate transforms** via selection box with handles
+- ✅ **Canvas pan/zoom** (viewport system with trackpad gestures)
+- ✅ **Four tools**: Select, Text, Shape (Rectangle/Oval), with generic `ShapeObject`
+- ✅ **Advanced hit testing** with edge/corner/body detection
+- ✅ **Text editing** in shapes with auto-resize
+- ✅ **Drag-to-create** shapes and objects
+- ✅ **Rich styling**: Color, font size, stroke width, stroke styles (solid/dashed/dotted)
+- ✅ **Z-index management** for explicit rendering order
+- ✅ **Rotation support** with transform helpers in `CanvasObject` protocol
 
-### Gaps to Address
-- No multi-selection (Shift+Click)
-- No marquee selection (drag-to-select region)
-- No resize/rotate transforms
-- No canvas pan/zoom (viewport)
-- Limited tool variety
-- No stroke styles (dashed, dotted)
-- No line/arrow tools
-- No freehand drawing
-- No auto-numbering
-- No sticker/image support
+### Implementation Status
+
+**Phase 1: Foundation** - ✅ **COMPLETED**
+- Unified object system with protocols
+- Multi-selection with Shift+Click
+- Marquee drag-to-select
+- Selection box with resize/rotate handles
+- Viewport pan/zoom system
+- Gesture coordinator refactoring
+
+**Phase 2: Selection Box Interactions** - ✅ **COMPLETED**
+- Corner/edge resize handles
+- Rotation handles
+- Cursor feedback
+- Multi-object resize
+
+**Current Phase: New Tools** - 🚧 **IN PROGRESS**
+- Shape tool with generic `ShapeObject` ✅
+- Line/arrow tools (next priority)
+
+### Remaining Features to Address
+- Line/arrow tools (Phase 3)
+- Freehand drawing: pencil, highlighter (Phase 3)
+- Special annotations: auto-number, mosaic, note, sticker (Phase 4)
+- Enhanced shape varieties (Phase 5)
+- Undo/redo, keyboard shortcuts, persistence (Phase 6)
 
 ---
 
@@ -247,11 +268,18 @@ struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableOb
 
 ### 3.3 Line Objects
 
+**Design Decision**: Lines and arrows are implemented as **independent node objects** (not connection edges), following the industry-proven pattern from tldraw and Excalidraw.
+
+**Rationale**:
+- Phase 1 (current): Independent objects for annotation use cases
+- Phase 2 (future): Optional binding system if diagram features needed
+- See [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md) for full analysis
+
 ```swift
 struct LineObject: CanvasObject, StrokableObject {
     let id: UUID
-    var startPoint: CGPoint
-    var endPoint: CGPoint
+    var startPoint: CGPoint    // Control point 1
+    var endPoint: CGPoint      // Control point 2
     var rotation: CGFloat = 0
     var isLocked: Bool = false
     var zIndex: Int = 0
@@ -261,12 +289,12 @@ struct LineObject: CanvasObject, StrokableObject {
     var strokeWidth: CGFloat = 2
     var strokeStyle: StrokeStyle = .solid
 
-    // Label (NEW)
+    // Label (optional text annotation on line)
     var label: String = ""
     var labelAttributes: TextAttributes = TextAttributes()
     var isEditingLabel: Bool = false
 
-    // Computed properties
+    // Computed properties (CanvasObject conformance)
     var position: CGPoint {
         CGPoint(x: min(startPoint.x, endPoint.x),
                 y: min(startPoint.y, endPoint.y))
@@ -283,7 +311,7 @@ struct LineObject: CanvasObject, StrokableObject {
     }
 
     func hitTest(_ point: CGPoint, threshold: CGFloat = 8) -> HitTestResult? {
-        // Check control points first
+        // Check control points first (endpoints for reshaping)
         if distance(point, startPoint) < threshold { return .controlPoint(index: 0) }
         if distance(point, endPoint) < threshold { return .controlPoint(index: 1) }
 
@@ -301,8 +329,8 @@ struct LineObject: CanvasObject, StrokableObject {
 
 struct ArrowObject: CanvasObject, StrokableObject {
     let id: UUID
-    var startPoint: CGPoint
-    var endPoint: CGPoint
+    var startPoint: CGPoint    // Control point 1
+    var endPoint: CGPoint      // Control point 2
     var rotation: CGFloat = 0
     var isLocked: Bool = false
     var zIndex: Int = 0
@@ -316,10 +344,13 @@ struct ArrowObject: CanvasObject, StrokableObject {
     var startArrowHead: ArrowHead = .none
     var endArrowHead: ArrowHead = .filled
 
-    // Label
+    // Label (optional text annotation)
     var label: String = ""
     var labelAttributes: TextAttributes = TextAttributes()
     var isEditingLabel: Bool = false
+
+    // Optional binding (Phase 2 - future)
+    // var binding: ArrowBinding? = nil
 
     enum ArrowHead: String, CaseIterable {
         case none
@@ -327,6 +358,58 @@ struct ArrowObject: CanvasObject, StrokableObject {
         case filled    // Filled triangle
         case circle    // Circle endpoint
         case diamond   // Diamond shape
+    }
+
+    // Computed properties (same as LineObject)
+    var position: CGPoint {
+        CGPoint(x: min(startPoint.x, endPoint.x),
+                y: min(startPoint.y, endPoint.y))
+    }
+
+    var size: CGSize {
+        CGSize(width: abs(endPoint.x - startPoint.x),
+               height: abs(endPoint.y - startPoint.y))
+    }
+
+    var midPoint: CGPoint {
+        CGPoint(x: (startPoint.x + endPoint.x) / 2,
+                y: (startPoint.y + endPoint.y) / 2)
+    }
+}
+```
+
+**Future Enhancement (Phase 2)**: Optional binding system for connection-aware arrows
+
+```swift
+// Only implement if users request diagram/flowchart features
+struct ArrowBinding: Codable {
+    var sourceObjectId: UUID?
+    var targetObjectId: UUID?
+    var sourceAnchor: AnchorPoint = .auto
+    var targetAnchor: AnchorPoint = .auto
+
+    enum AnchorPoint {
+        case auto                    // Closest edge point
+        case center                  // Object center
+        case edge(Edge)             // Specific edge (top/right/bottom/left)
+        case point(CGPoint)         // Exact normalized point (0-1)
+    }
+}
+
+// Enhanced ArrowObject with optional binding
+extension ArrowObject {
+    var effectiveStartPoint: CGPoint {
+        if let binding = binding, let sourceId = binding.sourceObjectId {
+            return computeAnchorPoint(for: sourceId, anchor: binding.sourceAnchor)
+        }
+        return startPoint
+    }
+
+    var effectiveEndPoint: CGPoint {
+        if let binding = binding, let targetId = binding.targetObjectId {
+            return computeAnchorPoint(for: targetId, anchor: binding.targetAnchor)
+        }
+        return endPoint
     }
 }
 ```
@@ -1246,86 +1329,114 @@ extension CanvasView {
 
 ## 9. Implementation Phases
 
-### Phase 1: Foundation (Core Infrastructure)
+### Phase 1: Foundation (Core Infrastructure) - ✅ **COMPLETED**
 **Goal**: Establish the new architecture without breaking existing functionality
 
-1. **Unified Object System**
-   - Create `CanvasObject` protocol hierarchy
-   - Create `AnyCanvasObject` wrapper
-   - Migrate existing models to conform to protocols
-   - Update `CanvasViewModel` to use unified storage
+1. **Unified Object System** ✅
+   - Created `CanvasObject` protocol hierarchy
+   - Created `AnyCanvasObject` wrapper with type erasure
+   - Migrated existing models to conform to protocols
+   - Updated `CanvasViewModel` to use unified storage
 
-2. **Enhanced Selection System**
-   - Implement `SelectionState` with multi-selection
-   - Add Shift+Click for additive selection
-   - Implement marquee (drag-to-select) selection
-   - Create `SelectionBoxView` with handles
+2. **Enhanced Selection System** ✅
+   - Implemented `SelectionState` with multi-selection
+   - Added Shift+Click for additive selection
+   - Implemented marquee (drag-to-select) selection
+   - Created `SelectionBoxView` with handles
 
-3. **Viewport System**
-   - Implement `ViewportState` with pan/zoom
-   - Add two-finger trackpad gestures
-   - Add zoom controls to toolbar
+3. **Viewport System** ✅
+   - Implemented `ViewportState` with pan/zoom
+   - Added two-finger trackpad gestures
+   - Added zoom controls to toolbar
    - Transform canvas content by viewport
 
-4. **Gesture Refactoring**
-   - Implement `InteractionMode` state machine
-   - Create `GestureCoordinator`
+4. **Gesture Refactoring** ✅
+   - Implemented `InteractionMode` state machine
+   - Created `GestureCoordinator`
    - Handle keyboard modifiers
 
-**Deliverables**: Working multi-selection, pan/zoom, same tools as before
+**Deliverables**: ✅ Working multi-selection, pan/zoom, all existing tools functional
 
 ---
 
-### Phase 2: Selection Box Interactions
+### Phase 2: Selection Box Interactions - ✅ **COMPLETED**
 **Goal**: Full selection box manipulation
 
-1. **Resize Functionality**
+1. **Resize Functionality** ✅
    - Corner resize (diagonal)
    - Edge resize (horizontal/vertical)
    - Shift+resize for proportional scaling
    - Multi-object resize (scale from center)
 
-2. **Rotation Functionality**
+2. **Rotation Functionality** ✅
    - Rotation handles outside corners
    - Rotation cursor feedback
    - Shift+rotate for 15° snapping
-   - Single-object rotation only (initially)
+   - Single-object rotation
 
-3. **Cursor Feedback**
+3. **Cursor Feedback** ✅
    - Resize cursors on edges/corners
    - Rotation cursor outside corners
    - Move cursor inside selection
    - Tool-specific cursors
 
-**Deliverables**: Fully interactive selection box with resize/rotate
+**Deliverables**: ✅ Fully interactive selection box with resize/rotate
 
 ---
 
-### Phase 3: New Drawing Tools
+### Phase 3: New Drawing Tools - 🚧 **IN PROGRESS**
 **Goal**: Add line, arrow, pencil, highlighter
 
-1. **Line Tool**
-   - Two-point line drawing
-   - Stroke styles (solid, dashed, dotted)
-   - Selection shows two control points
-   - Double-click to add/edit label
+**Note**: Lines/arrows implemented as **independent node objects** (Phase 3.1), with optional binding system deferred to future phase if needed (see [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md)).
 
-2. **Arrow Tool**
-   - Extends line tool
-   - Arrow head styles (open, filled, etc.)
-   - Arrow at start/end/both options
+**Phase 3.1: Lines/Arrows as Independent Nodes** - 📋 **NEXT**
 
-3. **Pencil Tool**
-   - Freehand point collection
-   - Catmull-Rom smoothing
-   - Stroke customization
+1. **Line Tool** (3-4 days)
+   - `LineObject` data model with `startPoint`/`endPoint` control points
+   - Two-point drag-to-create gesture
+   - Stroke styles (solid, dashed, dotted) via existing `StrokeStyleType`
+   - Selection shows two control points for endpoint dragging
+   - Optional label support (double-click midpoint to add/edit)
+   - Hit testing: control points, line segment, label area
+   - `LineObjectView` for rendering
 
-4. **Highlighter Tool**
-   - Thick, semi-transparent stroke
+2. **Arrow Tool** (2-3 days)
+   - `ArrowObject` data model (extends line pattern)
+   - Arrowhead rendering: none, open (V), filled (triangle), circle, diamond
+   - `startArrowHead` and `endArrowHead` properties (both/either/neither)
+   - Arrowhead size scales with `strokeWidth`
+   - `ArrowObjectView` for rendering arrow with heads
+   - Toolbar controls for arrowhead style selection
+
+3. **Pencil Tool** (3-4 days)
+   - `PencilObject` data model with `points: [CGPoint]` array
+   - Freehand point collection during drag gesture
+   - Catmull-Rom spline smoothing algorithm
+   - Cached `smoothedPath: Path?` for performance
+   - Stroke customization (color, width, style)
+   - Bounding box computed from points
+
+4. **Highlighter Tool** (1-2 days)
+   - `HighlighterObject` data model (similar to `PencilObject`)
+   - Thick stroke (default 20pt), semi-transparent (0.4 opacity)
    - Default yellow color
+   - Round line caps for highlighter aesthetic
    - Optimized for annotation use
 
-**Deliverables**: Four new drawing tools fully functional
+**Estimated Total**: 9-13 days
+
+**Phase 3.2: Optional Binding System** - 🔮 **FUTURE** (only if needed)
+- Add `ArrowBinding` struct with source/target object IDs
+- Optional `binding` property on `ArrowObject`
+- Auto-update arrow positions when bound objects move
+- Snap-to-bind UX during arrow creation
+- Connection point rendering on shapes
+- Bind/unbind toggle in UI
+- See [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md) for details
+
+**Decision Point**: Only implement Phase 3.2 if users request diagram/flowchart features or show pain points with manual arrow repositioning.
+
+**Deliverables (Phase 3.1)**: Four new drawing tools (line, arrow, pencil, highlighter) as independent annotation objects
 
 ---
 
