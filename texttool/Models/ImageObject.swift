@@ -6,6 +6,10 @@
 import SwiftUI
 import AppKit
 
+/// Cache for decoded NSImages keyed by image data identity.
+/// Avoids re-decoding PNG data on every SwiftUI re-render.
+private let imageCache = NSCache<NSData, NSImage>()
+
 struct ImageObject: CanvasObject, Codable {
     // MARK: - CanvasObject Properties
     let id: UUID
@@ -46,9 +50,16 @@ struct ImageObject: CanvasObject, Codable {
 
     // MARK: - Computed Properties
 
-    /// Convert stored PNG data to NSImage for rendering
+    /// Convert stored PNG data to NSImage for rendering, using a cache
+    /// to avoid re-decoding on every SwiftUI body evaluation.
     var nsImage: NSImage? {
-        NSImage(data: imageData)
+        let key = imageData as NSData
+        if let cached = imageCache.object(forKey: key) {
+            return cached
+        }
+        guard let image = NSImage(data: imageData) else { return nil }
+        imageCache.setObject(image, forKey: key)
+        return image
     }
 
     // MARK: - Static Helpers

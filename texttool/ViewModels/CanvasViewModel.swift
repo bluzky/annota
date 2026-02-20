@@ -457,4 +457,45 @@ class CanvasViewModel: ObservableObject {
     func resetViewport() {
         viewport.reset()
     }
+
+    // MARK: - Export
+
+    /// Render all canvas objects to an NSImage.
+    /// The image covers the bounding box of all objects, with optional padding.
+    /// Returns nil if there are no objects to render.
+    @MainActor
+    func renderToImage(scale: CGFloat = 2.0, padding: CGFloat = 40) -> NSImage? {
+        guard !objects.isEmpty else { return nil }
+
+        // Compute tight bounding box over all objects
+        var minX = CGFloat.infinity, minY = CGFloat.infinity
+        var maxX = -CGFloat.infinity, maxY = -CGFloat.infinity
+        for obj in objects {
+            let bbox = obj.boundingBox()
+            minX = min(minX, bbox.minX)
+            minY = min(minY, bbox.minY)
+            maxX = max(maxX, bbox.maxX)
+            maxY = max(maxY, bbox.maxY)
+        }
+        let contentRect = CGRect(
+            x: minX - padding,
+            y: minY - padding,
+            width: (maxX - minX) + padding * 2,
+            height: (maxY - minY) + padding * 2
+        )
+
+        // Build a viewport that maps the content rect to screen coordinates starting at origin
+        let exportViewport = ViewportState(
+            offset: CGPoint(x: -contentRect.minX, y: -contentRect.minY),
+            scale: 1.0
+        )
+
+        let exportView = CanvasExportView(objects: objects, viewport: exportViewport)
+            .frame(width: contentRect.width, height: contentRect.height)
+
+        let renderer = ImageRenderer(content: exportView)
+        renderer.scale = scale
+        guard let cgImage = renderer.cgImage else { return nil }
+        return NSImage(cgImage: cgImage, size: contentRect.size)
+    }
 }

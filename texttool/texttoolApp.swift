@@ -13,5 +13,8 @@ struct texttoolApp: App {
         WindowGroup {
             ContentView()
         }
+        .commands {
+            CanvasFileCommands()
+        }
     }
 }

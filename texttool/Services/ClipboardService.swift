@@ -35,16 +35,16 @@ enum ClipboardService {
 
         // Prefer the best available pixel size: read from the pasteboard bitmap rep
         // to get actual pixel dimensions rather than point dimensions.
-        let pixelSize: CGSize = bestPixelSize(from: pasteboard, fallback: image.size)
+        let pixelSize: CGSize = bestPixelSize(from: pasteboard, image: image)
 
         guard let pngData = image.pngData() else { return nil }
         return (pngData, pixelSize)
     }
 
-    /// Returns the pixel dimensions of the first bitmap rep on the pasteboard,
+    /// Returns the pixel dimensions of the best available image representation,
     /// falling back to the NSImage point size if no bitmap rep is available.
-    private static func bestPixelSize(from pasteboard: NSPasteboard, fallback: CGSize) -> CGSize {
-        // Walk known lossless types first so we get real pixel counts
+    private static func bestPixelSize(from pasteboard: NSPasteboard, image: NSImage) -> CGSize {
+        // Try pasteboard bitmap data for common raster types
         let preferredTypes: [NSPasteboard.PasteboardType] = [.png, .tiff]
         for type in preferredTypes {
             if let data = pasteboard.data(forType: type),
@@ -52,7 +52,14 @@ enum ClipboardService {
                 return CGSize(width: rep.pixelsWide, height: rep.pixelsHigh)
             }
         }
-        return fallback
+
+        // Fall back to the NSImage's own bitmap representations (covers JPEG,
+        // HEIC, WebP, and any other format the system decoded for us).
+        if let rep = image.representations.first(where: { $0 is NSBitmapImageRep }) as? NSBitmapImageRep {
+            return CGSize(width: rep.pixelsWide, height: rep.pixelsHigh)
+        }
+
+        return image.size
     }
 }
 
