@@ -66,6 +66,11 @@ class CanvasViewModel: ObservableObject {
         objects.compactMap { $0.asShapeObject }
     }
 
+    /// Returns all image objects
+    var imageObjects: [ImageObject] {
+        objects.compactMap { $0.asImageObject }
+    }
+
     /// Check if any object is currently being edited
     var isAnyObjectEditing: Bool {
         objects.contains { $0.isEditing }
@@ -105,6 +110,41 @@ class CanvasViewModel: ObservableObject {
         objects.append(AnyCanvasObject(textObj))
         sortObjectsByZIndex()
         return textObj.id
+    }
+
+    @discardableResult
+    func addImageObject(imageData: Data, imageSize: CGSize, at position: CGPoint, maxSize: CGSize = .zero) -> UUID {
+        var size = imageSize.width > 0 && imageSize.height > 0
+            ? imageSize
+            : CGSize(width: 100, height: 100)
+
+        // Cap to maxSize (viewport canvas dimensions) while preserving aspect ratio
+        if maxSize.width > 0 && maxSize.height > 0 {
+            size = ImageObject.fittingSize(for: size, maxDimension: min(maxSize.width, maxSize.height))
+        }
+
+        let aspectRatio = size.width / size.height
+        // Position is the center point — convert to top-left origin
+        let origin = CGPoint(
+            x: position.x - size.width / 2,
+            y: position.y - size.height / 2
+        )
+        var imageObj = ImageObject(
+            position: origin,
+            size: size,
+            imageData: imageData,
+            aspectRatio: aspectRatio
+        )
+        imageObj.zIndex = nextZIndex
+        nextZIndex += 1
+
+        objects.append(AnyCanvasObject(imageObj))
+        sortObjectsByZIndex()
+        return imageObj.id
+    }
+
+    func updateImageObject(withId id: UUID, update: (inout ImageObject) -> Void) {
+        updateObject(withId: id, as: ImageObject.self, update: update)
     }
 
     func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) {
@@ -322,8 +362,29 @@ class CanvasViewModel: ObservableObject {
     }
 
     func pasteFromClipboard(viewportSize: CGSize = .zero) {
-        guard let codableObjects = ClipboardService.pasteObjects(), !codableObjects.isEmpty else { return }
+        // Try internal canvas clipboard first
+        if let codableObjects = ClipboardService.pasteObjects(), !codableObjects.isEmpty {
+            pasteCanvasObjects(codableObjects, viewportSize: viewportSize)
+            return
+        }
 
+        // Fall back to system image clipboard
+        if let (imageData, imageSize) = ClipboardService.pasteImageData() {
+            let screenCenter = viewportSize.width > 0 && viewportSize.height > 0
+                ? CGPoint(x: viewportSize.width / 2, y: viewportSize.height / 2)
+                : CGPoint(x: 400, y: 300)
+            let canvasCenter = viewport.screenToCanvas(screenCenter)
+            // Convert viewport screen size to canvas units so the cap respects current zoom
+            let canvasMaxSize = viewportSize.width > 0 && viewportSize.height > 0
+                ? CGSize(width: viewportSize.width / viewport.scale, height: viewportSize.height / viewport.scale)
+                : CGSize.zero
+            let newId = addImageObject(imageData: imageData, imageSize: imageSize, at: canvasCenter, maxSize: canvasMaxSize)
+            endAllEditing()
+            selectionState.select(newId)
+        }
+    }
+
+    private func pasteCanvasObjects(_ codableObjects: [CodableCanvasObject], viewportSize: CGSize) {
         // Compute the offset to center pasted objects in the current viewport
         let pasteOffset: CGPoint
         if viewportSize.width > 0 && viewportSize.height > 0 {

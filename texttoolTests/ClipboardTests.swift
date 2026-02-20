@@ -214,4 +214,145 @@ struct ClipboardTests {
         #expect(!vm.isSelected(id1))
         #expect(!vm.isSelected(shapeId))
     }
+
+    // MARK: - ImageObject Codable Round-Trip
+
+    @Test func imageObjectCodableRoundTrip() async throws {
+        // Create minimal 1x1 PNG data
+        let pngData = makeSinglePixelPNG()
+
+        let original = ImageObject(
+            position: CGPoint(x: 50, y: 75),
+            size: CGSize(width: 200, height: 150),
+            imageData: pngData,
+            aspectRatio: 4.0 / 3.0,
+            maintainAspectRatio: true,
+            rotation: 0.25,
+            zIndex: 2
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(ImageObject.self, from: data)
+
+        #expect(decoded.id == original.id)
+        #expect(decoded.position == original.position)
+        #expect(decoded.size == original.size)
+        #expect(abs(decoded.aspectRatio - original.aspectRatio) < 0.001)
+        #expect(decoded.maintainAspectRatio == original.maintainAspectRatio)
+        #expect(decoded.rotation == original.rotation)
+        #expect(decoded.zIndex == original.zIndex)
+        #expect(decoded.imageData == original.imageData)
+    }
+
+    @Test func codableCanvasObjectWithImageRoundTrip() async throws {
+        let pngData = makeSinglePixelPNG()
+        let imageObj = ImageObject(
+            position: CGPoint(x: 10, y: 20),
+            size: CGSize(width: 100, height: 100),
+            imageData: pngData,
+            aspectRatio: 1.0
+        )
+
+        let codables: [CodableCanvasObject] = [.image(imageObj)]
+        let data = try JSONEncoder().encode(codables)
+        let decoded = try JSONDecoder().decode([CodableCanvasObject].self, from: data)
+
+        #expect(decoded.count == 1)
+        if case .image(let decodedImage) = decoded[0] {
+            #expect(decodedImage.id == imageObj.id)
+            #expect(decodedImage.imageData == imageObj.imageData)
+        } else {
+            Issue.record("Expected .image case")
+        }
+    }
+
+    @Test func imageObjectFittingSizePreservesAspectRatio() {
+        // Landscape: 800x400 should fit within 300px max
+        let landscapeSize = CGSize(width: 800, height: 400)
+        let fitted = ImageObject.fittingSize(for: landscapeSize, maxDimension: 300)
+        #expect(abs(fitted.width / fitted.height - 2.0) < 0.001) // aspect ratio preserved
+        #expect(fitted.width <= 300)
+        #expect(fitted.height <= 300)
+
+        // Portrait: 400x800 should fit within 300px max
+        let portraitSize = CGSize(width: 400, height: 800)
+        let fittedPortrait = ImageObject.fittingSize(for: portraitSize, maxDimension: 300)
+        #expect(abs(fittedPortrait.width / fittedPortrait.height - 0.5) < 0.001) // aspect ratio preserved
+        #expect(fittedPortrait.width <= 300)
+        #expect(fittedPortrait.height <= 300)
+
+        // Small image: should not be scaled up
+        let smallSize = CGSize(width: 50, height: 50)
+        let fittedSmall = ImageObject.fittingSize(for: smallSize, maxDimension: 300)
+        #expect(fittedSmall.width == 50)
+        #expect(fittedSmall.height == 50)
+    }
+
+    @Test func addImageObjectCentersOnPosition() async throws {
+        let vm = CanvasViewModel()
+        let pngData = makeSinglePixelPNG()
+        let imageSize = CGSize(width: 600, height: 400)
+        let center = CGPoint(x: 200, y: 150)
+
+        let id = vm.addImageObject(imageData: pngData, imageSize: imageSize, at: center)
+
+        let obj = vm.imageObjects.first { $0.id == id }
+        #expect(obj != nil)
+
+        // Size should match real pixel dimensions when no maxSize is given
+        #expect(obj!.size == imageSize)
+
+        // The object's bounding box center should match the requested center
+        let bbox = obj!.boundingBox()
+        #expect(abs(bbox.midX - center.x) < 0.5)
+        #expect(abs(bbox.midY - center.y) < 0.5)
+    }
+
+    @Test func addImageObjectCapsToMaxSize() async throws {
+        let vm = CanvasViewModel()
+        let pngData = makeSinglePixelPNG()
+        // Large image that exceeds the viewport
+        let imageSize = CGSize(width: 2000, height: 1000)
+        let maxSize = CGSize(width: 800, height: 600)
+        let center = CGPoint(x: 400, y: 300)
+
+        let id = vm.addImageObject(imageData: pngData, imageSize: imageSize, at: center, maxSize: maxSize)
+        let obj = vm.imageObjects.first { $0.id == id }!
+
+        // Should fit within the min(maxSize) dimension while preserving aspect ratio
+        #expect(obj.size.width <= maxSize.width)
+        #expect(obj.size.height <= maxSize.height)
+        #expect(abs(obj.size.width / obj.size.height - 2.0) < 0.001) // 2000/1000 aspect ratio preserved
+    }
+
+    @Test func pastedImageIsHighestZIndex() async throws {
+        let vm = CanvasViewModel()
+        // Add some existing objects
+        vm.addTextObject(at: CGPoint(x: 10, y: 10))
+        vm.addShape(preset: .rectangle, from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
+
+        let maxExistingZIndex = vm.objects.map(\.zIndex).max() ?? 0
+
+        let pngData = makeSinglePixelPNG()
+        let id = vm.addImageObject(imageData: pngData, imageSize: CGSize(width: 100, height: 100), at: .zero)
+        let imageObj = vm.imageObjects.first { $0.id == id }!
+
+        #expect(imageObj.zIndex > maxExistingZIndex)
+    }
+}
+
+// MARK: - Helpers
+
+private func makeSinglePixelPNG() -> Data {
+    // Create a 1x1 white NSImage and convert to PNG
+    let image = NSImage(size: NSSize(width: 1, height: 1))
+    image.lockFocus()
+    NSColor.white.setFill()
+    NSRect(x: 0, y: 0, width: 1, height: 1).fill()
+    image.unlockFocus()
+    guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+        return Data()
+    }
+    let rep = NSBitmapImageRep(cgImage: cgImage)
+    return rep.representation(using: .png, properties: [:]) ?? Data()
 }

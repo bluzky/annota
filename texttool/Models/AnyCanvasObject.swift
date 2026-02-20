@@ -68,6 +68,8 @@ struct AnyCanvasObject: Identifiable {
             self.objectType = .text
         case is ShapeObject:
             self.objectType = .shape
+        case is ImageObject:
+            self.objectType = .image
         default:
             self.objectType = .unknown
         }
@@ -191,6 +193,11 @@ struct AnyCanvasObject: Identifiable {
         _object as? ShapeObject
     }
 
+    /// Get as ImageObject if applicable
+    var asImageObject: ImageObject? {
+        _object as? ImageObject
+    }
+
     // MARK: - Protocol Checks
 
     /// Check if underlying object conforms to StrokableObject
@@ -208,7 +215,13 @@ struct AnyCanvasObject: Identifiable {
 
 extension AnyCanvasObject: Equatable {
     static func == (lhs: AnyCanvasObject, rhs: AnyCanvasObject) -> Bool {
-        lhs.id == rhs.id
+        guard lhs.id == rhs.id else { return false }
+        // Compare geometric state so SwiftUI re-renders when position/size/rotation changes
+        return lhs.position == rhs.position
+            && lhs.size == rhs.size
+            && lhs.rotation == rhs.rotation
+            && lhs.zIndex == rhs.zIndex
+            && lhs.isEditing == rhs.isEditing
     }
 }
 
