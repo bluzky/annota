@@ -50,7 +50,7 @@ private struct ExportImageObjectView: View {
     let object: ImageObject
 
     var body: some View {
-        if let nsImage = NSImage(data: object.imageData) {
+        if let nsImage = object.nsImage {
             Image(nsImage: nsImage)
                 .resizable()
                 .frame(width: object.size.width, height: object.size.height)
