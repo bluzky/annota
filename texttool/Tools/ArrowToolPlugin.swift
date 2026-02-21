@@ -6,7 +6,7 @@
 import SwiftUI
 
 /// Tool plugin for creating arrows via drag-to-create gesture.
-/// Renders preview with arrowhead; creates LineObject with endArrowHead.
+/// Renders preview with arrowhead; creates LineObject with endArrowHead = .open.
 struct ArrowToolPlugin: CanvasTool {
     let id = "arrow-tool"
     let toolType: DrawingTool = .arrow
@@ -27,33 +27,14 @@ struct ArrowToolPlugin: CanvasTool {
         viewModel: CanvasViewModel
     ) -> AnyView {
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-        let end = shiftHeld ? constrainToAngle(from: start, to: current) : current
-        let angle = atan2(end.y - start.y, end.x - start.x)
-        let headLength: CGFloat = 14
+        let end = shiftHeld ? constrainLineToAngle(from: start, to: current) : current
+
+        guard let mockArrow = makeArrow(from: start, to: end, viewModel: viewModel) else {
+            return AnyView(EmptyView())
+        }
 
         return AnyView(
-            ZStack {
-                // Line
-                Path { path in
-                    path.move(to: start)
-                    path.addLine(to: end)
-                }
-                .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-
-                // Arrow head (open V)
-                Path { path in
-                    path.move(to: CGPoint(
-                        x: end.x - headLength * cos(angle - .pi / 6),
-                        y: end.y - headLength * sin(angle - .pi / 6)
-                    ))
-                    path.addLine(to: end)
-                    path.addLine(to: CGPoint(
-                        x: end.x - headLength * cos(angle + .pi / 6),
-                        y: end.y - headLength * sin(angle + .pi / 6)
-                    ))
-                }
-                .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-            }
+            LineObjectView(object: mockArrow, isSelected: false, viewModel: viewModel)
         )
     }
 
@@ -74,20 +55,25 @@ struct ArrowToolPlugin: CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     ) {
-        let finalEnd = shiftHeld ? constrainToAngle(from: start, to: end) : end
-        viewModel.addLine(from: start, to: finalEnd, asArrow: true)
+        let finalEnd = shiftHeld ? constrainLineToAngle(from: start, to: end) : end
+        guard let arrow = makeArrow(from: start, to: finalEnd, viewModel: viewModel) else { return }
+        viewModel.addObject(arrow)
     }
 
-    private func constrainToAngle(from start: CGPoint, to end: CGPoint) -> CGPoint {
-        let dx = end.x - start.x
-        let dy = end.y - start.y
-        let distance = hypot(dx, dy)
-        let angle = atan2(dy, dx)
-        let snapAngle = CGFloat.pi / 12
-        let snappedAngle = (angle / snapAngle).rounded() * snapAngle
-        return CGPoint(
-            x: start.x + distance * cos(snappedAngle),
-            y: start.y + distance * sin(snappedAngle)
+    // MARK: - Private Helpers
+
+    private func makeArrow(
+        from start: CGPoint,
+        to end: CGPoint,
+        viewModel: CanvasViewModel
+    ) -> LineObject? {
+        let length = hypot(end.x - start.x, end.y - start.y)
+        guard length > 3 else { return nil }
+        return LineObject(
+            startPoint: start,
+            endPoint: end,
+            strokeColor: viewModel.activeColor,
+            endArrowHead: .open
         )
     }
 }

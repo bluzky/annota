@@ -84,7 +84,7 @@ struct ShapeObjectView: View {
     private func updateHeight() {
         let newHeight = calculatedTextHeight + 24
         if newHeight > object.size.height {
-            viewModel.updateShapeObject(withId: object.id) { shape in
+            viewModel.updateObject(withId: object.id, as: ShapeObject.self) { shape in
                 shape.size.height = newHeight
             }
         }
@@ -92,7 +92,7 @@ struct ShapeObjectView: View {
 
     private func updateHeightIfNeeded(_ newHeight: CGFloat) {
         if newHeight > object.size.height {
-            viewModel.updateShapeObject(withId: object.id) { shape in
+            viewModel.updateObject(withId: object.id, as: ShapeObject.self) { shape in
                 shape.size.height = newHeight
             }
         }

@@ -36,8 +36,15 @@ struct TextToolPlugin: CanvasTool {
             // Currently editing - just commit without creating new
             viewModel.deselectAll()
         } else {
-            // Not editing - create new text object
-            let newId = viewModel.addTextObject(at: point)
+            // Not editing - construct and add new text object, then start editing
+            let newObj = TextObject(
+                position: point,
+                text: "",
+                fontSize: viewModel.activeTextSize,
+                color: viewModel.activeColor,
+                isEditing: true
+            )
+            let newId = viewModel.addObject(newObj)
             viewModel.startEditing(objectId: newId)
         }
     }

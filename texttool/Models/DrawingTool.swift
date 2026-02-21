@@ -16,18 +16,3 @@ enum DrawingTool: Equatable {
     case hand
 }
 
-extension DrawingTool {
-    var isShapeTool: Bool {
-        if case .shape = self { return true }
-        return false
-    }
-
-    var shapePreset: ShapePreset? {
-        if case .shape(let p) = self { return p }
-        return nil
-    }
-
-    var isLineTool: Bool {
-        self == .line || self == .arrow
-    }
-}

@@ -12,7 +12,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ToolbarView(viewModel: viewModel)
+            ToolbarView(viewModel: viewModel, toolRegistry: ToolRegistry.shared)
             CanvasView(viewModel: viewModel)
         }
         .frame(minWidth: 800, minHeight: 600)

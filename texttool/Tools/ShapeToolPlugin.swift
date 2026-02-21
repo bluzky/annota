@@ -23,7 +23,8 @@ struct ShapeToolPlugin: CanvasTool {
 
     /// Matches any .shape(_) DrawingTool variant
     func matches(_ tool: DrawingTool) -> Bool {
-        tool.isShapeTool
+        if case .shape = tool { return true }
+        return false
     }
 
     func renderPreview(
@@ -31,24 +32,19 @@ struct ShapeToolPlugin: CanvasTool {
         current: CGPoint,
         viewModel: CanvasViewModel
     ) -> AnyView {
-        guard let preset = viewModel.selectedTool.shapePreset else {
+        guard case .shape(let preset) = viewModel.selectedTool else {
             return AnyView(EmptyView())
         }
 
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-        let rawWidth = abs(current.x - start.x)
-        let rawHeight = abs(current.y - start.y)
-        let width = shiftHeld ? max(rawWidth, rawHeight) : rawWidth
-        let height = shiftHeld ? max(rawWidth, rawHeight) : rawHeight
-        let x = min(start.x, current.x) + width / 2
-        let y = min(start.y, current.y) + height / 2
-        let previewRect = CGRect(origin: .zero, size: CGSize(width: width, height: height))
+        let end = clampedEnd(start: start, current: current, shiftHeld: shiftHeld)
+
+        guard let mockObject = makeShape(preset: preset, from: start, to: end, viewModel: viewModel) else {
+            return AnyView(EmptyView())
+        }
 
         return AnyView(
-            preset.path(in: previewRect)
-                .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-                .frame(width: width, height: height)
-                .position(x: x, y: y)
+            ShapeObjectView(object: mockObject, isSelected: false, viewModel: viewModel)
         )
     }
 
@@ -69,21 +65,38 @@ struct ShapeToolPlugin: CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     ) {
-        guard let preset = viewModel.selectedTool.shapePreset else { return }
+        guard case .shape(let preset) = viewModel.selectedTool else { return }
+        let finalEnd = clampedEnd(start: start, current: end, shiftHeld: shiftHeld)
+        guard let shape = makeShape(preset: preset, from: start, to: finalEnd, viewModel: viewModel) else { return }
+        viewModel.addObject(shape)
+    }
 
-        let finalEnd: CGPoint
-        if shiftHeld {
-            let rawWidth = abs(end.x - start.x)
-            let rawHeight = abs(end.y - start.y)
-            let side = max(rawWidth, rawHeight)
-            finalEnd = CGPoint(
-                x: start.x + (end.x >= start.x ? side : -side),
-                y: start.y + (end.y >= start.y ? side : -side)
-            )
-        } else {
-            finalEnd = end
-        }
+    // MARK: - Private Helpers
 
-        viewModel.addShape(preset: preset, from: start, to: finalEnd)
+    private func makeShape(
+        preset: ShapePreset,
+        from start: CGPoint,
+        to end: CGPoint,
+        viewModel: CanvasViewModel
+    ) -> ShapeObject? {
+        let origin = CGPoint(x: min(start.x, end.x), y: min(start.y, end.y))
+        let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
+        guard size.width > 1 && size.height > 1 else { return nil }
+        return ShapeObject(
+            position: origin,
+            size: size,
+            preset: preset,
+            color: viewModel.activeColor,
+            autoResizeHeight: viewModel.autoResizeShapes
+        )
+    }
+
+    private func clampedEnd(start: CGPoint, current: CGPoint, shiftHeld: Bool) -> CGPoint {
+        guard shiftHeld else { return current }
+        let side = max(abs(current.x - start.x), abs(current.y - start.y))
+        return CGPoint(
+            x: start.x + (current.x >= start.x ? side : -side),
+            y: start.y + (current.y >= start.y ? side : -side)
+        )
     }
 }

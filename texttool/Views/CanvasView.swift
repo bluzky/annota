@@ -67,8 +67,8 @@ struct CanvasView: View {
                     // Tool drag preview (dispatched via ToolRegistry)
                     if let start = viewModel.dragStartPoint,
                        let current = viewModel.currentDragPoint,
-                       let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-                        tool.renderPreview(
+                   let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                     tool.renderPreview(
                             start: start,
                             current: current,
                             viewModel: viewModel
@@ -177,10 +177,8 @@ struct CanvasView: View {
                 } else {
                     NSCursor.arrow.set()
                 }
-            } else if viewModel.selectedTool == .text {
-                NSCursor.iBeam.set()
-            } else if viewModel.selectedTool.isLineTool {
-                NSCursor.crosshair.set()
+            } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                tool.metadata.cursorType.set()
             } else {
                 NSCursor.arrow.set()
             }
@@ -265,6 +263,7 @@ struct CanvasView: View {
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
         // Delegate to registered tool plugin (shape, line, arrow, text, etc.)
+        // Select and pan are not registered — their nil return falls through to inline handling below.
         if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
             tool.handleDragChanged(
                 start: canvasStart,
@@ -272,10 +271,11 @@ struct CanvasView: View {
                 viewModel: viewModel
             )
             return
+        } else if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
         }
 
         if viewModel.selectedTool == .select {
-            // Don't drag if an object is being edited
             if viewModel.isAnyObjectEditing {
                 return
             }
@@ -352,7 +352,7 @@ struct CanvasView: View {
             if let cpIndex = draggingControlPointIndex,
                let objId = draggingControlPointObjectId {
                 let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-                viewModel.updateLineObject(withId: objId) { line in
+                viewModel.updateObject(withId: objId, as: LineObject.self) { line in
                     let newPoint: CGPoint
                     if shiftHeld {
                         let anchor = cpIndex == 0 ? line.endPoint : line.startPoint
@@ -655,7 +655,7 @@ struct CanvasView: View {
         if distance < 5 {
             handleClick(at: value.location)
         } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-            // Delegate drag-end to registered tool plugin
+            // Delegate drag-end to registered tool plugin (not select/pan — those are handled inline)
             let start = viewModel.dragStartPoint ?? canvasStart
             let shiftHeld = NSEvent.modifierFlags.contains(.shift)
             tool.handleDragEnded(
@@ -664,6 +664,8 @@ struct CanvasView: View {
                 viewModel: viewModel,
                 shiftHeld: shiftHeld
             )
+        } else if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
         }
 
         // Reset drag state
@@ -698,10 +700,13 @@ struct CanvasView: View {
 
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
 
-        // Delegate to registered tool plugin for click handling
+        // Delegate to registered tool plugin for click handling.
+        // Select and pan are not registered — their nil return falls through to inline handling.
         if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
             tool.handleClick(at: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
             return
+        } else if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
         }
 
         if viewModel.selectedTool == .select {
@@ -850,8 +855,8 @@ struct CanvasView: View {
         let dy = end.y - start.y
         let distance = hypot(dx, dy)
         let angle = atan2(dy, dx)
-        // Snap to nearest 15-degree (pi/12)
-        let snapAngle = CGFloat.pi / 12
+        // Snap to nearest 45-degree increment (pi/4)
+        let snapAngle = CGFloat.pi / 4
         let snappedAngle = (angle / snapAngle).rounded() * snapAngle
         return CGPoint(
             x: start.x + distance * cos(snappedAngle),

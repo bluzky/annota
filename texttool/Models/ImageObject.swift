@@ -6,8 +6,9 @@
 import SwiftUI
 import AppKit
 
-/// Cache for decoded NSImages keyed by a stable string key (object UUID).
-/// Using a UUID-based key avoids hashing the entire PNG blob on every cache lookup.
+/// Cache for decoded NSImages keyed by object UUID.
+/// imageData is immutable (let) on ImageObject — a new object with a new id is always
+/// created when the image changes — so the UUID key never goes stale.
 private let imageCache = NSCache<NSString, NSImage>()
 
 struct ImageObject: CanvasObject, CopyableCanvasObject {
@@ -20,7 +21,7 @@ struct ImageObject: CanvasObject, CopyableCanvasObject {
     var zIndex: Int = 0
 
     // MARK: - ImageObject Specific
-    var imageData: Data
+    let imageData: Data
     var aspectRatio: CGFloat
     var maintainAspectRatio: Bool = true
 
@@ -50,9 +51,10 @@ struct ImageObject: CanvasObject, CopyableCanvasObject {
 
     // MARK: - Computed Properties
 
-    /// Convert stored PNG data to NSImage for rendering, using a cache
+    /// Convert stored PNG data to NSImage for rendering, using a cache keyed by UUID
     /// to avoid re-decoding on every SwiftUI body evaluation.
-    /// The cache is keyed by the object's stable UUID to avoid hashing the entire Data blob.
+    /// Safe to use UUID as key because imageData is immutable (let) — the UUID never
+    /// outlives the data it was created with.
     var nsImage: NSImage? {
         let key = id.uuidString as NSString
         if let cached = imageCache.object(forKey: key) {

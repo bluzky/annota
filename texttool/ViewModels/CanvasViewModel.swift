@@ -93,22 +93,6 @@ class CanvasViewModel: ObservableObject {
         return obj.id
     }
 
-    func addTextObject(at position: CGPoint) -> UUID {
-        var textObj = TextObject(
-            position: position,
-            text: "",
-            fontSize: activeTextSize,
-            color: activeColor,
-            isEditing: true
-        )
-        textObj.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(textObj))
-        sortObjectsByZIndex()
-        return textObj.id
-    }
-
     @discardableResult
     func addImageObject(imageData: Data, imageSize: CGSize, at position: CGPoint, maxSize: CGSize = .zero) -> UUID {
         var size = imageSize.width > 0 && imageSize.height > 0
@@ -140,60 +124,6 @@ class CanvasViewModel: ObservableObject {
         return imageObj.id
     }
 
-    func updateImageObject(withId id: UUID, update: (inout ImageObject) -> Void) {
-        updateObject(withId: id, as: ImageObject.self, update: update)
-    }
-
-    func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) {
-        let origin = CGPoint(
-            x: min(start.x, end.x),
-            y: min(start.y, end.y)
-        )
-        let size = CGSize(
-            width: abs(end.x - start.x),
-            height: abs(end.y - start.y)
-        )
-
-        // Skip tiny shapes (likely accidental clicks)
-        guard size.width > 1 && size.height > 1 else { return }
-
-        var shape = ShapeObject(
-            position: origin,
-            size: size,
-            preset: preset,
-            color: activeColor,
-            autoResizeHeight: autoResizeShapes
-        )
-        shape.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(shape))
-        sortObjectsByZIndex()
-    }
-
-    func addLine(from start: CGPoint, to end: CGPoint, asArrow: Bool = false) {
-        // Skip tiny lines (likely accidental clicks)
-        let length = hypot(end.x - start.x, end.y - start.y)
-        guard length > 3 else { return }
-
-        var line = LineObject(
-            startPoint: start,
-            endPoint: end,
-            strokeColor: activeColor,
-            endArrowHead: asArrow ? .open : .none
-        )
-        line.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(line))
-        sortObjectsByZIndex()
-    }
-
-    /// Update a LineObject in place
-    func updateLineObject(withId id: UUID, update: (inout LineObject) -> Void) {
-        updateObject(withId: id, as: LineObject.self, update: update)
-    }
-
     // MARK: - Remove Objects
 
     /// Remove object by ID
@@ -213,16 +143,6 @@ class CanvasViewModel: ObservableObject {
               var obj = objects[index].asType(T.self) else { return }
         update(&obj)
         objects[index] = AnyCanvasObject(obj)
-    }
-
-    /// Update a TextObject in place
-    func updateTextObject(withId id: UUID, update: (inout TextObject) -> Void) {
-        updateObject(withId: id, as: TextObject.self, update: update)
-    }
-
-    /// Update a ShapeObject in place
-    func updateShapeObject(withId id: UUID, update: (inout ShapeObject) -> Void) {
-        updateObject(withId: id, as: ShapeObject.self, update: update)
     }
 
     // MARK: - Hit Testing & Selection
@@ -265,10 +185,6 @@ class CanvasViewModel: ObservableObject {
             updated.text = text
             objects[index] = AnyCanvasObject(updated)
         }
-    }
-
-    func updateTextObjectSize(objectId: UUID, size: CGSize) {
-        updateTextObject(withId: objectId) { $0.size = size }
     }
 
     func deselectAll() {
