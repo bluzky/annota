@@ -20,6 +20,12 @@ import SwiftUI
 struct AnyCanvasObject: Identifiable {
     let id: UUID
 
+    /// Monotonically increasing version stamp.  Every `init` gets a unique value,
+    /// so two wrappers compare as equal only when they are literally the same snapshot.
+    /// This avoids enumerating every concrete-type field in `Equatable`.
+    private let _version: UInt64
+    @MainActor private static var _nextVersion: UInt64 = 0
+
     // Store the underlying object
     private let _object: Any
 
@@ -32,6 +38,7 @@ struct AnyCanvasObject: Identifiable {
     private let _contains: (CGPoint) -> Bool
     private let _boundingBox: () -> CGRect
     private let _hitTest: (CGPoint, CGFloat) -> HitTestResult?
+    private let _intersectsRect: (CGRect) -> Bool
 
     // TextContentObject closures (nil when underlying type doesn't conform)
     private let _getIsEditing: (() -> Bool)?
@@ -46,8 +53,11 @@ struct AnyCanvasObject: Identifiable {
 
     // MARK: - Initialization
 
+    @MainActor
     init<T: CanvasObject>(_ object: T) {
         self.id = object.id
+        self._version = Self._nextVersion
+        Self._nextVersion += 1
         self._object = object
         self.underlyingTypeId = ObjectIdentifier(T.self)
         self._usesControlPoints = object.usesControlPoints
@@ -60,6 +70,7 @@ struct AnyCanvasObject: Identifiable {
         self._contains = { object.contains($0) }
         self._boundingBox = { object.boundingBox() }
         self._hitTest = { object.hitTest($0, threshold: $1) }
+        self._intersectsRect = { object.intersectsRect($0) }
 
         // TextContentObject closures — set only when the underlying type conforms
         if let textObj = object as? any TextContentObject {
@@ -91,6 +102,10 @@ struct AnyCanvasObject: Identifiable {
 
     func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         _hitTest(point, threshold)
+    }
+
+    func intersectsRect(_ rect: CGRect) -> Bool {
+        _intersectsRect(rect)
     }
 
     // MARK: - TextContentObject Properties (read-only)
@@ -154,15 +169,9 @@ struct AnyCanvasObject: Identifiable {
 
 extension AnyCanvasObject: Equatable {
     static func == (lhs: AnyCanvasObject, rhs: AnyCanvasObject) -> Bool {
-        guard lhs.id == rhs.id else { return false }
-        // Compare all observable state so SwiftUI re-renders when anything changes.
-        return lhs.position == rhs.position
-            && lhs.size == rhs.size
-            && lhs.rotation == rhs.rotation
-            && lhs.zIndex == rhs.zIndex
-            && lhs.isLocked == rhs.isLocked
-            && lhs.isEditing == rhs.isEditing
-            && lhs.text == rhs.text
+        // Version is unique per init, so this catches every concrete-type field change
+        // without needing to enumerate them (strokeColor, arrowheads, imageData, etc.).
+        lhs.id == rhs.id && lhs._version == rhs._version
     }
 }
 

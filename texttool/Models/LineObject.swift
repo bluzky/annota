@@ -244,6 +244,50 @@ struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
         CGRect(origin: position, size: size)
     }
 
+    /// Precise marquee-selection test: returns true only when the line segment (or its label)
+    /// actually intersects the marquee rectangle, not just its axis-aligned bounding box.
+    func intersectsRect(_ rect: CGRect) -> Bool {
+        // Fast reject: if the AABB of the line doesn't overlap the rect, nothing can intersect.
+        guard rect.intersects(boundingBox()) else { return false }
+
+        // Label area check
+        if !label.isEmpty && rect.intersects(labelBounds()) { return true }
+
+        // Either endpoint inside the rect
+        if rect.contains(startPoint) || rect.contains(endPoint) { return true }
+
+        // Cohen-Sutherland parametric line-segment clip against the rect edges.
+        // We look for any overlap of the parameter t ∈ [0,1] after clipping.
+        var tMin: CGFloat = 0
+        var tMax: CGFloat = 1
+        let dx = endPoint.x - startPoint.x
+        let dy = endPoint.y - startPoint.y
+
+        // Clip against each of the four half-planes.
+        // Returns false (reject) if the interval becomes empty.
+        func clip(p: CGFloat, q: CGFloat) -> Bool {
+            if p == 0 {
+                return q >= 0  // parallel; reject if outside
+            }
+            let t = q / p
+            if p < 0 {
+                if t > tMax { return false }
+                if t > tMin { tMin = t }
+            } else {
+                if t < tMin { return false }
+                if t < tMax { tMax = t }
+            }
+            return true
+        }
+
+        guard clip(p: -dx, q: startPoint.x - rect.minX) else { return false }
+        guard clip(p:  dx, q: rect.maxX - startPoint.x) else { return false }
+        guard clip(p: -dy, q: startPoint.y - rect.minY) else { return false }
+        guard clip(p:  dy, q: rect.maxY - startPoint.y) else { return false }
+
+        return tMin <= tMax
+    }
+
     func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         let localPoint = rotation != 0 ? transformToLocal(point) : point
 

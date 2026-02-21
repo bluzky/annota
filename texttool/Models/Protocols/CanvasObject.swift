@@ -46,12 +46,24 @@ protocol CanvasObject: Identifiable {
     /// Whether this object uses control points for interaction instead of a selection box.
     /// Objects that return true (e.g. lines) show control-point handles rather than a bounding-box overlay.
     var usesControlPoints: Bool { get }
+
+    /// Return true if this object visually intersects the given canvas-coordinate rectangle.
+    /// Used for marquee (rubber-band) selection to avoid false positives from AABB expansion
+    /// on non-rectangular objects such as diagonal lines.
+    /// The default implementation delegates to the axis-aligned bounding box.
+    func intersectsRect(_ rect: CGRect) -> Bool
 }
 
 // MARK: - Default Implementations
 
 extension CanvasObject {
     var usesControlPoints: Bool { false }
+
+    /// Default marquee intersection: the axis-aligned bounding box is sufficient for
+    /// rectangular objects. Non-rectangular objects (e.g. LineObject) override this.
+    func intersectsRect(_ rect: CGRect) -> Bool {
+        rect.intersects(boundingBox())
+    }
 
     /// Default bounding box implementation based on position and size
     func boundingBox() -> CGRect {

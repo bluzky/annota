@@ -1,15 +1,18 @@
 //
-//  TextToolPlugin.swift
+//  TextTool.swift
 //  texttool
 //
 
 import SwiftUI
 
-/// Tool plugin for placing and editing text objects.
-/// Click-to-place tool: clicking empty space creates a new text object,
+extension DrawingTool {
+    static let text = DrawingTool(id: "text")
+}
+
+/// Tool for placing and editing text objects.
+/// Click-to-place: clicking empty space creates a new text object,
 /// clicking an existing object starts editing it.
-struct TextToolPlugin: CanvasTool {
-    let id = "text-tool"
+struct TextTool: CanvasTool {
     let toolType: DrawingTool = .text
 
     var metadata: ToolMetadata {
@@ -21,6 +24,19 @@ struct TextToolPlugin: CanvasTool {
             shortcutKey: "T"
         )
     }
+
+    // MARK: - Manifest
+
+    static let manifest = ToolManifest(
+        tool: TextTool(),
+        discriminator: "text",
+        interactiveView: { obj, isSelected, vm in
+            AnyView(TextObjectView(object: obj, viewModel: vm, isSelected: isSelected))
+        },
+        exportView: { obj in
+            AnyView(ExportTextObjectView(object: obj))
+        }
+    )
 
     func handleClick(
         at point: CGPoint,

@@ -1,25 +1,33 @@
 //
-//  LineToolPlugin.swift
+//  ArrowTool.swift
 //  texttool
 //
 
 import SwiftUI
 
-/// Tool plugin for creating lines via drag-to-create gesture.
-/// Supports shift+drag for 15-degree angle snapping.
-struct LineToolPlugin: CanvasTool {
-    let id = "line-tool"
-    let toolType: DrawingTool = .line
+extension DrawingTool {
+    static let arrow = DrawingTool(id: "arrow")
+}
+
+/// Tool for creating arrows via drag-to-create gesture.
+/// Renders preview with arrowhead; creates LineObject with endArrowHead = .open.
+struct ArrowTool: CanvasTool {
+    let toolType: DrawingTool = .arrow
 
     var metadata: ToolMetadata {
         ToolMetadata(
-            name: "Line",
-            icon: "line.diagonal",
+            name: "Arrow",
+            icon: "arrow.right",
             category: .drawing,
             cursorType: .crosshair,
-            shortcutKey: "L"
+            shortcutKey: "A"
         )
     }
+
+    // MARK: - Note
+    // ArrowTool produces LineObject — the same type as LineTool.
+    // It is registered directly via ToolRegistry.register(_: any CanvasTool);
+    // LineTool.manifest covers the shared LineObject view and codable registrations.
 
     func renderPreview(
         start: CGPoint,
@@ -29,12 +37,12 @@ struct LineToolPlugin: CanvasTool {
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
         let end = shiftHeld ? constrainLineToAngle(from: start, to: current) : current
 
-        guard let mockLine = makeLine(from: start, to: end, viewModel: viewModel) else {
+        guard let mockArrow = makeArrow(from: start, to: end, viewModel: viewModel) else {
             return AnyView(EmptyView())
         }
 
         return AnyView(
-            LineObjectView(object: mockLine, isSelected: false, viewModel: viewModel)
+            LineObjectView(object: mockArrow, isSelected: false, viewModel: viewModel)
         )
     }
 
@@ -56,13 +64,13 @@ struct LineToolPlugin: CanvasTool {
         shiftHeld: Bool
     ) {
         let finalEnd = shiftHeld ? constrainLineToAngle(from: start, to: end) : end
-        guard let line = makeLine(from: start, to: finalEnd, viewModel: viewModel) else { return }
-        viewModel.addObject(line)
+        guard let arrow = makeArrow(from: start, to: finalEnd, viewModel: viewModel) else { return }
+        viewModel.addObject(arrow)
     }
 
     // MARK: - Private Helpers
 
-    private func makeLine(
+    private func makeArrow(
         from start: CGPoint,
         to end: CGPoint,
         viewModel: CanvasViewModel
@@ -72,7 +80,8 @@ struct LineToolPlugin: CanvasTool {
         return LineObject(
             startPoint: start,
             endPoint: end,
-            strokeColor: viewModel.activeColor
+            strokeColor: viewModel.activeColor,
+            endArrowHead: .open
         )
     }
 }

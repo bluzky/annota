@@ -132,4 +132,18 @@ struct ImageObject: CanvasObject, CopyableCanvasObject {
     func boundingBox() -> CGRect {
         CGRect(origin: position, size: size)
     }
+
+    // MARK: - ObjectManifest
+
+    /// ImageObject has no dedicated toolbar tool — it is inserted via paste or drag-drop.
+    /// This manifest registers its views and codable support without a tool entry.
+    static let objectManifest = ObjectManifest<ImageObject>(
+        discriminator: "image",
+        interactiveView: { obj, isSelected, vm in
+            AnyView(ImageObjectView(object: obj, isSelected: isSelected, viewModel: vm))
+        },
+        exportView: { obj in
+            AnyView(ExportImageObjectView(object: obj))
+        }
+    )
 }

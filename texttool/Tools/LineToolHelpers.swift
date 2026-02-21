@@ -2,13 +2,13 @@
 //  LineToolHelpers.swift
 //  texttool
 //
-//  Shared geometry helpers for line and arrow tool plugins.
+//  Shared geometry helpers for line and arrow tools.
 //
 
 import CoreGraphics
 
 /// Constrains an endpoint to the nearest 15-degree angle from the start point.
-/// Used by both LineToolPlugin and ArrowToolPlugin for shift+drag snapping.
+/// Used by both LineTool and ArrowTool for shift+drag snapping.
 func constrainLineToAngle(from start: CGPoint, to end: CGPoint) -> CGPoint {
     let dx = end.x - start.x
     let dy = end.y - start.y

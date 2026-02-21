@@ -60,8 +60,9 @@ struct ToolbarView: View {
     }
 
     private var activeShapeIcon: String {
-        if case .shape(let preset) = viewModel.selectedTool {
-            return preset.sfSymbol
+        let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
+        if activeTool?.metadata.category == .shape {
+            return activeTool?.metadata.icon ?? "square.on.square"
         }
         return "square.on.square"
     }

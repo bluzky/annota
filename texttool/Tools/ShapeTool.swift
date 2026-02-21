@@ -1,30 +1,51 @@
 //
-//  ShapeToolPlugin.swift
+//  ShapeTool.swift
 //  texttool
 //
 
 import SwiftUI
 
-/// Tool plugin for creating shapes via drag-to-create gesture.
-/// Handles all ShapePreset types (rectangle, oval, triangle, etc.)
-struct ShapeToolPlugin: CanvasTool {
-    let id = "shape-tool"
-    let toolType: DrawingTool = .shape(.rectangle)
+extension DrawingTool {
+    /// Returns a DrawingTool whose identity encodes both the "shape" family and the specific preset.
+    static func shape(_ preset: ShapePreset) -> DrawingTool {
+        DrawingTool(id: "shape-\(preset.name)")
+    }
+}
+
+/// Tool for creating a specific shape preset via drag-to-create gesture.
+/// One instance is registered per preset; the preset is carried as a stored property
+/// so no ViewModel inspection is needed during drag handling.
+struct ShapeTool: CanvasTool {
+    let preset: ShapePreset
+
+    var toolType: DrawingTool { .shape(preset) }
 
     var metadata: ToolMetadata {
         ToolMetadata(
-            name: "Shape",
-            icon: "square.on.square",
+            name: preset.name,
+            icon: preset.sfSymbol,
             category: .shape,
             cursorType: .crosshair,
-            shortcutKey: "R"
+            shortcutKey: preset == .rectangle ? "R" : nil
         )
     }
 
-    /// Matches any .shape(_) DrawingTool variant
-    func matches(_ tool: DrawingTool) -> Bool {
-        if case .shape = tool { return true }
-        return false
+    // MARK: - Manifest
+
+    /// Returns a manifest for a specific shape preset.
+    /// All presets produce ShapeObject, so the view and codable registrations are
+    /// identical for every preset — only the tool instance differs.
+    static func manifest(preset: ShapePreset) -> ToolManifest<ShapeObject> {
+        ToolManifest(
+            tool: ShapeTool(preset: preset),
+            discriminator: "shape",
+            interactiveView: { obj, isSelected, vm in
+                AnyView(ShapeObjectView(object: obj, isSelected: isSelected, viewModel: vm))
+            },
+            exportView: { obj in
+                AnyView(ExportShapeObjectView(object: obj))
+            }
+        )
     }
 
     func renderPreview(
@@ -32,14 +53,10 @@ struct ShapeToolPlugin: CanvasTool {
         current: CGPoint,
         viewModel: CanvasViewModel
     ) -> AnyView {
-        guard case .shape(let preset) = viewModel.selectedTool else {
-            return AnyView(EmptyView())
-        }
-
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
         let end = clampedEnd(start: start, current: current, shiftHeld: shiftHeld)
 
-        guard let mockObject = makeShape(preset: preset, from: start, to: end, viewModel: viewModel) else {
+        guard let mockObject = makeShape(from: start, to: end, viewModel: viewModel) else {
             return AnyView(EmptyView())
         }
 
@@ -65,16 +82,14 @@ struct ShapeToolPlugin: CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     ) {
-        guard case .shape(let preset) = viewModel.selectedTool else { return }
         let finalEnd = clampedEnd(start: start, current: end, shiftHeld: shiftHeld)
-        guard let shape = makeShape(preset: preset, from: start, to: finalEnd, viewModel: viewModel) else { return }
+        guard let shape = makeShape(from: start, to: finalEnd, viewModel: viewModel) else { return }
         viewModel.addObject(shape)
     }
 
     // MARK: - Private Helpers
 
     private func makeShape(
-        preset: ShapePreset,
         from start: CGPoint,
         to end: CGPoint,
         viewModel: CanvasViewModel
