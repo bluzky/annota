@@ -6,7 +6,7 @@
 import SwiftUI
 import SVGPath
 
-struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject, Codable {
+struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject, CopyableCanvasObject {
     // MARK: - CanvasObject
     let id: UUID
     var position: CGPoint
@@ -79,6 +79,44 @@ struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableOb
         self.zIndex = zIndex
     }
 
+    /// Memberwise initializer that accepts strokeColor and fillColor independently.
+    /// Used by copied(newId:zIndex:offset:) to preserve independent fill/stroke colors.
+    init(
+        id: UUID,
+        position: CGPoint,
+        size: CGSize,
+        preset: ShapePreset,
+        strokeColor: Color,
+        fillColor: Color,
+        strokeWidth: CGFloat,
+        strokeStyle: StrokeStyleType,
+        fillOpacity: CGFloat,
+        text: String,
+        textAttributes: TextAttributes,
+        isEditing: Bool,
+        autoResizeHeight: Bool,
+        rotation: CGFloat,
+        isLocked: Bool,
+        zIndex: Int
+    ) {
+        self.id = id
+        self.position = position
+        self.size = size
+        self.preset = preset
+        self.strokeColor = strokeColor
+        self.fillColor = fillColor
+        self.strokeWidth = strokeWidth
+        self.strokeStyle = strokeStyle
+        self.fillOpacity = fillOpacity
+        self.text = text
+        self.textAttributes = textAttributes
+        self.isEditing = isEditing
+        self.autoResizeHeight = autoResizeHeight
+        self.rotation = rotation
+        self.isLocked = isLocked
+        self.zIndex = zIndex
+    }
+
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
@@ -133,25 +171,24 @@ struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableOb
     // MARK: - Copy
 
     func copied(newId: UUID, zIndex: Int, offset: CGPoint) -> ShapeObject {
-        var copy = ShapeObject(
+        ShapeObject(
             id: newId,
             position: CGPoint(x: position.x + offset.x, y: position.y + offset.y),
             size: size,
             preset: preset,
-            color: strokeColor,
+            strokeColor: strokeColor,
+            fillColor: fillColor,
             strokeWidth: strokeWidth,
             strokeStyle: strokeStyle,
             fillOpacity: fillOpacity,
             text: text,
+            textAttributes: textAttributes,
             isEditing: false,
             autoResizeHeight: autoResizeHeight,
             rotation: rotation,
             isLocked: false,
             zIndex: zIndex
         )
-        copy.fillColor = fillColor
-        copy.textAttributes = textAttributes
-        return copy
     }
 
     // MARK: - CanvasObject
@@ -219,10 +256,14 @@ private extension ShapeObject {
     /// Classify a point near the shape boundary into the nearest cardinal edge.
     /// Normalises by half-extents so aspect ratio doesn't bias the result.
     func edgeForPoint(_ point: CGPoint, in bounds: CGRect) -> Edge {
+        let halfW = bounds.width / 2
+        let halfH = bounds.height / 2
+        // Guard against zero-size bounds to avoid division by zero
+        guard halfW > 0, halfH > 0 else { return .right }
         let dx = point.x - bounds.midX
         let dy = point.y - bounds.midY
-        let nx = dx / (bounds.width  / 2)
-        let ny = dy / (bounds.height / 2)
+        let nx = dx / halfW
+        let ny = dy / halfH
         if abs(nx) >= abs(ny) {
             return nx >= 0 ? .right : .left
         } else {

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CanvasView: View {
     @ObservedObject var viewModel: CanvasViewModel
+    private let toolRegistry = ToolRegistry.shared
     @State private var draggedObjectId: UUID?
     @State private var lastDragLocation: CGPoint?
     @State private var lastTapTime: Date?
@@ -63,56 +64,15 @@ struct CanvasView: View {
                         )
                     }
 
-                    // Shape drag preview
-                    if let preset = viewModel.selectedTool.shapePreset,
-                       let start = viewModel.dragStartPoint,
-                       let current = viewModel.currentDragPoint {
-                        let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-                        let rawWidth = abs(current.x - start.x)
-                        let rawHeight = abs(current.y - start.y)
-                        // Shift+drag constrains to square for all shape tools
-                        let constrain = shiftHeld
-                        let width = constrain ? max(rawWidth, rawHeight) : rawWidth
-                        let height = constrain ? max(rawWidth, rawHeight) : rawHeight
-                        let x = min(start.x, current.x) + width / 2
-                        let y = min(start.y, current.y) + height / 2
-                        let previewRect = CGRect(origin: .zero, size: CGSize(width: width, height: height))
-
-                        preset.path(in: previewRect)
-                            .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-                            .frame(width: width, height: height)
-                            .position(x: x, y: y)
-                    }
-
-                    // Line/arrow drag preview
-                    if viewModel.selectedTool.isLineTool,
-                       let start = viewModel.dragStartPoint,
-                       let current = viewModel.currentDragPoint {
-                        let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-                        let end = shiftHeld ? constrainToAngle(from: start, to: current) : current
-                        Path { path in
-                            path.move(to: start)
-                            path.addLine(to: end)
-                        }
-                        .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-
-                        // Arrow head preview (open V to match final render)
-                        if viewModel.selectedTool == .arrow {
-                            let angle = atan2(end.y - start.y, end.x - start.x)
-                            let headLength: CGFloat = 14
-                            Path { path in
-                                path.move(to: CGPoint(
-                                    x: end.x - headLength * cos(angle - .pi / 6),
-                                    y: end.y - headLength * sin(angle - .pi / 6)
-                                ))
-                                path.addLine(to: end)
-                                path.addLine(to: CGPoint(
-                                    x: end.x - headLength * cos(angle + .pi / 6),
-                                    y: end.y - headLength * sin(angle + .pi / 6)
-                                ))
-                            }
-                            .stroke(viewModel.activeColor.opacity(0.5), lineWidth: 2)
-                        }
+                    // Tool drag preview (dispatched via ToolRegistry)
+                    if let start = viewModel.dragStartPoint,
+                       let current = viewModel.currentDragPoint,
+                       let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                        tool.renderPreview(
+                            start: start,
+                            current: current,
+                            viewModel: viewModel
+                        )
                     }
 
                 }
@@ -125,7 +85,7 @@ struct CanvasView: View {
                    let selectionBox = viewModel.selectionBox,
                    viewModel.selectedTool == .select,
                    !viewModel.isAnyObjectEditing,
-                   !viewModel.isLineOnlySelection {
+                   !viewModel.isControlPointOnlySelection {
                     let screenBox = selectionBox.toScreen(viewport: viewModel.viewport)
                     SelectionBoxView(
                         selectionBox: screenBox,
@@ -151,7 +111,7 @@ struct CanvasView: View {
                     keyMonitor = nil
                 }
             }
-            .onChange(of: geometry.size) { canvasSize = $0 }
+            .onChange(of: geometry.size) { _, newSize in canvasSize = newSize }
         }
         .contentShape(Rectangle())
         .gesture(
@@ -200,7 +160,7 @@ struct CanvasView: View {
             } else if viewModel.isAnyObjectEditing {
                 NSCursor.iBeam.set()
             } else if viewModel.selectedTool == .select,
-                      viewModel.isLineOnlySelection {
+                      viewModel.isControlPointOnlySelection {
                 let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
                 if hitTestLineControlPoint(at: canvasPoint) != nil {
                     NSCursor.arrow.set()
@@ -304,12 +264,17 @@ struct CanvasView: View {
         let canvasStart = viewModel.viewport.screenToCanvas(value.startLocation)
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
-        if viewModel.selectedTool.isShapeTool || viewModel.selectedTool.isLineTool {
-            if viewModel.dragStartPoint == nil {
-                viewModel.dragStartPoint = canvasStart
-            }
-            viewModel.currentDragPoint = canvasLocation
-        } else if viewModel.selectedTool == .select {
+        // Delegate to registered tool plugin (shape, line, arrow, text, etc.)
+        if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+            tool.handleDragChanged(
+                start: canvasStart,
+                current: canvasLocation,
+                viewModel: viewModel
+            )
+            return
+        }
+
+        if viewModel.selectedTool == .select {
             // Don't drag if an object is being edited
             if viewModel.isAnyObjectEditing {
                 return
@@ -327,7 +292,7 @@ struct CanvasView: View {
                     lastDragLocation = canvasLocation
                 }
                 // Then check if we started drag on a selection box handle (skip for line-only selections)
-                else if !viewModel.isLineOnlySelection,
+                else if !viewModel.isControlPointOnlySelection,
                    let selectionBox = viewModel.selectionBox,
                    let hitZone = selectionBox.hitTest(canvasStart) {
                     switch hitZone {
@@ -404,35 +369,39 @@ struct CanvasView: View {
                 return
             }
 
-            // Handle resize dragging
-            if let handleZone = activeHandleZone, let anchor = resizeAnchor {
-                handleResize(zone: handleZone, canvasLocation: canvasLocation, anchor: anchor)
-                return
-            }
-
-            // Handle rotation dragging
-            if case .rotation = activeHandleZone {
-                let currentAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
-                var angleDelta = currentAngle - rotationStartAngle
-                // Shift+rotate snaps to 15° increments
-                if NSEvent.modifierFlags.contains(.shift) {
-                    let snapAngle = CGFloat.pi / 12 // 15 degrees
-                    angleDelta = ((initialRotation + angleDelta) / snapAngle).rounded() * snapAngle - initialRotation
-                }
-                for id in viewModel.selectedIds {
-                    let objInitialRotation = initialObjectRotations[id] ?? 0
-                    let newRotation = objInitialRotation + angleDelta
-                    // Orbit each object's center around the group center, then convert back to origin
-                    if let initialCenter = initialObjectPositions[id],
-                       let bbox = initialObjectFrames[id] {
-                        let newCenter = rotatePoint(initialCenter, around: rotationCenter, by: angleDelta)
-                        let newOrigin = CGPoint(x: newCenter.x - bbox.width / 2, y: newCenter.y - bbox.height / 2)
-                        viewModel.updateObjectPositionAndRotation(id: id, position: newOrigin, rotation: newRotation)
-                    } else {
-                        viewModel.updateObjectRotation(id: id, rotation: newRotation)
+            // Handle resize / rotation dragging via a single switch on the active handle zone
+            if let handleZone = activeHandleZone {
+                switch handleZone {
+                case .corner, .edge:
+                    if let anchor = resizeAnchor {
+                        handleResize(zone: handleZone, canvasLocation: canvasLocation, anchor: anchor)
                     }
+                    return
+                case .rotation:
+                    let currentAngle = atan2(canvasLocation.y - rotationCenter.y, canvasLocation.x - rotationCenter.x)
+                    var angleDelta = currentAngle - rotationStartAngle
+                    // Shift+rotate snaps to 15° increments
+                    if NSEvent.modifierFlags.contains(.shift) {
+                        let snapAngle = CGFloat.pi / 12 // 15 degrees
+                        angleDelta = ((initialRotation + angleDelta) / snapAngle).rounded() * snapAngle - initialRotation
+                    }
+                    for id in viewModel.selectedIds {
+                        let objInitialRotation = initialObjectRotations[id] ?? 0
+                        let newRotation = objInitialRotation + angleDelta
+                        // Orbit each object's center around the group center, then convert back to origin
+                        if let initialCenter = initialObjectPositions[id],
+                           let bbox = initialObjectFrames[id] {
+                            let newCenter = rotatePoint(initialCenter, around: rotationCenter, by: angleDelta)
+                            let newOrigin = CGPoint(x: newCenter.x - bbox.width / 2, y: newCenter.y - bbox.height / 2)
+                            viewModel.updateObjectPositionAndRotation(id: id, position: newOrigin, rotation: newRotation)
+                        } else {
+                            viewModel.updateObjectRotation(id: id, rotation: newRotation)
+                        }
+                    }
+                    return
+                case .move:
+                    break  // falls through to object-drag logic below
                 }
-                return
             }
 
             // Handle object dragging (move all selected objects)
@@ -685,34 +654,16 @@ struct CanvasView: View {
         // If it's a click (minimal drag)
         if distance < 5 {
             handleClick(at: value.location)
-        } else if let preset = viewModel.selectedTool.shapePreset {
-            // It's a drag for a shape tool — apply shift-constrain for all shape tools
+        } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+            // Delegate drag-end to registered tool plugin
             let start = viewModel.dragStartPoint ?? canvasStart
             let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-            let end: CGPoint
-            if shiftHeld {
-                let rawWidth = abs(canvasLocation.x - start.x)
-                let rawHeight = abs(canvasLocation.y - start.y)
-                let side = max(rawWidth, rawHeight)
-                end = CGPoint(
-                    x: start.x + (canvasLocation.x >= start.x ? side : -side),
-                    y: start.y + (canvasLocation.y >= start.y ? side : -side)
-                )
-            } else {
-                end = canvasLocation
-            }
-            viewModel.addShape(preset: preset, from: start, to: end)
-        } else if viewModel.selectedTool.isLineTool {
-            let start = viewModel.dragStartPoint ?? canvasStart
-            let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-            let end: CGPoint
-            if shiftHeld {
-                // Shift+drag constrains to 45-degree angles
-                end = constrainToAngle(from: start, to: canvasLocation)
-            } else {
-                end = canvasLocation
-            }
-            viewModel.addLine(from: start, to: end, asArrow: viewModel.selectedTool == .arrow)
+            tool.handleDragEnded(
+                start: start,
+                end: canvasLocation,
+                viewModel: viewModel,
+                shiftHeld: shiftHeld
+            )
         }
 
         // Reset drag state
@@ -745,24 +696,15 @@ struct CanvasView: View {
         // Convert screen location to canvas coordinates
         let canvasLocation = viewModel.viewport.screenToCanvas(screenLocation)
 
-        // Check if any object is currently being edited
-        let isEditing = viewModel.isAnyObjectEditing
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
 
-        if viewModel.selectedTool == .text {
-            // Check if clicking on existing object (using canvas coordinates)
-            if let objectId = viewModel.selectObject(at: canvasLocation) {
-                // Start editing the existing text
-                viewModel.startEditing(objectId: objectId)
-            } else if isEditing {
-                // Currently editing - just commit (deselect) without creating new
-                viewModel.deselectAll()
-            } else {
-                // Not editing anything - create new text object at canvas location
-                let newId = viewModel.addTextObject(at: canvasLocation)
-                viewModel.startEditing(objectId: newId)
-            }
-        } else if viewModel.selectedTool == .select {
+        // Delegate to registered tool plugin for click handling
+        if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+            tool.handleClick(at: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
+            return
+        }
+
+        if viewModel.selectedTool == .select {
             // Check if clicking inside an object that's currently being edited
             if let editing = viewModel.editingObject(), editing.contains(canvasLocation) {
                 // Click inside editing object - let NSTextView handle it (cursor positioning)
@@ -831,6 +773,9 @@ struct CanvasView: View {
     // MARK: - Keyboard Shortcuts
 
     private func installKeyMonitor() {
+        // Guard against double-install if onAppear fires more than once.
+        // A second monitor would leak a strong capture of viewModel.
+        guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Let text fields handle their own keyboard input
             if viewModel.isAnyObjectEditing {

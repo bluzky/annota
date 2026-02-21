@@ -42,38 +42,48 @@ protocol CanvasObject: Identifiable {
     ///   - threshold: The tolerance distance for edge/corner detection
     /// - Returns: The hit test result, or nil if the point is outside the object
     func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult?
+
+    /// Whether this object uses control points for interaction instead of a selection box.
+    /// Objects that return true (e.g. lines) show control-point handles rather than a bounding-box overlay.
+    var usesControlPoints: Bool { get }
 }
 
 // MARK: - Default Implementations
 
 extension CanvasObject {
+    var usesControlPoints: Bool { false }
+
     /// Default bounding box implementation based on position and size
     func boundingBox() -> CGRect {
         CGRect(origin: position, size: size)
     }
 
-    /// Default hit test implementation
+    /// Default hit test implementation.
+    /// Transforms the test point into object-local space before testing against the bounding box,
+    /// so rotated objects are hit-tested correctly.
     func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+        // Transform the point into local (unrotated) space
+        let localPoint = rotation != 0 ? transformToLocal(point) : point
         let bounds = boundingBox()
 
         // Check if point is outside the expanded bounds
         let expandedBounds = bounds.insetBy(dx: -threshold, dy: -threshold)
-        guard expandedBounds.contains(point) else {
+        guard expandedBounds.contains(localPoint) else {
             return nil
         }
 
         // Check corners first (they have priority)
-        if let corner = hitTestCorner(point: point, bounds: bounds, threshold: threshold) {
+        if let corner = hitTestCorner(point: localPoint, bounds: bounds, threshold: threshold) {
             return .corner(corner)
         }
 
         // Check edges
-        if let edge = hitTestEdge(point: point, bounds: bounds, threshold: threshold) {
+        if let edge = hitTestEdge(point: localPoint, bounds: bounds, threshold: threshold) {
             return .edge(edge)
         }
 
         // If inside the bounds, it's a body hit
-        if bounds.contains(point) {
+        if bounds.contains(localPoint) {
             return .body
         }
 

@@ -95,9 +95,31 @@ extension ShapePreset {
 
 // MARK: - Rendering Helpers
 
+/// Cache key for cgPath: encodes both the SVG path string and the target rect.
+private final class ShapePathCacheKey: NSObject {
+    let key: String
+    init(svgPath: String, rect: CGRect) {
+        self.key = "\(svgPath)|\(rect.minX),\(rect.minY),\(rect.width),\(rect.height)"
+    }
+    override var hash: Int { key.hashValue }
+    override func isEqual(_ object: Any?) -> Bool {
+        guard let other = object as? ShapePathCacheKey else { return false }
+        return key == other.key
+    }
+}
+
+private let cgPathCache = NSCache<ShapePathCacheKey, CGPath>()
+
 extension ShapePreset {
     /// Returns a CGPath scaled to fill `rect` exactly (stretch, not letterbox).
+    /// Results are cached in a static NSCache to avoid re-parsing the SVG string
+    /// on every hit-test or render call.
     func cgPath(in rect: CGRect) -> CGPath {
+        let cacheKey = ShapePathCacheKey(svgPath: svgPath, rect: rect)
+        if let cached = cgPathCache.object(forKey: cacheKey) {
+            return cached
+        }
+
         // Use invertYAxis: false so SVG Y-down coordinates match SwiftUI/screen space.
         guard let parsed = try? SVGPath(string: svgPath, with: .init(invertYAxis: false)) else {
             return CGPath(rect: rect, transform: nil)
@@ -110,7 +132,9 @@ extension ShapePreset {
         var transform = CGAffineTransform(translationX: rect.minX, y: rect.minY)
             .scaledBy(x: rect.width / unitBounds.width, y: rect.height / unitBounds.height)
             .translatedBy(x: -unitBounds.minX, y: -unitBounds.minY)
-        return rawPath.copy(using: &transform) ?? CGPath(rect: rect, transform: nil)
+        let result = rawPath.copy(using: &transform) ?? CGPath(rect: rect, transform: nil)
+        cgPathCache.setObject(result, forKey: cacheKey)
+        return result
     }
 
     /// Returns a SwiftUI Path scaled to fill `rect` exactly.

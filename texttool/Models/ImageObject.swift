@@ -6,11 +6,11 @@
 import SwiftUI
 import AppKit
 
-/// Cache for decoded NSImages keyed by image data identity.
-/// Avoids re-decoding PNG data on every SwiftUI re-render.
-private let imageCache = NSCache<NSData, NSImage>()
+/// Cache for decoded NSImages keyed by a stable string key (object UUID).
+/// Using a UUID-based key avoids hashing the entire PNG blob on every cache lookup.
+private let imageCache = NSCache<NSString, NSImage>()
 
-struct ImageObject: CanvasObject, Codable {
+struct ImageObject: CanvasObject, CopyableCanvasObject {
     // MARK: - CanvasObject Properties
     let id: UUID
     var position: CGPoint
@@ -52,8 +52,9 @@ struct ImageObject: CanvasObject, Codable {
 
     /// Convert stored PNG data to NSImage for rendering, using a cache
     /// to avoid re-decoding on every SwiftUI body evaluation.
+    /// The cache is keyed by the object's stable UUID to avoid hashing the entire Data blob.
     var nsImage: NSImage? {
-        let key = imageData as NSData
+        let key = id.uuidString as NSString
         if let cached = imageCache.object(forKey: key) {
             return cached
         }

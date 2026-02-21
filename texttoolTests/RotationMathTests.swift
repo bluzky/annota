@@ -17,9 +17,6 @@ struct RotationMathTests {
 
     // MARK: - Helpers
 
-    /// Tolerance for floating-point comparisons
-    private let epsilon: CGFloat = 1e-10
-
     private func assertPointsEqual(_ a: CGPoint, _ b: CGPoint, tolerance: CGFloat = 1e-10, sourceLocation: Testing.SourceLocation = #_sourceLocation) {
         #expect(abs(a.x - b.x) < tolerance, sourceLocation: sourceLocation)
         #expect(abs(a.y - b.y) < tolerance, sourceLocation: sourceLocation)
