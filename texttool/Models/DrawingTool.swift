@@ -11,6 +11,8 @@ enum DrawingTool: Equatable {
     case select
     case text
     case shape(ShapePreset)   // replaces .rectangle and .oval
+    case line
+    case arrow
     case hand
 }
 
@@ -23,5 +25,9 @@ extension DrawingTool {
     var shapePreset: ShapePreset? {
         if case .shape(let p) = self { return p }
         return nil
+    }
+
+    var isLineTool: Bool {
+        self == .line || self == .arrow
     }
 }
