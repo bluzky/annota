@@ -16,6 +16,10 @@ struct ContentView: View {
             CanvasView(viewModel: viewModel)
         }
         .frame(minWidth: 800, minHeight: 600)
+        .focusedSceneObject(viewModel)
+        .onAppear {
+            AppState.shared.canvasViewModel = viewModel
+        }
     }
 }
 
