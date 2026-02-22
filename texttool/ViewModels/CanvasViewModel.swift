@@ -54,6 +54,11 @@ class CanvasViewModel: ObservableObject {
     @Published var dragStartPoint: CGPoint?
     @Published var currentDragPoint: CGPoint?
 
+    /// Current canvas viewport size (updated by CanvasView on geometry changes).
+    /// Stored here so closures that outlive a SwiftUI body evaluation (e.g. the
+    /// key-event monitor) always read the current value instead of a stale capture.
+    var canvasSize: CGSize = .zero
+
     // MARK: - Computed Properties
 
     /// Check if any object is currently being edited
@@ -93,22 +98,6 @@ class CanvasViewModel: ObservableObject {
         return obj.id
     }
 
-    func addTextObject(at position: CGPoint) -> UUID {
-        var textObj = TextObject(
-            position: position,
-            text: "",
-            fontSize: activeTextSize,
-            color: activeColor,
-            isEditing: true
-        )
-        textObj.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(textObj))
-        sortObjectsByZIndex()
-        return textObj.id
-    }
-
     @discardableResult
     func addImageObject(imageData: Data, imageSize: CGSize, at position: CGPoint, maxSize: CGSize = .zero) -> UUID {
         var size = imageSize.width > 0 && imageSize.height > 0
@@ -140,60 +129,6 @@ class CanvasViewModel: ObservableObject {
         return imageObj.id
     }
 
-    func updateImageObject(withId id: UUID, update: (inout ImageObject) -> Void) {
-        updateObject(withId: id, as: ImageObject.self, update: update)
-    }
-
-    func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) {
-        let origin = CGPoint(
-            x: min(start.x, end.x),
-            y: min(start.y, end.y)
-        )
-        let size = CGSize(
-            width: abs(end.x - start.x),
-            height: abs(end.y - start.y)
-        )
-
-        // Skip tiny shapes (likely accidental clicks)
-        guard size.width > 1 && size.height > 1 else { return }
-
-        var shape = ShapeObject(
-            position: origin,
-            size: size,
-            preset: preset,
-            color: activeColor,
-            autoResizeHeight: autoResizeShapes
-        )
-        shape.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(shape))
-        sortObjectsByZIndex()
-    }
-
-    func addLine(from start: CGPoint, to end: CGPoint, asArrow: Bool = false) {
-        // Skip tiny lines (likely accidental clicks)
-        let length = hypot(end.x - start.x, end.y - start.y)
-        guard length > 3 else { return }
-
-        var line = LineObject(
-            startPoint: start,
-            endPoint: end,
-            strokeColor: activeColor,
-            endArrowHead: asArrow ? .open : .none
-        )
-        line.zIndex = nextZIndex
-        nextZIndex += 1
-
-        objects.append(AnyCanvasObject(line))
-        sortObjectsByZIndex()
-    }
-
-    /// Update a LineObject in place
-    func updateLineObject(withId id: UUID, update: (inout LineObject) -> Void) {
-        updateObject(withId: id, as: LineObject.self, update: update)
-    }
-
     // MARK: - Remove Objects
 
     /// Remove object by ID
@@ -215,16 +150,6 @@ class CanvasViewModel: ObservableObject {
         objects[index] = AnyCanvasObject(obj)
     }
 
-    /// Update a TextObject in place
-    func updateTextObject(withId id: UUID, update: (inout TextObject) -> Void) {
-        updateObject(withId: id, as: TextObject.self, update: update)
-    }
-
-    /// Update a ShapeObject in place
-    func updateShapeObject(withId id: UUID, update: (inout ShapeObject) -> Void) {
-        updateObject(withId: id, as: ShapeObject.self, update: update)
-    }
-
     // MARK: - Hit Testing & Selection
 
     func selectObject(at point: CGPoint) -> UUID? {
@@ -240,35 +165,14 @@ class CanvasViewModel: ObservableObject {
     func startEditing(objectId: UUID) {
         guard let index = objectIndex(withId: objectId) else { return }
         guard objects[index].hasTextContent else { return }
-        // Mutate the concrete object directly so @Published fires
-        if let textObj = objects[index].asTextObject {
-            var updated = textObj
-            updated.isEditing = true
-            objects[index] = AnyCanvasObject(updated)
-        } else if let shapeObj = objects[index].asShapeObject {
-            var updated = shapeObj
-            updated.isEditing = true
-            objects[index] = AnyCanvasObject(updated)
-        }
+        mutateTextContent(at: index) { $0.isEditing = true }
         selectedObjectId = objectId
     }
 
     func updateText(objectId: UUID, text: String) {
         guard let index = objectIndex(withId: objectId) else { return }
         guard objects[index].hasTextContent else { return }
-        if let textObj = objects[index].asTextObject {
-            var updated = textObj
-            updated.text = text
-            objects[index] = AnyCanvasObject(updated)
-        } else if let shapeObj = objects[index].asShapeObject {
-            var updated = shapeObj
-            updated.text = text
-            objects[index] = AnyCanvasObject(updated)
-        }
-    }
-
-    func updateTextObjectSize(objectId: UUID, size: CGSize) {
-        updateTextObject(withId: objectId) { $0.size = size }
+        mutateTextContent(at: index) { $0.text = text }
     }
 
     func deselectAll() {
@@ -280,18 +184,9 @@ class CanvasViewModel: ObservableObject {
 
     func moveObject(id: UUID, by offset: CGSize) {
         guard let index = objectIndex(withId: id) else { return }
-        if var obj = objects[index].asTextObject {
-            obj.position.x += offset.width; obj.position.y += offset.height
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asShapeObject {
-            obj.position.x += offset.width; obj.position.y += offset.height
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asLineObject {
-            obj.position.x += offset.width; obj.position.y += offset.height
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asImageObject {
-            obj.position.x += offset.width; obj.position.y += offset.height
-            objects[index] = AnyCanvasObject(obj)
+        applyGeometry(at: index) {
+            $0.position.x += offset.width
+            $0.position.y += offset.height
         }
     }
 
@@ -316,29 +211,20 @@ class CanvasViewModel: ObservableObject {
     /// Apply a geometry mutation to whichever concrete type lives at `index`.
     /// This is the single place that handles the four-way type dispatch so callers
     /// don't have to repeat it.  The closure receives a mutable reference to a thin
-    /// `GeometryProxy` value; changes are written back into `objects[index]`.
+    /// `ObjectGeometry` value; changes are written back into `objects[index]`.
     private func applyGeometry(at index: Int, mutation: (inout ObjectGeometry) -> Void) {
-        if var obj = objects[index].asTextObject {
-            var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
-            mutation(&geo)
-            obj.position = geo.position; obj.size = geo.size; obj.rotation = geo.rotation
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asShapeObject {
-            var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
-            mutation(&geo)
-            obj.position = geo.position; obj.size = geo.size; obj.rotation = geo.rotation
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asLineObject {
-            var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
-            mutation(&geo)
-            obj.position = geo.position; obj.size = geo.size; obj.rotation = geo.rotation
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asImageObject {
+        func apply<T: CanvasObject>(_ obj: T?) {
+            guard var obj = obj else { return }
             var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
             mutation(&geo)
             obj.position = geo.position; obj.size = geo.size; obj.rotation = geo.rotation
             objects[index] = AnyCanvasObject(obj)
         }
+        // Try each concrete type; first match wins
+        if objects[index].asTextObject != nil { apply(objects[index].asTextObject) }
+        else if objects[index].asShapeObject != nil { apply(objects[index].asShapeObject) }
+        else if objects[index].asLineObject != nil { apply(objects[index].asLineObject) }
+        else if objects[index].asImageObject != nil { apply(objects[index].asImageObject) }
     }
 
     func selectObjectOnly(id: UUID) {
@@ -397,13 +283,23 @@ class CanvasViewModel: ObservableObject {
     /// End all text editing without clearing selection
     private func endAllEditing() {
         for index in objects.indices where objects[index].isEditing {
-            if var obj = objects[index].asTextObject {
-                obj.isEditing = false
-                objects[index] = AnyCanvasObject(obj)
-            } else if var obj = objects[index].asShapeObject {
-                obj.isEditing = false
-                objects[index] = AnyCanvasObject(obj)
-            }
+            mutateTextContent(at: index) { $0.isEditing = false }
+        }
+    }
+
+    /// Apply a mutation to the TextContentObject (TextObject or ShapeObject) at the given index.
+    /// Centralises the two-way dispatch so callers don't repeat it.
+    private func mutateTextContent(at index: Int, mutation: (inout TextContentProxy) -> Void) {
+        if var obj = objects[index].asTextObject {
+            var proxy = TextContentProxy(text: obj.text, isEditing: obj.isEditing)
+            mutation(&proxy)
+            obj.text = proxy.text; obj.isEditing = proxy.isEditing
+            objects[index] = AnyCanvasObject(obj)
+        } else if var obj = objects[index].asShapeObject {
+            var proxy = TextContentProxy(text: obj.text, isEditing: obj.isEditing)
+            mutation(&proxy)
+            obj.text = proxy.text; obj.isEditing = proxy.isEditing
+            objects[index] = AnyCanvasObject(obj)
         }
     }
 
@@ -411,8 +307,7 @@ class CanvasViewModel: ObservableObject {
     func objectsInRect(_ rect: CGRect) -> Set<UUID> {
         var ids = Set<UUID>()
         for obj in objects {
-            let bbox = obj.boundingBox()
-            if rect.intersects(bbox) {
+            if obj.intersectsRect(rect) {
                 ids.insert(obj.id)
             }
         }
@@ -589,4 +484,11 @@ private struct ObjectGeometry {
     var position: CGPoint
     var size: CGSize
     var rotation: CGFloat
+}
+
+/// Lightweight mutable bag used by CanvasViewModel.mutateTextContent(at:mutation:) to
+/// carry text and isEditing across the two-way TextObject/ShapeObject dispatch.
+struct TextContentProxy {
+    var text: String
+    var isEditing: Bool
 }

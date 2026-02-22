@@ -7,14 +7,13 @@ import SwiftUI
 
 /// Protocol that all canvas tools must implement.
 /// Each tool encapsulates its own preview rendering, gesture handling, and object rendering.
+/// A tool's identity is fully represented by its `toolType: DrawingTool` value;
+/// the registry keys directly on `toolType.id` for O(1) lookup.
 protocol CanvasTool {
-    /// Unique identifier for this tool
-    var id: String { get }
-
     /// Tool metadata for UI rendering (icon, name, category, etc.)
     var metadata: ToolMetadata { get }
 
-    /// The DrawingTool enum case this tool handles
+    /// The DrawingTool value that uniquely identifies this tool instance.
     var toolType: DrawingTool { get }
 
     /// Render preview during drag operation.
@@ -46,10 +45,6 @@ protocol CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     )
-
-    /// Whether this tool handles the given DrawingTool type.
-    /// Override for tools that match multiple variants (e.g. ShapeTool matches all .shape(_)).
-    func matches(_ type: DrawingTool) -> Bool
 }
 
 // MARK: - Default Implementations
@@ -61,10 +56,6 @@ extension CanvasTool {
         shiftHeld: Bool
     ) {
         // Default: no-op for tools that don't need click handling
-    }
-
-    func matches(_ type: DrawingTool) -> Bool {
-        toolType == type
     }
 
     func renderPreview(

@@ -9,24 +9,21 @@ import SwiftUI
 
 struct ToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
+    @ObservedObject var toolRegistry: ToolRegistry
     @State private var showShapePicker = false
 
     var body: some View {
         HStack(spacing: 20) {
-            // Tool Selection
+            // Tool Selection — order is an application-level concern, hardcoded here.
+            // Shape-category tools are rendered as a single popover button (shapePickerButton).
             HStack(spacing: 4) {
-                toolButton(.select, icon: "cursorarrow", tooltip: "Select")
+                toolButton(.select, icon: "arrow.up.left", tooltip: "Select")
                 toolButton(.hand, icon: "hand.raised", tooltip: "Hand")
-
-                // Shape tool — single button opens shape picker popover
                 shapePickerButton
-
                 toolButton(.line, icon: "line.diagonal", tooltip: "Line")
                 toolButton(.arrow, icon: "arrow.right", tooltip: "Arrow")
-
                 toolButton(.text, icon: "textformat", tooltip: "Text")
             }
-
             Divider()
                 .frame(height: 20)
 
@@ -40,7 +37,7 @@ struct ToolbarView: View {
             }
             .labelsHidden()
             .frame(width: 80)
-            .disabled(viewModel.selectedTool != .text)
+            .disabled(toolRegistry.tool(for: viewModel.selectedTool)?.metadata.category != .annotation)
 
             // Color Picker
             ColorPicker("Color", selection: $viewModel.activeColor)
@@ -62,12 +59,21 @@ struct ToolbarView: View {
         .background(Color(nsColor: .controlBackgroundColor))
     }
 
+    private var activeShapeIcon: String {
+        let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
+        if activeTool?.metadata.category == .shape {
+            return activeTool?.metadata.icon ?? "square.on.square"
+        }
+        return "square.on.square"
+    }
+
     /// A single toolbar button that shows the active shape's icon (or a generic squares icon
     /// when no shape tool is selected) and opens the shape picker popover on tap.
     @ViewBuilder
     private var shapePickerButton: some View {
-        let isShapeActive = viewModel.selectedTool.isShapeTool
-        let icon = viewModel.selectedTool.shapePreset?.sfSymbol ?? "square.on.square"
+        let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
+        let isShapeActive = activeTool?.metadata.category == .shape
+        let icon = activeShapeIcon
 
         Button(action: {
             showShapePicker.toggle()

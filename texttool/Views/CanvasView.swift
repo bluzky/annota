@@ -42,7 +42,6 @@ struct CanvasView: View {
 
     // Current hover position (screen coordinates, relative to CanvasView)
     @State private var currentHoverLocation: CGPoint?
-    @State private var canvasSize: CGSize = .zero
 
     // Keyboard event monitor
     @State private var keyMonitor: Any?
@@ -67,8 +66,8 @@ struct CanvasView: View {
                     // Tool drag preview (dispatched via ToolRegistry)
                     if let start = viewModel.dragStartPoint,
                        let current = viewModel.currentDragPoint,
-                       let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-                        tool.renderPreview(
+                   let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                     tool.renderPreview(
                             start: start,
                             current: current,
                             viewModel: viewModel
@@ -102,7 +101,7 @@ struct CanvasView: View {
             }
             .clipped()
             .onAppear {
-                canvasSize = geometry.size
+                viewModel.canvasSize = geometry.size
                 installKeyMonitor()
             }
             .onDisappear {
@@ -111,7 +110,7 @@ struct CanvasView: View {
                     keyMonitor = nil
                 }
             }
-            .onChange(of: geometry.size) { _, newSize in canvasSize = newSize }
+            .onChange(of: geometry.size) { _, newSize in viewModel.canvasSize = newSize }
         }
         .contentShape(Rectangle())
         .gesture(
@@ -129,12 +128,12 @@ struct CanvasView: View {
                 viewModel.panViewport(by: CGSize(width: delta.x, height: delta.y))
             },
             magnify: { magnification, _ in
-                let anchor = currentHoverLocation ?? CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                let anchor = currentHoverLocation ?? CGPoint(x: viewModel.canvasSize.width / 2, y: viewModel.canvasSize.height / 2)
                 let factor = 1.0 + magnification
                 viewModel.zoomViewport(by: factor, around: anchor)
             },
             scrollZoom: { zoomDelta, _ in
-                let anchor = currentHoverLocation ?? CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
+                let anchor = currentHoverLocation ?? CGPoint(x: viewModel.canvasSize.width / 2, y: viewModel.canvasSize.height / 2)
                 let factor = 1.0 + zoomDelta
                 viewModel.zoomViewport(by: factor, around: anchor)
             }
@@ -177,10 +176,8 @@ struct CanvasView: View {
                 } else {
                     NSCursor.arrow.set()
                 }
-            } else if viewModel.selectedTool == .text {
-                NSCursor.iBeam.set()
-            } else if viewModel.selectedTool.isLineTool {
-                NSCursor.crosshair.set()
+            } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                tool.metadata.cursorType.set()
             } else {
                 NSCursor.arrow.set()
             }
@@ -264,18 +261,21 @@ struct CanvasView: View {
         let canvasStart = viewModel.viewport.screenToCanvas(value.startLocation)
         let canvasLocation = viewModel.viewport.screenToCanvas(value.location)
 
-        // Delegate to registered tool plugin (shape, line, arrow, text, etc.)
-        if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-            tool.handleDragChanged(
-                start: canvasStart,
-                current: canvasLocation,
-                viewModel: viewModel
-            )
+        // Select and hand tool gesture logic runs inline; all other tools delegate to registry.
+        if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                tool.handleDragChanged(
+                    start: canvasStart,
+                    current: canvasLocation,
+                    viewModel: viewModel
+                )
+            } else {
+                assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
+            }
             return
         }
 
         if viewModel.selectedTool == .select {
-            // Don't drag if an object is being edited
             if viewModel.isAnyObjectEditing {
                 return
             }
@@ -352,7 +352,7 @@ struct CanvasView: View {
             if let cpIndex = draggingControlPointIndex,
                let objId = draggingControlPointObjectId {
                 let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-                viewModel.updateLineObject(withId: objId) { line in
+                viewModel.updateObject(withId: objId, as: LineObject.self) { line in
                     let newPoint: CGPoint
                     if shiftHeld {
                         let anchor = cpIndex == 0 ? line.endPoint : line.startPoint
@@ -654,16 +654,20 @@ struct CanvasView: View {
         // If it's a click (minimal drag)
         if distance < 5 {
             handleClick(at: value.location)
-        } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-            // Delegate drag-end to registered tool plugin
-            let start = viewModel.dragStartPoint ?? canvasStart
-            let shiftHeld = NSEvent.modifierFlags.contains(.shift)
-            tool.handleDragEnded(
-                start: start,
-                end: canvasLocation,
-                viewModel: viewModel,
-                shiftHeld: shiftHeld
-            )
+        } else if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            // Delegate drag-end to registered tool (not select/pan — those are handled inline)
+            if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                let start = viewModel.dragStartPoint ?? canvasStart
+                let shiftHeld = NSEvent.modifierFlags.contains(.shift)
+                tool.handleDragEnded(
+                    start: start,
+                    end: canvasLocation,
+                    viewModel: viewModel,
+                    shiftHeld: shiftHeld
+                )
+            } else {
+                assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
+            }
         }
 
         // Reset drag state
@@ -698,9 +702,13 @@ struct CanvasView: View {
 
         let shiftHeld = NSEvent.modifierFlags.contains(.shift)
 
-        // Delegate to registered tool plugin for click handling
-        if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-            tool.handleClick(at: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
+        // Select and hand tool click logic runs inline; all other tools delegate to registry.
+        if viewModel.selectedTool != .select && viewModel.selectedTool != .hand {
+            if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
+                tool.handleClick(at: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
+            } else {
+                assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
+            }
             return
         }
 
@@ -738,15 +746,8 @@ struct CanvasView: View {
                     // With shift held, keep existing selection
                 }
             }
-        } else if viewModel.selectedTool == .hand {
-            // Hand tool click does nothing
-            return
-        } else {
-            // For other tools, deselect if clicking empty space
-            if viewModel.selectObject(at: canvasLocation) == nil {
-                viewModel.deselectAll()
-            }
         }
+        // .hand: click does nothing
     }
 
     private func isDoubleClickDetected(at location: CGPoint) -> Bool {
@@ -776,7 +777,9 @@ struct CanvasView: View {
         // Guard against double-install if onAppear fires more than once.
         // A second monitor would leak a strong capture of viewModel.
         guard keyMonitor == nil else { return }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak viewModel] event in
+            guard let viewModel else { return event }
+
             // Let text fields handle their own keyboard input
             if viewModel.isAnyObjectEditing {
                 return event
@@ -798,7 +801,7 @@ struct CanvasView: View {
 
             // Cmd+V: Paste
             if modifiers == .command && event.charactersIgnoringModifiers == "v" {
-                viewModel.pasteFromClipboard(viewportSize: canvasSize)
+                viewModel.pasteFromClipboard(viewportSize: viewModel.canvasSize)
                 return nil
             }
 
@@ -844,19 +847,10 @@ struct CanvasView: View {
 
     // MARK: - Line Angle Constraint
 
-    /// Constrain endpoint to nearest 45-degree angle from start
+    /// Constrain endpoint to nearest 15-degree angle from start.
+    /// Delegates to the shared helper so creation and editing use the same snapping.
     private func constrainToAngle(from start: CGPoint, to end: CGPoint) -> CGPoint {
-        let dx = end.x - start.x
-        let dy = end.y - start.y
-        let distance = hypot(dx, dy)
-        let angle = atan2(dy, dx)
-        // Snap to nearest 15-degree (pi/12)
-        let snapAngle = CGFloat.pi / 12
-        let snappedAngle = (angle / snapAngle).rounded() * snapAngle
-        return CGPoint(
-            x: start.x + distance * cos(snappedAngle),
-            y: start.y + distance * sin(snappedAngle)
-        )
+        constrainLineToAngle(from: start, to: end)
     }
 
     // MARK: - Magnification (Pinch-to-Zoom)

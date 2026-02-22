@@ -7,27 +7,9 @@
 
 import Foundation
 
-enum DrawingTool: Equatable {
-    case select
-    case text
-    case shape(ShapePreset)   // replaces .rectangle and .oval
-    case line
-    case arrow
-    case hand
-}
-
-extension DrawingTool {
-    var isShapeTool: Bool {
-        if case .shape = self { return true }
-        return false
-    }
-
-    var shapePreset: ShapePreset? {
-        if case .shape(let p) = self { return p }
-        return nil
-    }
-
-    var isLineTool: Bool {
-        self == .line || self == .arrow
-    }
+/// A lightweight value type identifying which tool is active.
+/// Tool identities are declared as static constants in each tool file —
+/// this file is never modified when adding a new tool.
+struct DrawingTool: Hashable {
+    let id: String
 }

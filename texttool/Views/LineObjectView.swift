@@ -109,19 +109,32 @@ struct LineObjectView: View {
             .fill(object.strokeColor)
 
         case .circle:
-            let radius: CGFloat = arrowHeadLength / 2.5
+            // Center one radius behind the tip so the line doesn't poke through the circle
+            let radius: CGFloat = arrowHeadLength / 2
+            let cx = tip.x - radius * cos(angle)
+            let cy = tip.y - radius * sin(angle)
             Circle()
                 .fill(object.strokeColor)
                 .frame(width: radius * 2, height: radius * 2)
-                .position(tip)
+                .position(x: cx, y: cy)
 
         case .diamond:
+            // Tip of diamond sits at the line tip; body extends arrowHeadLength behind it
             let half = arrowHeadLength / 2
             Path { path in
-                path.move(to: CGPoint(x: tip.x + half * cos(angle), y: tip.y + half * sin(angle)))
-                path.addLine(to: CGPoint(x: tip.x + half * cos(angle + .pi / 2), y: tip.y + half * sin(angle + .pi / 2)))
-                path.addLine(to: CGPoint(x: tip.x - half * cos(angle), y: tip.y - half * sin(angle)))
-                path.addLine(to: CGPoint(x: tip.x - half * cos(angle + .pi / 2), y: tip.y - half * sin(angle + .pi / 2)))
+                path.move(to: tip)
+                path.addLine(to: CGPoint(
+                    x: tip.x - half * cos(angle - .pi / 2),
+                    y: tip.y - half * sin(angle - .pi / 2)
+                ))
+                path.addLine(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle),
+                    y: tip.y - arrowHeadLength * sin(angle)
+                ))
+                path.addLine(to: CGPoint(
+                    x: tip.x - half * cos(angle + .pi / 2),
+                    y: tip.y - half * sin(angle + .pi / 2)
+                ))
                 path.closeSubpath()
             }
             .fill(object.strokeColor)

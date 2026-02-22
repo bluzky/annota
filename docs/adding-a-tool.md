@@ -5,7 +5,7 @@ This guide walks through adding a new tool to the canvas app. It covers two scen
 1. **Tool only** — your tool creates an existing object type (e.g. a new shape preset)
 2. **Tool + new object type** — your tool introduces a brand-new kind of canvas object
 
-After the registry-based refactoring, adding a new object type touches **zero core files**. Everything is done through registration.
+Adding a new tool touches **zero core files**. Tool identity is declared inside the tool file itself — there is no central enum to edit.
 
 ---
 
@@ -13,7 +13,7 @@ After the registry-based refactoring, adding a new object type touches **zero co
 
 ```
 CanvasView
-  │  dispatches gestures via ──► ToolRegistry ──► CanvasTool plugins
+  │  dispatches gestures via ──► ToolRegistry ──► CanvasTool instances
   │  renders objects via ───────► ObjectViewRegistry ──► view factories
   │
 CanvasViewModel
@@ -25,45 +25,48 @@ CanvasViewModel
 
 | Registry | Purpose | Keyed by |
 |----------|---------|----------|
-| `ToolRegistry` | Maps `DrawingTool` → gesture handlers + preview | Tool ID string |
+| `ToolRegistry` | Maps `DrawingTool` → gesture handlers + preview | `DrawingTool.id` string |
 | `ObjectViewRegistry` | Maps object type → interactive & export SwiftUI views | `ObjectIdentifier` |
 | `CodableObjectRegistry` | Maps object type → encode/decode for clipboard | Discriminator string |
+
+### ToolManifest — one call, all registrations
+
+When a tool introduces a new object type, a `ToolManifest<Obj>` bundles all four registrations together:
+
+```swift
+ToolRegistry.shared.register(StickerTool.manifest)
+// ↳ registers the tool in ToolRegistry
+// ↳ registers the interactive view in ObjectViewRegistry
+// ↳ registers the export view in ObjectViewRegistry
+// ↳ registers the Codable discriminator in CodableObjectRegistry
+```
+
+Tools that don't introduce a new object type (e.g. `SelectTool`, `HandTool`, `ArrowTool`) are registered with the plain `register(_: any CanvasTool)` call instead.
+
+Object types that have no toolbar tool (e.g. `ImageObject`, inserted via paste) use `ObjectManifest<Obj>` and `register(_: ObjectManifest<Obj>)`.
 
 ---
 
 ## Scenario A: Tool Only (Existing Object Type)
 
-If your tool creates objects that already exist (e.g. a "Star" tool that uses `ShapeObject` with a new preset), you only need:
+If your tool creates objects that already exist (e.g. a "Pencil" tool that produces `LineObject`), you only need:
 
-1. Add a `DrawingTool` case (if needed)
-2. Create the tool plugin
-3. Register it
-4. Add a toolbar button (if needed)
+1. Create the tool
+2. Register it
+3. Add a toolbar button (if needed)
 
-### Step 1 — Add a DrawingTool case
+### Step 1 — Create the tool
 
-```swift
-// Models/DrawingTool.swift
-enum DrawingTool: Equatable {
-    case select
-    case text
-    case shape(ShapePreset)
-    case line
-    case arrow
-    case hand
-    case pencil          // ← new case
-}
-```
-
-### Step 2 — Create the tool plugin
-
-Create `Tools/PencilToolPlugin.swift`:
+Create `Tools/PencilTool.swift`. Declare the `DrawingTool` identity as a static constant via an extension **in this same file** — no changes to `DrawingTool.swift`.
 
 ```swift
 import SwiftUI
 
-struct PencilToolPlugin: CanvasTool {
-    let id = "pencil-tool"
+extension DrawingTool {
+    static let pencil = DrawingTool(id: "pencil")
+}
+
+struct PencilTool: CanvasTool {
     let toolType: DrawingTool = .pencil
 
     var metadata: ToolMetadata {
@@ -110,26 +113,27 @@ struct PencilToolPlugin: CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     ) {
-        viewModel.addLine(from: start, to: end)
+        let line = LineObject(startPoint: start, endPoint: end, strokeColor: viewModel.activeColor)
+        viewModel.addObject(line)
     }
 }
 ```
 
-### Step 3 — Register it
+### Step 2 — Register it
 
 In `Tools/ToolRegistry.swift`, add to `registerBuiltInTools()`:
 
 ```swift
-register(PencilToolPlugin())
+register(PencilTool())
 ```
 
 Or register at runtime from anywhere:
 
 ```swift
-ToolRegistry.shared.register(PencilToolPlugin())
+ToolRegistry.shared.register(PencilTool())
 ```
 
-### Step 4 — Add a toolbar button
+### Step 3 — Add a toolbar button
 
 In `Views/ToolbarView.swift`, add to the tool button row:
 
@@ -145,25 +149,17 @@ Done. No other files need changes.
 
 When your tool introduces a new kind of object (e.g. `StickerObject`), you need to:
 
-1. Add a `DrawingTool` case
-2. Create the data model struct
-3. Create the interactive view
-4. Create the export view
-5. Create the tool plugin
-6. Register everything in `ToolRegistry`
-7. Add a toolbar button
-8. Add tests
+1. Create the data model struct
+2. Create the interactive view
+3. Create the export view
+4. Create the tool (declares the `DrawingTool` identity and a `static manifest`)
+5. Register the manifest in `ToolRegistry`
+6. Add a toolbar button
+7. Add tests
 
-No modifications to `AnyCanvasObject`, `CanvasObjectView`, `CanvasExportView`, `CanvasViewModel`, or `CodableCanvasObject` are required.
+No modifications to `DrawingTool`, `AnyCanvasObject`, `CanvasObjectView`, `CanvasExportView`, `CanvasViewModel`, or `CodableCanvasObject` are required.
 
-### Step 1 — Add a DrawingTool case
-
-```swift
-// Models/DrawingTool.swift
-case sticker
-```
-
-### Step 2 — Create the data model
+### Step 1 — Create the data model
 
 Create `Models/StickerObject.swift`. Conform to `CopyableCanvasObject` (which implies `CanvasObject` + `Codable`) for full clipboard support.
 
@@ -256,7 +252,7 @@ Required properties and methods:
 |------|---------|----------------------|
 | `usesControlPoints` | `false` | Object uses draggable control points instead of a selection box (like lines) |
 
-### Step 3 — Create the interactive view
+### Step 2 — Create the interactive view
 
 Create `Views/StickerObjectView.swift`:
 
@@ -281,9 +277,9 @@ struct StickerObjectView: View {
 }
 ```
 
-### Step 4 — Create the export view
+### Step 3 — Create the export view
 
-Create `Views/ExportStickerObjectView.swift` (or add it to `CanvasExportView.swift`):
+Create `Views/ExportStickerObjectView.swift`:
 
 ```swift
 import SwiftUI
@@ -304,15 +300,18 @@ struct ExportStickerObjectView: View {
 }
 ```
 
-### Step 5 — Create the tool plugin
+### Step 4 — Create the tool
 
-Create `Tools/StickerToolPlugin.swift`:
+Create `Tools/StickerTool.swift`. Declare the `DrawingTool` identity and a `static manifest` that bundles all registrations:
 
 ```swift
 import SwiftUI
 
-struct StickerToolPlugin: CanvasTool {
-    let id = "sticker-tool"
+extension DrawingTool {
+    static let sticker = DrawingTool(id: "sticker")
+}
+
+struct StickerTool: CanvasTool {
     let toolType: DrawingTool = .sticker
 
     var metadata: ToolMetadata {
@@ -333,36 +332,35 @@ struct StickerToolPlugin: CanvasTool {
         let sticker = StickerObject(position: point, emoji: "⭐️")
         viewModel.addObject(sticker)
     }
+
+    // MARK: - Manifest
+
+    static let manifest = ToolManifest(
+        tool: StickerTool(),
+        discriminator: "sticker",
+        interactiveView: { obj, isSelected, vm in
+            AnyView(StickerObjectView(object: obj, isSelected: isSelected, viewModel: vm))
+        },
+        exportView: { obj in
+            AnyView(ExportStickerObjectView(object: obj))
+        }
+    )
 }
 ```
 
 The generic `viewModel.addObject(_:)` method works with any `CanvasObject`. No need to add type-specific helper methods to the view model.
 
-### Step 6 — Register everything
+### Step 5 — Register the manifest
 
-In `Tools/ToolRegistry.swift`:
+In `Tools/ToolRegistry.swift`, add one line to `registerBuiltInTools()`:
 
 ```swift
-// In registerBuiltInTools():
-register(StickerToolPlugin())
-
-// In registerBuiltInObjectTypes():
-
-// Interactive view
-ObjectViewRegistry.register(StickerObject.self) { obj, isSelected, vm in
-    AnyView(StickerObjectView(object: obj, isSelected: isSelected, viewModel: vm))
-}
-
-// Export view
-ObjectViewRegistry.registerExport(StickerObject.self) { obj in
-    AnyView(ExportStickerObjectView(object: obj))
-}
-
-// Clipboard support
-CodableObjectRegistry.register(StickerObject.self, discriminator: "sticker")
+register(StickerTool.manifest)
 ```
 
-### Step 7 — Add a toolbar button
+That single call registers the tool, its interactive view, its export view, and its codable discriminator. There are no other registration sites to update.
+
+### Step 6 — Add a toolbar button
 
 In `Views/ToolbarView.swift`:
 
@@ -370,7 +368,7 @@ In `Views/ToolbarView.swift`:
 toolButton(.sticker, icon: "face.smiling", tooltip: "Sticker")
 ```
 
-### Step 8 — Add tests
+### Step 7 — Add tests
 
 ```swift
 // texttoolTests/ToolTests.swift
@@ -383,7 +381,7 @@ struct StickerToolTests {
         let vm = CanvasViewModel()
         vm.selectedTool = .sticker
 
-        let tool = StickerToolPlugin()
+        let tool = StickerTool()
         tool.handleClick(at: CGPoint(x: 100, y: 100), viewModel: vm, shiftHeld: false)
 
         #expect(vm.objects.count == 1)
@@ -419,7 +417,6 @@ All methods have default no-op implementations. Only override what your tool nee
 | `handleDragChanged(start:current:viewModel:)` | Each drag move event | Update `dragStartPoint`/`currentDragPoint` |
 | `handleDragEnded(start:end:viewModel:shiftHeld:)` | Drag release (distance >= 5px) | Create the final object |
 | `handleClick(at:viewModel:shiftHeld:)` | Tap/click (distance < 5px) | Click-to-place tools (text, sticker) |
-| `matches(_:)` | Tool lookup in registry | Override to match multiple `DrawingTool` variants (e.g. `ShapeToolPlugin` matches all `.shape(_)`) |
 
 ## Tool Categories
 
@@ -437,8 +434,7 @@ All methods have default no-op implementations. Only override what your tool nee
 
 | File | Action |
 |------|--------|
-| `Models/DrawingTool.swift` | Add enum case |
-| `Tools/YourToolPlugin.swift` | **New** — tool plugin |
+| `Tools/YourTool.swift` | **New** — tool + `DrawingTool` extension |
 | `Tools/ToolRegistry.swift` | Add `register()` call |
 | `Views/ToolbarView.swift` | Add toolbar button |
 
@@ -446,12 +442,11 @@ All methods have default no-op implementations. Only override what your tool nee
 
 | File | Action |
 |------|--------|
-| `Models/DrawingTool.swift` | Add enum case |
 | `Models/YourObject.swift` | **New** — data model |
 | `Views/YourObjectView.swift` | **New** — interactive view |
 | `Views/ExportYourObjectView.swift` | **New** — export view |
-| `Tools/YourToolPlugin.swift` | **New** — tool plugin |
-| `Tools/ToolRegistry.swift` | Add registrations (tool + view + export + codable) |
+| `Tools/YourTool.swift` | **New** — tool + `DrawingTool` extension + `static manifest` |
+| `Tools/ToolRegistry.swift` | Add `register(YourTool.manifest)` |
 | `Views/ToolbarView.swift` | Add toolbar button |
 
-Zero modifications to `AnyCanvasObject`, `CanvasObjectView`, `CanvasExportView`, `CanvasViewModel`, or `CodableCanvasObject`.
+Zero modifications to `DrawingTool`, `AnyCanvasObject`, `CanvasObjectView`, `CanvasExportView`, `CanvasViewModel`, or `CodableCanvasObject`.

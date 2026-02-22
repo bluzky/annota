@@ -22,7 +22,7 @@ struct TextObjectView: View {
                     textColor: object.color,
                     onFocus: { isFocused = true },
                     onSizeChange: { size in
-                        viewModel.updateTextObjectSize(objectId: object.id, size: size)
+                        viewModel.updateObject(withId: object.id, as: TextObject.self) { $0.size = size }
                     }
                 )
                 .id(object.id) // Keep same view instance while editing

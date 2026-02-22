@@ -7,7 +7,7 @@ import SwiftUI
 import Combine
 
 /// Singleton registry managing all available canvas tools.
-/// Tools register themselves and CanvasView dispatches to them via this registry.
+/// Tools are keyed by `toolType.id` for O(1) lookup — no linear scan needed.
 @MainActor
 class ToolRegistry: ObservableObject {
     static let shared = ToolRegistry()
@@ -18,74 +18,75 @@ class ToolRegistry: ObservableObject {
         registerBuiltInTools()
     }
 
-    /// Register a new tool
+    /// Register a tool, keyed by its toolType.id.
     func register(_ tool: any CanvasTool) {
-        registeredTools[tool.id] = tool
+        registeredTools[tool.toolType.id] = tool
     }
 
-    /// Unregister a tool by ID
-    func unregister(id: String) {
-        registeredTools.removeValue(forKey: id)
+    /// Register a tool together with all registrations for the object type it produces.
+    /// This is the preferred registration path: one call covers the tool, its interactive
+    /// view, its export view, and its clipboard (Codable) support.
+    func register<Obj: CopyableCanvasObject>(_ manifest: ToolManifest<Obj>) {
+        register(manifest.tool)
+        ObjectViewRegistry.register(Obj.self) { obj, isSelected, vm in
+            manifest.interactiveView(obj, isSelected, vm)
+        }
+        ObjectViewRegistry.registerExport(Obj.self) { obj in
+            manifest.exportView(obj)
+        }
+        CodableObjectRegistry.register(Obj.self, discriminator: manifest.discriminator)
     }
 
-    /// Get tool instance for a given DrawingTool type.
-    /// Uses the tool's matches() method to support tools that handle multiple variants
-    /// (e.g. ShapeTool matches all .shape(_) types).
+    /// Register view and codable support for an object type that has no dedicated tool
+    /// (e.g. ImageObject, inserted via paste rather than a toolbar tool).
+    func register<Obj: CopyableCanvasObject>(_ manifest: ObjectManifest<Obj>) {
+        ObjectViewRegistry.register(Obj.self) { obj, isSelected, vm in
+            manifest.interactiveView(obj, isSelected, vm)
+        }
+        ObjectViewRegistry.registerExport(Obj.self) { obj in
+            manifest.exportView(obj)
+        }
+        CodableObjectRegistry.register(Obj.self, discriminator: manifest.discriminator)
+    }
+
+    /// Unregister a tool by its DrawingTool identity.
+    func unregister(_ toolType: DrawingTool) {
+        registeredTools.removeValue(forKey: toolType.id)
+    }
+
+    /// Get the tool instance for a given DrawingTool — O(1) dictionary lookup.
     func tool(for type: DrawingTool) -> (any CanvasTool)? {
-        registeredTools.values.first { $0.matches(type) }
+        registeredTools[type.id]
     }
 
-    /// Get all tools in a specific category
+    /// Get all tools in a specific category.
     func tools(in category: ToolCategory) -> [any CanvasTool] {
         registeredTools.values.filter { $0.metadata.category == category }
     }
 
-    /// Get all registered tool IDs
+    /// All registered DrawingTool identifiers.
     var toolIds: [String] {
         Array(registeredTools.keys)
     }
 
     private func registerBuiltInTools() {
-        register(ShapeToolPlugin())
-        register(LineToolPlugin())
-        register(ArrowToolPlugin())
-        register(TextToolPlugin())
-        registerBuiltInObjectTypes()
-    }
+        // Tool-only (no produced object) — registered directly
+        register(SelectTool())
+        register(HandTool())
+        register(ArrowTool())
 
-    private func registerBuiltInObjectTypes() {
-        // Interactive view factories
-        ObjectViewRegistry.register(TextObject.self) { obj, isSelected, vm in
-            AnyView(TextObjectView(object: obj, viewModel: vm, isSelected: isSelected))
-        }
-        ObjectViewRegistry.register(ShapeObject.self) { obj, isSelected, vm in
-            AnyView(ShapeObjectView(object: obj, isSelected: isSelected, viewModel: vm))
-        }
-        ObjectViewRegistry.register(LineObject.self) { obj, isSelected, vm in
-            AnyView(LineObjectView(object: obj, isSelected: isSelected, viewModel: vm))
-        }
-        ObjectViewRegistry.register(ImageObject.self) { obj, isSelected, vm in
-            AnyView(ImageObjectView(object: obj, isSelected: isSelected, viewModel: vm))
+        // Shape tools — one per preset, all sharing ShapeObject registrations.
+        // Only the first preset registration reaches the ObjectViewRegistry/CodableObjectRegistry
+        // calls; subsequent ones are no-ops for those registries (same ObjectIdentifier key).
+        for preset in ShapePreset.builtIn {
+            register(ShapeTool.manifest(preset: preset))
         }
 
-        // Export view factories
-        ObjectViewRegistry.registerExport(TextObject.self) { obj in
-            AnyView(ExportTextObjectView(object: obj))
-        }
-        ObjectViewRegistry.registerExport(ShapeObject.self) { obj in
-            AnyView(ExportShapeObjectView(object: obj))
-        }
-        ObjectViewRegistry.registerExport(LineObject.self) { obj in
-            AnyView(ExportLineObjectView(object: obj))
-        }
-        ObjectViewRegistry.registerExport(ImageObject.self) { obj in
-            AnyView(ExportImageObjectView(object: obj))
-        }
+        // Line and text tools carry their own object registrations
+        register(LineTool.manifest)
+        register(TextTool.manifest)
 
-        // Codable object registrations
-        CodableObjectRegistry.register(TextObject.self, discriminator: "text")
-        CodableObjectRegistry.register(ShapeObject.self, discriminator: "shape")
-        CodableObjectRegistry.register(LineObject.self, discriminator: "line")
-        CodableObjectRegistry.register(ImageObject.self, discriminator: "image")
+        // ImageObject has no toolbar tool — register views and codable support directly.
+        register(ImageObject.objectManifest)
     }
 }
