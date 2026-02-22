@@ -1,9 +1,10 @@
 //
 //  TextTool.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
+import AppKit
 
 public extension DrawingTool {
     public static let text = DrawingTool(id: "text")
@@ -15,15 +16,9 @@ public extension DrawingTool {
 public struct TextTool: CanvasTool {
     public let toolType: DrawingTool = .text
 
-    public var metadata: ToolMetadata {
-        ToolMetadata(
-            name: "Text",
-            icon: "textformat",
-            category: .annotation,
-            cursorType: .iBeam,
-            shortcutKey: "T"
-        )
-    }
+    public let name: String = "Text"
+    public let category: ToolCategory = .annotation
+    public let cursor: NSCursor = .iBeam
 
     // MARK: - Manifest
 
@@ -52,9 +47,12 @@ public struct TextTool: CanvasTool {
             // Currently editing - just commit without creating new
             viewModel.deselectAll()
         } else {
-            // Not editing - construct and add new text object, then start editing
+            // Not editing - construct and add new text object, then start editing.
+            // Offset so the blinking text cursor aligns with where the user clicked.
+            // Horizontal: 4pt textContainerInset.
+            // Vertical: 4pt inset + ~6pt font leading above the blinking caret.
             let newObj = TextObject(
-                position: point,
+                position: CGPoint(x: point.x - 4, y: point.y - 10),
                 text: "",
                 fontSize: viewModel.activeTextSize,
                 color: viewModel.activeColor,

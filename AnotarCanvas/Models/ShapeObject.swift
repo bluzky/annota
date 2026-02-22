@@ -1,10 +1,12 @@
 //
 //  ShapeObject.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
+#if canImport(SVGPath)
 import SVGPath
+#endif
 
 public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject, CopyableCanvasObject {
     // MARK: - CanvasObject
@@ -30,7 +32,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
     public var isEditing: Bool = false
 
     // MARK: - Shape-specific
-    public var preset: ShapePreset
+    public var svgPath: String            // The geometry (SVG path string)
+    public var toolId: String             // "rectangle", "oval", etc. for deserialization
     public var autoResizeHeight: Bool = false
 
     // MARK: - Backward Compatibility
@@ -50,7 +53,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         id: UUID = UUID(),
         position: CGPoint,
         size: CGSize,
-        preset: ShapePreset = .rectangle,
+        svgPath: String,
+        toolId: String,
         color: Color = .black,
         strokeWidth: CGFloat = 2,
         strokeStyle: StrokeStyleType = .solid,
@@ -65,7 +69,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         self.id = id
         self.position = position
         self.size = size
-        self.preset = preset
+        self.svgPath = svgPath
+        self.toolId = toolId
         self.strokeColor = color
         self.fillColor = color
         self.strokeWidth = strokeWidth
@@ -85,7 +90,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         id: UUID,
         position: CGPoint,
         size: CGSize,
-        preset: ShapePreset,
+        svgPath: String,
+        toolId: String,
         strokeColor: Color,
         fillColor: Color,
         strokeWidth: CGFloat,
@@ -102,7 +108,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         self.id = id
         self.position = position
         self.size = size
-        self.preset = preset
+        self.svgPath = svgPath
+        self.toolId = toolId
         self.strokeColor = strokeColor
         self.fillColor = fillColor
         self.strokeWidth = strokeWidth
@@ -124,7 +131,7 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         case strokeColor, strokeWidth, strokeStyle
         case fillColor, fillOpacity
         case text, textAttributes
-        case preset, autoResizeHeight
+        case svgPath, toolId, autoResizeHeight
     }
 
     public init(from decoder: Decoder) throws {
@@ -144,7 +151,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         fillOpacity = try container.decodeIfPresent(CGFloat.self, forKey: .fillOpacity) ?? 0.1
         text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
         textAttributes = try container.decodeIfPresent(TextAttributes.self, forKey: .textAttributes) ?? .default
-        preset = try container.decode(ShapePreset.self, forKey: .preset)
+        svgPath = try container.decode(String.self, forKey: .svgPath)
+        toolId = try container.decode(String.self, forKey: .toolId)
         autoResizeHeight = try container.decodeIfPresent(Bool.self, forKey: .autoResizeHeight) ?? false
         isEditing = false
     }
@@ -164,8 +172,62 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         try container.encode(fillOpacity, forKey: .fillOpacity)
         try container.encode(text, forKey: .text)
         try container.encode(textAttributes, forKey: .textAttributes)
-        try container.encode(preset, forKey: .preset)
+        try container.encode(svgPath, forKey: .svgPath)
+        try container.encode(toolId, forKey: .toolId)
         try container.encode(autoResizeHeight, forKey: .autoResizeHeight)
+    }
+
+    // MARK: - Path Helper
+
+    /// Cache key for cgPath: encodes both the SVG path string and the target rect.
+    private final class ShapePathCacheKey: NSObject {
+        public let key: String
+        public init(svgPath: String, rect: CGRect) {
+            self.key = "\(svgPath)|\(rect.minX),\(rect.minY),\(rect.width),\(rect.height)"
+        }
+        override var hash: Int { key.hashValue }
+        override func isEqual(_ object: Any?) -> Bool {
+            guard let other = object as? ShapePathCacheKey else { return false }
+            return key == other.key
+        }
+    }
+
+    private let cgPathCache = NSCache<ShapePathCacheKey, CGPath>()
+
+    /// Returns a CGPath scaled to fill `rect` exactly (stretch, not letterbox).
+    /// Results are cached in a static NSCache to avoid re-parsing the SVG string
+    /// on every hit-test or render call.
+    public func cgPath(in rect: CGRect) -> CGPath {
+        let cacheKey = ShapePathCacheKey(svgPath: svgPath, rect: rect)
+        if let cached = cgPathCache.object(forKey: cacheKey) {
+            return cached
+        }
+
+        #if canImport(SVGPath)
+        // Use invertYAxis: false so SVG Y-down coordinates match SwiftUI/screen space.
+        guard let parsed = try? SVGPath(string: svgPath, with: .init(invertYAxis: false)) else {
+            return CGPath(rect: rect, transform: nil)
+        }
+        let rawPath = CGPath.from(parsed)
+        let unitBounds = rawPath.boundingBoxOfPath
+        guard unitBounds.width > 0 && unitBounds.height > 0 else {
+            return CGPath(rect: rect, transform: nil)
+        }
+        var transform = CGAffineTransform(translationX: rect.minX, y: rect.minY)
+            .scaledBy(x: rect.width / unitBounds.width, y: rect.height / unitBounds.height)
+            .translatedBy(x: -unitBounds.minX, y: -unitBounds.minY)
+        let result = rawPath.copy(using: &transform) ?? CGPath(rect: rect, transform: nil)
+        cgPathCache.setObject(result, forKey: cacheKey)
+        return result
+        #else
+        // Fallback without SVGPath module
+        return CGPath(rect: rect, transform: nil)
+        #endif
+    }
+
+    /// Returns a SwiftUI Path scaled to fill `rect` exactly.
+    public func path(in rect: CGRect) -> Path {
+        Path(cgPath(in: rect))
     }
 
     // MARK: - Copy
@@ -175,7 +237,8 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
             id: newId,
             position: CGPoint(x: position.x + offset.x, y: position.y + offset.y),
             size: size,
-            preset: preset,
+            svgPath: svgPath,
+            toolId: toolId,
             strokeColor: strokeColor,
             fillColor: fillColor,
             strokeWidth: strokeWidth,
@@ -195,7 +258,7 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
 
     public func contains(_ point: CGPoint) -> Bool {
         let localPoint = rotation != 0 ? transformToLocal(point) : point
-        return preset.cgPath(in: boundingBox()).contains(localPoint)
+        return cgPath(in: boundingBox()).contains(localPoint)
     }
 
     public func boundingBox() -> CGRect {
@@ -217,7 +280,7 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
         }
 
         // Edge: stroke the CGPath — shape-agnostic, handles curves and polygons
-        let path = preset.cgPath(in: bounds)
+        let path = cgPath(in: bounds)
         let strokedPath = path.copy(
             strokingWithWidth: threshold * 2,
             lineCap: .round,

@@ -172,7 +172,7 @@ public struct CanvasView: View {
                     NSCursor.arrow.set()
                 }
             } else if let tool = toolRegistry.tool(for: viewModel.selectedTool) {
-                tool.metadata.cursorType.set()
+                tool.cursor.set()
             } else {
                 NSCursor.arrow.set()
             }

@@ -28,7 +28,8 @@ struct RotationMathTests {
         var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         rect.rotation = 0
@@ -45,7 +46,8 @@ struct RotationMathTests {
         var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         rect.rotation = .pi / 2  // 90°
@@ -65,7 +67,8 @@ struct RotationMathTests {
         var rect = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         rect.rotation = .pi  // 180°
@@ -86,7 +89,8 @@ struct RotationMathTests {
         var rect = ShapeObject(
             position: CGPoint(x: 50, y: 75),
             size: CGSize(width: 150, height: 80),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         rect.rotation = CGFloat.pi / 6  // 30°
@@ -106,7 +110,8 @@ struct RotationMathTests {
             var rect = ShapeObject(
                 position: CGPoint(x: 100, y: 100),
                 size: CGSize(width: 200, height: 100),
-                preset: .rectangle,
+                svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+                toolId: "rectangle",
                 color: .blue
             )
             rect.rotation = angle
@@ -122,7 +127,8 @@ struct RotationMathTests {
         var rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         rect.rotation = .pi / 2  // 90°
@@ -298,14 +304,16 @@ struct RotationMathTests {
         let rect1 = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue,
             rotation: 0
         )
         let rect2 = ShapeObject(
             position: CGPoint(x: 200, y: 0),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .red,
             rotation: 0
         )
@@ -324,7 +332,8 @@ struct RotationMathTests {
         let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue,
             rotation: .pi / 4  // 45°
         )
@@ -332,7 +341,8 @@ struct RotationMathTests {
         let anchor = ShapeObject(
             position: CGPoint(x: 500, y: 500),
             size: CGSize(width: 1, height: 1),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .red
         )
         let box = SelectionBox.from(objects: [AnyCanvasObject(rect), AnyCanvasObject(anchor)])!

@@ -10,8 +10,14 @@ import SwiftUI
 /// A tool's identity is fully represented by its `toolType: DrawingTool` value;
 /// the registry keys directly on `toolType.id` for O(1) lookup.
 public protocol CanvasTool {
-    /// Tool metadata for UI rendering (icon, name, category, etc.)
-    var metadata: ToolMetadata { get }
+    /// Tool name for debugging, logging, plugin identification
+    var name: String { get }
+
+    /// Category for functional grouping
+    var category: ToolCategory { get }
+
+    /// Cursor for visual feedback during drawing
+    var cursor: NSCursor { get }
 
     /// The DrawingTool value that uniquely identifies this tool instance.
     var toolType: DrawingTool { get }
@@ -50,7 +56,7 @@ public protocol CanvasTool {
 // MARK: - Default Implementations
 
 public extension CanvasTool {
-    public func handleClick(
+    func handleClick(
         at point: CGPoint,
         viewModel: CanvasViewModel,
         shiftHeld: Bool
@@ -58,7 +64,7 @@ public extension CanvasTool {
         // Default: no-op for tools that don't need click handling
     }
 
-    public func renderPreview(
+    func renderPreview(
         start: CGPoint,
         current: CGPoint,
         viewModel: CanvasViewModel
@@ -66,7 +72,7 @@ public extension CanvasTool {
         AnyView(EmptyView())
     }
 
-    public func handleDragChanged(
+    func handleDragChanged(
         start: CGPoint,
         current: CGPoint,
         viewModel: CanvasViewModel
@@ -74,7 +80,7 @@ public extension CanvasTool {
         // Default: no-op
     }
 
-    public func handleDragEnded(
+    func handleDragEnded(
         start: CGPoint,
         end: CGPoint,
         viewModel: CanvasViewModel,
@@ -82,17 +88,6 @@ public extension CanvasTool {
     ) {
         // Default: no-op
     }
-}
-
-// MARK: - ToolMetadata
-
-/// Metadata describing a tool for UI purposes
-public struct ToolMetadata {
-    public let name: String
-    public let icon: String              // SF Symbol name
-    public let category: ToolCategory
-    public let cursorType: NSCursor
-    public let shortcutKey: String?      // Optional keyboard shortcut
 }
 
 // MARK: - ToolCategory

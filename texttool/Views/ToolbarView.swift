@@ -38,7 +38,7 @@ struct ToolbarView: View {
             }
             .labelsHidden()
             .frame(width: 80)
-            .disabled(toolRegistry.tool(for: viewModel.selectedTool)?.metadata.category != .annotation)
+            .disabled(toolRegistry.tool(for: viewModel.selectedTool)?.category != .annotation)
 
             // Color Picker
             ColorPicker("Color", selection: $viewModel.activeColor)
@@ -61,9 +61,18 @@ struct ToolbarView: View {
     }
 
     private var activeShapeIcon: String {
+        // Map tool IDs to icons (app responsibility - framework doesn't handle UI concerns)
+        let shapeIcons: [String: String] = [
+            "rectangle": "rectangle",
+            "oval": "circle",
+            "triangle": "triangle",
+            "diamond": "diamond",
+            "star": "star",
+        ]
+
         let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
-        if activeTool?.metadata.category == .shape {
-            return activeTool?.metadata.icon ?? "square.on.square"
+        if activeTool?.category == .shape {
+            return shapeIcons[viewModel.selectedTool.id] ?? "square.on.square"
         }
         return "square.on.square"
     }
@@ -73,7 +82,7 @@ struct ToolbarView: View {
     @ViewBuilder
     private var shapePickerButton: some View {
         let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
-        let isShapeActive = activeTool?.metadata.category == .shape
+        let isShapeActive = activeTool?.category == .shape
         let icon = activeShapeIcon
 
         Button(action: {

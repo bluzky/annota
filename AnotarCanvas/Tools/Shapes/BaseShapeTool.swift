@@ -1,52 +1,44 @@
 //
-//  ShapeTool.swift
-//  texttool
+//  BaseShapeTool.swift
+//  AnotarCanvas
+//
+//  Base class for all shape tools. Each shape tool defines its own SVG path geometry.
+//  Subclasses only need to override `svgPath`, `toolType`, and `name`.
 //
 
 import SwiftUI
+import AppKit
 
-public extension DrawingTool {
-    /// Returns a DrawingTool whose identity encodes both the "shape" family and the specific preset.
-    public static func shape(_ preset: ShapePreset) -> DrawingTool {
-        DrawingTool(id: "shape-\(preset.name)")
-    }
-}
+/// Base class for all shape tools. Each shape tool defines its own SVG path geometry.
+/// Subclasses only need to override `svgPath`, `toolType`, and `name`.
+open class ShapeTool: CanvasTool {
 
-/// Tool for creating a specific shape preset via drag-to-create gesture.
-/// One instance is registered per preset; the preset is carried as a stored property
-/// so no ViewModel inspection is needed during drag handling.
-public struct ShapeTool: CanvasTool {
-    public let preset: ShapePreset
+    public init() {}
 
-    public var toolType: DrawingTool { .shape(preset) }
-
-    public var metadata: ToolMetadata {
-        ToolMetadata(
-            name: preset.name,
-            icon: preset.sfSymbol,
-            category: .shape,
-            cursorType: .crosshair,
-            shortcutKey: preset == .rectangle ? "R" : nil
-        )
+    /// The SVG path defining the shape's geometry (must be overridden by subclasses)
+    open var svgPath: String {
+        fatalError("Subclasses must override svgPath")
     }
 
-    // MARK: - Manifest
-
-    /// Returns a manifest for a specific shape preset.
-    /// All presets produce ShapeObject, so the view and codable registrations are
-    /// identical for every preset — only the tool instance differs.
-    public static func manifest(preset: ShapePreset) -> ToolManifest<ShapeObject> {
-        ToolManifest(
-            tool: ShapeTool(preset: preset),
-            discriminator: "shape",
-            interactiveView: { obj, isSelected, vm in
-                AnyView(ShapeObjectView(object: obj, isSelected: isSelected, viewModel: vm))
-            },
-            exportView: { obj in
-                AnyView(ExportShapeObjectView(object: obj))
-            }
-        )
+    /// Tool name (must be overridden by subclasses)
+    open var name: String {
+        fatalError("Subclasses must override name")
     }
+
+    /// Category is always .shape for shape tools
+    open var category: ToolCategory {
+        .shape
+    }
+
+    /// Cursor type — defaults to crosshair for all shape tools
+    open var cursor: NSCursor { .crosshair }
+
+    /// The DrawingTool type identifying this tool
+    open var toolType: DrawingTool {
+        fatalError("Subclasses must override toolType")
+    }
+
+    // MARK: - Preview Rendering
 
     public func renderPreview(
         start: CGPoint,
@@ -87,6 +79,22 @@ public struct ShapeTool: CanvasTool {
         viewModel.addObject(shape)
     }
 
+    /// Returns the tool manifest for this shape tool.
+    /// All shape tools produce ShapeObject, so the view and codable registrations
+    /// are identical for every tool — only the tool instance differs.
+    public func manifest() -> ToolManifest<ShapeObject> {
+        ToolManifest(
+            tool: self,
+            discriminator: "shape",
+            interactiveView: { obj, isSelected, vm in
+                AnyView(ShapeObjectView(object: obj, isSelected: isSelected, viewModel: vm))
+            },
+            exportView: { obj in
+                AnyView(ExportShapeObjectView(object: obj))
+            }
+        )
+    }
+
     // MARK: - Private Helpers
 
     private func makeShape(
@@ -100,7 +108,8 @@ public struct ShapeTool: CanvasTool {
         return ShapeObject(
             position: origin,
             size: size,
-            preset: preset,
+            svgPath: svgPath,
+            toolId: toolType.id,
             color: viewModel.activeColor,
             autoResizeHeight: viewModel.autoResizeShapes
         )
@@ -115,3 +124,4 @@ public struct ShapeTool: CanvasTool {
         )
     }
 }
+
