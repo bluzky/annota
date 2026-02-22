@@ -7,7 +7,7 @@
 
 import Testing
 import CoreGraphics
-@testable import texttool
+@testable import AnotarCanvas
 
 struct ViewportStateTests {
 

@@ -5,7 +5,7 @@
 
 import Testing
 import SwiftUI
-@testable import texttool
+@testable import AnotarCanvas
 
 @MainActor
 @Suite(.serialized)
@@ -30,16 +30,16 @@ struct ToolRegistryTests {
     }
 
     @Test func selectToolNotRegistered() {
-        // Select and Hand tools are kept inline in CanvasView for performance
+        // Select and Hand are now registered tools — tool(for:) returns non-nil
         let registry = ToolRegistry.shared
-        #expect(registry.tool(for: .select) == nil)
-        #expect(registry.tool(for: .hand) == nil)
+        #expect(registry.tool(for: .select) != nil)
+        #expect(registry.tool(for: .hand) != nil)
     }
 
     @Test func toolMetadata() {
         let registry = ToolRegistry.shared
         let shapeTool = registry.tool(for: .shape(.rectangle))!
-        #expect(shapeTool.metadata.name == "Shape")
+        #expect(shapeTool.metadata.name == "Rectangle")
         #expect(shapeTool.metadata.category == .shape)
         #expect(shapeTool.metadata.shortcutKey == "R")
 
@@ -79,7 +79,7 @@ struct ShapeToolTests {
         vm.selectedTool = .shape(.rectangle)
         vm.activeColor = .blue
 
-        let tool = ShapeToolPlugin()
+        let tool = ShapeTool(preset: .rectangle)
         tool.handleDragChanged(
             start: CGPoint(x: 10, y: 10),
             current: CGPoint(x: 110, y: 110),
@@ -107,7 +107,7 @@ struct LineToolTests {
         let vm = CanvasViewModel()
         vm.selectedTool = .line
 
-        let tool = LineToolPlugin()
+        let tool = LineTool()
         tool.handleDragEnded(
             start: CGPoint(x: 0, y: 0),
             end: CGPoint(x: 100, y: 100),
@@ -129,7 +129,7 @@ struct ArrowToolTests {
         let vm = CanvasViewModel()
         vm.selectedTool = .arrow
 
-        let tool = ArrowToolPlugin()
+        let tool = ArrowTool()
         tool.handleDragEnded(
             start: CGPoint(x: 0, y: 0),
             end: CGPoint(x: 100, y: 50),
@@ -151,7 +151,7 @@ struct TextToolTests {
         let vm = CanvasViewModel()
         vm.selectedTool = .text
 
-        let tool = TextToolPlugin()
+        let tool = TextTool()
         tool.handleClick(
             at: CGPoint(x: 50, y: 50),
             viewModel: vm,
@@ -167,12 +167,13 @@ struct TextToolTests {
         vm.selectedTool = .text
 
         // Create a text object first
-        let id = vm.addTextObject(at: CGPoint(x: 50, y: 50))
+        let textObj = TextObject(position: CGPoint(x: 50, y: 50), text: "Hello")
+        let id = vm.addObject(textObj)
         vm.deselectAll()
         #expect(vm.objects.first?.isEditing == false)
 
         // Click on it should start editing
-        let tool = TextToolPlugin()
+        let tool = TextTool()
         tool.handleClick(
             at: CGPoint(x: 50, y: 50),
             viewModel: vm,

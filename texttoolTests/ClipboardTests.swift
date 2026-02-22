@@ -5,7 +5,7 @@
 
 import Testing
 import SwiftUI
-@testable import texttool
+@testable import AnotarCanvas
 
 @MainActor
 @Suite(.serialized)
@@ -419,4 +419,23 @@ private func makeSinglePixelPNG() -> Data {
     }
     let rep = NSBitmapImageRep(cgImage: cgImage)
     return rep.representation(using: .png, properties: [:]) ?? Data()
+}
+
+// MARK: - Test helpers
+
+@MainActor
+private extension CanvasViewModel {
+    /// Convenience used by clipboard tests: creates a default TextObject at `position`.
+    @discardableResult
+    func addTextObject(at position: CGPoint) -> UUID {
+        addObject(TextObject(position: position, text: ""))
+    }
+
+    /// Convenience used by clipboard tests: creates a ShapeObject from a drag rect.
+    @discardableResult
+    func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) -> UUID {
+        let origin = CGPoint(x: min(start.x, end.x), y: min(start.y, end.y))
+        let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
+        return addObject(ShapeObject(position: origin, size: size, preset: preset))
+    }
 }

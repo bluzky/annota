@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import AnotarCanvas
 
 struct FloatingFormatBar: View {
     var position: CGPoint

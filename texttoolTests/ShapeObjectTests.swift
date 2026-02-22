@@ -8,7 +8,7 @@
 import Testing
 import SwiftUI
 import CoreGraphics
-@testable import texttool
+@testable import AnotarCanvas
 
 @MainActor
 struct ShapeObjectTests {
