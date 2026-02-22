@@ -60,4 +60,11 @@ public extension ObjectAttributes {
 
     /// Font size in points
     static let fontSize = "fontSize"
+
+    // MARK: - Custom Attributes (Tool-specific)
+
+    /// Namespace for tool-specific custom attributes
+    /// Value should be a [String: Any] dictionary containing tool-defined attributes
+    /// This enables tools to add arbitrary attributes without framework modifications
+    static let customAttributes = "customAttributes"
 }

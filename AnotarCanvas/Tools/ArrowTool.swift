@@ -11,13 +11,20 @@ public extension DrawingTool {
 }
 
 /// Tool for creating arrows via drag-to-create gesture.
-/// Renders preview with arrowhead; creates LineObject with endArrowHead = .open.
+/// Renders preview with arrowhead; creates LineObject with customizable arrowhead styles.
 public struct ArrowTool: CanvasTool {
     public let toolType: DrawingTool = .arrow
 
     public let name: String = "Arrow"
     public let category: ToolCategory = .drawing
     public let cursor: NSCursor = .crosshair
+
+    // MARK: - Custom Attribute Keys
+    // Tool-specific attribute keys (pure strings for extensibility)
+    public enum CustomAttr {
+        public static let startArrowHead = "startArrowHead"
+        public static let endArrowHead = "endArrowHead"
+    }
 
     // MARK: - Note
     // ArrowTool produces LineObject — the same type as LineTool.
@@ -76,9 +83,27 @@ public struct ArrowTool: CanvasTool {
         // Get stored tool attributes
         let attrs = viewModel.currentToolAttributes
 
-        let strokeColor = attrs["strokeColor"] as? Color ?? .black
-        let strokeWidth = attrs["strokeWidth"] as? CGFloat ?? 2.0
-        let strokeStyle = attrs["strokeStyle"] as? StrokeStyleType ?? .solid
+        // Standard attributes
+        let strokeColor = attrs[ObjectAttributes.strokeColor] as? Color ?? .black
+        let strokeWidth = attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0
+        let strokeStyle = attrs[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid
+
+        // Custom attributes from customAttributes namespace
+        let customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+
+        let startArrow: ArrowHead
+        if let rawValue = customAttrs[CustomAttr.startArrowHead] as? String {
+            startArrow = ArrowHead(rawValue: rawValue) ?? .none
+        } else {
+            startArrow = .none
+        }
+
+        let endArrow: ArrowHead
+        if let rawValue = customAttrs[CustomAttr.endArrowHead] as? String {
+            endArrow = ArrowHead(rawValue: rawValue) ?? .open
+        } else {
+            endArrow = .open
+        }
 
         return LineObject(
             startPoint: start,
@@ -86,7 +111,60 @@ public struct ArrowTool: CanvasTool {
             strokeColor: strokeColor,
             strokeWidth: strokeWidth,
             strokeStyle: strokeStyle,
-            endArrowHead: .open
+            startArrowHead: startArrow,
+            endArrowHead: endArrow
         )
+    }
+
+    // MARK: - Custom Tool Controls
+
+    public func customToolControls(viewModel: CanvasViewModel) -> AnyView? {
+        AnyView(ArrowToolControls(viewModel: viewModel))
+    }
+}
+
+// MARK: - Arrow Tool UI Controls
+
+struct ArrowToolControls: View {
+    @ObservedObject var viewModel: CanvasViewModel
+
+    var body: some View {
+        Group {
+            Label("Arrow Style", systemImage: "arrow.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Picker("Start", selection: Binding(
+                get: {
+                    ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead) ?? "none") ?? .none
+                },
+                set: {
+                    viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead, value: $0.rawValue)
+                }
+            )) {
+                ForEach(ArrowHead.allCases, id: \.self) { style in
+                    Text(style.rawValue.capitalized).tag(style)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(width: 80)
+            .help("Start arrowhead")
+
+            Picker("End", selection: Binding(
+                get: {
+                    ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead) ?? "open") ?? .open
+                },
+                set: {
+                    viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead, value: $0.rawValue)
+                }
+            )) {
+                ForEach(ArrowHead.allCases, id: \.self) { style in
+                    Text(style.rawValue.capitalized).tag(style)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(width: 80)
+            .help("End arrowhead")
+        }
     }
 }

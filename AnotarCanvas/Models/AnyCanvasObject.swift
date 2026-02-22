@@ -261,6 +261,16 @@ public struct AnyCanvasObject: Identifiable {
                 object = updated
             }
         }
+
+        // Custom attributes (tool-specific, protocol-based)
+        if let customAttrs = attributes[ObjectAttributes.customAttributes] as? [String: Any] {
+            if var customizable = object as? any CustomizableObject {
+                customizable.applyCustomAttributes(customAttrs)
+                if let updated = customizable as? T {
+                    object = updated
+                }
+            }
+        }
     }
 
     // MARK: - Protocol Checks

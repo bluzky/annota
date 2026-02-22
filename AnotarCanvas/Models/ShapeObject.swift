@@ -35,6 +35,7 @@ public struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, Fil
     public var svgPath: String            // The geometry (SVG path string)
     public var toolId: String             // "rectangle", "oval", etc. for deserialization
     public var autoResizeHeight: Bool = false
+    public var borderRadius: CGFloat = 0  // For rounded rectangles and custom shapes
 
     // MARK: - Backward Compatibility
 
@@ -332,5 +333,28 @@ private extension ShapeObject {
         } else {
             return ny >= 0 ? .bottom : .top
         }
+    }
+}
+
+// MARK: - CustomizableObject
+
+extension ShapeObject: CustomizableObject {
+    public mutating func applyCustomAttributes(_ attributes: [String: Any]) {
+        // Handle border radius for rounded rectangles and custom shapes
+        if let radius = attributes["borderRadius"] as? CGFloat {
+            self.borderRadius = radius
+        }
+        // Future tools can add more custom attributes here without modifying the framework
+    }
+
+    public func getCustomAttributes() -> [String: Any] {
+        var attrs: [String: Any] = [:]
+
+        // Only include borderRadius if it's non-zero
+        if borderRadius > 0 {
+            attrs["borderRadius"] = borderRadius
+        }
+
+        return attrs
     }
 }

@@ -15,16 +15,29 @@ struct ContentView: View {
     @State private var keyMonitor: Any?
 
     var body: some View {
-        VStack(spacing: 0) {
-            ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
-
-            Divider()
-
-            SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
-
-            Divider()
-
+        ZStack(alignment: .top) {
+            // Canvas fills the entire space
             CanvasView(viewModel: viewModel)
+                .frame(minWidth: 800, minHeight: 600)
+
+            // Floating toolbars overlaid on top
+            HStack {
+                Spacer()
+                VStack(spacing: 0) {
+                    // Main toolbar - floating with top spacing
+                    ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+                        .padding(.top, 12)
+
+                    // Sub toolbar - floating directly below main toolbar (no spacing)
+                    // Only show when there's content to display
+                    if showSubToolbar {
+                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+                    }
+
+                    Spacer()
+                }
+                Spacer()
+            }
         }
         .frame(minWidth: 800, minHeight: 600)
         .focusedSceneObject(viewModel)
@@ -38,6 +51,16 @@ struct ContentView: View {
                 keyMonitor = nil
             }
         }
+    }
+
+    // Check if sub-toolbar should be displayed
+    private var showSubToolbar: Bool {
+        if viewModel.selectionState.hasSelection {
+            return true
+        }
+        // Check if current tool has relevant attributes to display
+        let tool = toolRegistry.tool(for: viewModel.selectedTool)
+        return tool?.category == .shape || tool?.category == .drawing || tool?.category == .annotation
     }
 
     // MARK: - Keyboard Shortcuts

@@ -51,6 +51,12 @@ public protocol CanvasTool {
         viewModel: CanvasViewModel,
         shiftHeld: Bool
     )
+
+    /// Optional: Tool provides custom controls for the sub-toolbar
+    /// Return nil if the tool has no custom attributes
+    /// Tools can use this to display their own SwiftUI controls
+    @ViewBuilder
+    func customToolControls(viewModel: CanvasViewModel) -> AnyView?
 }
 
 // MARK: - Default Implementations
@@ -62,6 +68,11 @@ public extension CanvasTool {
         shiftHeld: Bool
     ) {
         // Default: no-op for tools that don't need click handling
+    }
+
+    func customToolControls(viewModel: CanvasViewModel) -> AnyView? {
+        // Default: no custom controls
+        return nil
     }
 
     func renderPreview(

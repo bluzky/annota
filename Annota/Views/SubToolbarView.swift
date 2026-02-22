@@ -14,7 +14,7 @@ struct SubToolbarView: View {
     @ObservedObject var toolRegistry: ToolRegistry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        HStack(spacing: 16) {
             if viewModel.selectionState.hasSelection {
                 selectionControls
             } else {
@@ -23,22 +23,9 @@ struct SubToolbarView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
-        .background(Color.white)
+        .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-        // Hide completely if nothing to show
-        .opacity(hasContent ? 1 : 0)
-        .frame(height: hasContent ? nil : 0)
-    }
-
-    // Check if there's any content to display
-    private var hasContent: Bool {
-        if viewModel.selectionState.hasSelection {
-            return true
-        }
-        // Check if current tool has relevant attributes to display
-        let tool = toolRegistry.tool(for: viewModel.selectedTool)
-        return tool?.category == .shape || tool?.category == .drawing || tool?.category == .annotation
     }
 
     // Check if current tool has relevant attributes to display
@@ -71,8 +58,6 @@ struct SubToolbarView: View {
         }
 
         zOrderControls
-
-        Spacer()
 
         Button(action: { viewModel.deleteSelected() }) {
             Image(systemName: "trash")
@@ -204,17 +189,17 @@ struct SubToolbarView: View {
                 .foregroundColor(.secondary)
 
             ColorPicker("", selection: Binding(
-                get: { attrs["strokeColor"] as? Color ?? .black },
+                get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeColor, value: $0) }
             ))
             .labelsHidden()
             .frame(width: 40)
 
             Stepper(value: Binding(
-                get: { attrs["strokeWidth"] as? CGFloat ?? 2.0 },
+                get: { attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0 },
                 set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeWidth, value: $0) }
             ), in: 0...20, step: 0.5) {
-                Text("\(Int(attrs["strokeWidth"] as? CGFloat ?? 2.0))pt")
+                Text("\(Int(attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0))pt")
                     .font(.caption)
                     .frame(width: 30)
             }
@@ -227,19 +212,19 @@ struct SubToolbarView: View {
                     .foregroundColor(.secondary)
 
                 ColorPicker("", selection: Binding(
-                    get: { attrs["fillColor"] as? Color ?? .white },
+                    get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
                     set: { viewModel.updateToolAttribute(key: ObjectAttributes.fillColor, value: $0) }
                 ))
                 .labelsHidden()
                 .frame(width: 40)
 
                 Slider(value: Binding(
-                    get: { attrs["fillOpacity"] as? CGFloat ?? 1.0 },
+                    get: { attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0 },
                     set: { viewModel.updateToolAttribute(key: ObjectAttributes.fillOpacity, value: $0) }
                 ), in: 0...1)
                 .frame(width: 80)
 
-                Text("\(Int((attrs["fillOpacity"] as? CGFloat ?? 1.0) * 100))%")
+                Text("\(Int((attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0) * 100))%")
                     .font(.caption)
                     .frame(width: 35)
             }
@@ -251,22 +236,26 @@ struct SubToolbarView: View {
                 .foregroundColor(.secondary)
 
             ColorPicker("", selection: Binding(
-                get: { attrs["strokeColor"] as? Color ?? .black },
+                get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeColor, value: $0) }
             ))
             .labelsHidden()
             .frame(width: 40)
 
             Stepper(value: Binding(
-                get: { attrs["strokeWidth"] as? CGFloat ?? 2.0 },
+                get: { attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0 },
                 set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeWidth, value: $0) }
             ), in: 0...20, step: 0.5) {
-                Text("\(Int(attrs["strokeWidth"] as? CGFloat ?? 2.0))pt")
+                Text("\(Int(attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0))pt")
                     .font(.caption)
                     .frame(width: 30)
             }
         }
 
-        Spacer()
+        // Tool-provided custom controls
+        if let customControls = tool?.customToolControls(viewModel: viewModel) {
+            Divider().frame(height: 20)
+            customControls
+        }
     }
 }

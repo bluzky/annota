@@ -45,7 +45,6 @@ public class CanvasViewModel: ObservableObject {
     }
     @Published public var activeTextSize: CGFloat = 16
     @Published public var activeColor: Color = .black
-    @Published public var autoResizeShapes: Bool = true
 
     // MARK: - Tool Attribute State
 
@@ -80,6 +79,29 @@ public class CanvasViewModel: ObservableObject {
         var attrs = currentToolAttributes
         attrs[key] = value
         toolAttributes[selectedTool.id] = attrs
+    }
+
+    /// Update a custom attribute for the current tool
+    public func updateCustomToolAttribute(key: String, value: Any) {
+        var attrs = currentToolAttributes
+        var customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        customAttrs[key] = value
+        attrs[ObjectAttributes.customAttributes] = customAttrs
+        toolAttributes[selectedTool.id] = attrs
+    }
+
+    /// Get a custom attribute value for the current tool
+    public func getCustomToolAttribute<T>(key: String, default defaultValue: T) -> T {
+        let attrs = currentToolAttributes
+        let customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        return customAttrs[key] as? T ?? defaultValue
+    }
+
+    /// Get a custom attribute value (optional)
+    public func getCustomToolAttribute<T>(key: String) -> T? {
+        let attrs = currentToolAttributes
+        let customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        return customAttrs[key] as? T
     }
 
     // MARK: - Viewport State
@@ -293,7 +315,53 @@ public class CanvasViewModel: ObservableObject {
             }
         }
 
+        // Extract custom attributes if all selected objects support customization
+        if !objects.isEmpty {
+            // Try to get custom attributes from first object
+            if let firstCustomizable = objects.first?.asType(LineObject.self) as? CustomizableObject ??
+               objects.first?.asType(ShapeObject.self) as? CustomizableObject {
+                var customAttrs = firstCustomizable.getCustomAttributes()
+
+                // Compare with remaining objects
+                for obj in objects.dropFirst() {
+                    if let customizable = obj.asType(LineObject.self) as? CustomizableObject ??
+                       obj.asType(ShapeObject.self) as? CustomizableObject {
+                        let objCustomAttrs = customizable.getCustomAttributes()
+
+                        // Remove keys that don't match
+                        for key in customAttrs.keys {
+                            if !areEqual(customAttrs[key], objCustomAttrs[key]) {
+                                customAttrs.removeValue(forKey: key)
+                            }
+                        }
+                    } else {
+                        // If any object doesn't support customization, clear all custom attrs
+                        customAttrs.removeAll()
+                        break
+                    }
+                }
+
+                if !customAttrs.isEmpty {
+                    result[ObjectAttributes.customAttributes] = customAttrs
+                }
+            }
+        }
+
         return result
+    }
+
+    /// Helper to compare Any values for attribute matching
+    private func areEqual(_ lhs: Any?, _ rhs: Any?) -> Bool {
+        guard let lhs = lhs, let rhs = rhs else { return lhs == nil && rhs == nil }
+
+        // Handle common types
+        if let l = lhs as? String, let r = rhs as? String { return l == r }
+        if let l = lhs as? CGFloat, let r = rhs as? CGFloat { return l == r }
+        if let l = lhs as? Int, let r = rhs as? Int { return l == r }
+        if let l = lhs as? Bool, let r = rhs as? Bool { return l == r }
+
+        // Add more type comparisons as needed
+        return false
     }
 
     // MARK: - Update Objects

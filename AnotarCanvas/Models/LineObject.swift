@@ -361,3 +361,29 @@ private extension LineObject {
         return CGSize(width: textSize.width + 12, height: textSize.height + 8)
     }
 }
+
+// MARK: - CustomizableObject
+
+extension LineObject: CustomizableObject {
+    public mutating func applyCustomAttributes(_ attributes: [String: Any]) {
+        // Handle arrowhead attributes (stored as strings for extensibility)
+        if let startRaw = attributes["startArrowHead"] as? String,
+           let start = ArrowHead(rawValue: startRaw) {
+            self.startArrowHead = start
+        }
+        if let endRaw = attributes["endArrowHead"] as? String,
+           let end = ArrowHead(rawValue: endRaw) {
+            self.endArrowHead = end
+        }
+    }
+
+    public func getCustomAttributes() -> [String: Any] {
+        var attrs: [String: Any] = [:]
+
+        // Always include arrowhead attributes
+        attrs["startArrowHead"] = startArrowHead.rawValue
+        attrs["endArrowHead"] = endArrowHead.rawValue
+
+        return attrs
+    }
+}

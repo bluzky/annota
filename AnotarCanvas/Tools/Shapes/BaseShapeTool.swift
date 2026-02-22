@@ -115,16 +115,25 @@ open class ShapeTool: CanvasTool {
         let fillColor = attrs["fillColor"] as? Color ?? .white
         let fillOpacity = attrs["fillOpacity"] as? CGFloat ?? 1.0
 
+        // Use memberwise initializer to set stroke and fill independently
         return ShapeObject(
+            id: UUID(),
             position: origin,
             size: size,
             svgPath: svgPath,
             toolId: toolType.id,
-            color: strokeColor,  // Sets both strokeColor and fillColor
+            strokeColor: strokeColor,
+            fillColor: fillColor,
             strokeWidth: strokeWidth,
             strokeStyle: strokeStyle,
             fillOpacity: fillOpacity,
-            autoResizeHeight: viewModel.autoResizeShapes
+            text: "",
+            textAttributes: .default,
+            isEditing: false,
+            autoResizeHeight: false,
+            rotation: 0,
+            isLocked: false,
+            zIndex: 0
         )
     }
 
