@@ -7,11 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FF0B65001EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65011EABCDEF00310EBB /* SVGPath */; };
+		AC00000100000001000000AC /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = AC00000200000002000000AC /* SVGPath */; };
+		AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; };
+		AC00000500000005000000AC /* AnotarCanvas.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65031EABCDEF00310EBB /* SVGPath */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AC00000600000006000000AC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC00000700000007000000AC;
+			remoteInfo = AnotarCanvas;
+		};
 		FF0B34492EEABCA500310EBB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
@@ -28,13 +37,33 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		AC00000800000008000000AC /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AC00000500000005000000AC /* AnotarCanvas.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AC00000400000004000000AC /* AnotarCanvas.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnotarCanvas.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF0B34392EEABCA300310EBB /* texttool.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = texttool.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF0B34482EEABCA500310EBB /* texttoolTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = texttoolTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF0B34522EEABCA500310EBB /* texttoolUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = texttoolUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AC00000900000009000000AC /* AnotarCanvas */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AnotarCanvas;
+			sourceTree = "<group>";
+		};
 		FF0B343B2EEABCA300310EBB /* texttool */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = texttool;
@@ -57,7 +86,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FF0B65001EABCDEF00310EBB /* SVGPath in Frameworks */,
+				AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC0000100000001000000AC0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC00000100000001000000AC /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,6 +119,7 @@
 		FF0B34302EEABCA300310EBB = {
 			isa = PBXGroup;
 			children = (
+				AC00000900000009000000AC /* AnotarCanvas */,
 				FF0B343B2EEABCA300310EBB /* texttool */,
 				FF0B344B2EEABCA500310EBB /* texttoolTests */,
 				FF0B34552EEABCA500310EBB /* texttoolUITests */,
@@ -92,6 +130,7 @@
 		FF0B343A2EEABCA300310EBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				AC00000400000004000000AC /* AnotarCanvas.framework */,
 				FF0B34392EEABCA300310EBB /* texttool.app */,
 				FF0B34482EEABCA500310EBB /* texttoolTests.xctest */,
 				FF0B34522EEABCA500310EBB /* texttoolUITests.xctest */,
@@ -102,6 +141,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AC00000700000007000000AC /* AnotarCanvas */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC0000110000001100000AC0 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */;
+			buildPhases = (
+				AC0000120000001200000AC0 /* Sources */,
+				AC0000100000001000000AC0 /* Frameworks */,
+				AC0000130000001300000AC0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AC00000900000009000000AC /* AnotarCanvas */,
+			);
+			name = AnotarCanvas;
+			packageProductDependencies = (
+				AC00000200000002000000AC /* SVGPath */,
+			);
+			productName = AnotarCanvas;
+			productReference = AC00000400000004000000AC /* AnotarCanvas.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		FF0B34382EEABCA300310EBB /* texttool */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttool" */;
@@ -109,17 +171,18 @@
 				FF0B34352EEABCA300310EBB /* Sources */,
 				FF0B34362EEABCA300310EBB /* Frameworks */,
 				FF0B34372EEABCA300310EBB /* Resources */,
+				AC00000800000008000000AC /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AC0000140000001400000AC0 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				FF0B343B2EEABCA300310EBB /* texttool */,
 			);
 			name = texttool;
 			packageProductDependencies = (
-				FF0B65011EABCDEF00310EBB /* SVGPath */,
 			);
 			productName = texttool;
 			productReference = FF0B34392EEABCA300310EBB /* texttool.app */;
@@ -182,6 +245,9 @@
 				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					AC00000700000007000000AC = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					FF0B34382EEABCA300310EBB = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -212,6 +278,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				AC00000700000007000000AC /* AnotarCanvas */,
 				FF0B34382EEABCA300310EBB /* texttool */,
 				FF0B34472EEABCA500310EBB /* texttoolTests */,
 				FF0B34512EEABCA500310EBB /* texttoolUITests */,
@@ -220,6 +287,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AC0000130000001300000AC0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FF0B34372EEABCA300310EBB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -244,6 +318,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AC0000120000001200000AC0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FF0B34352EEABCA300310EBB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -268,6 +349,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AC0000140000001400000AC0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC00000700000007000000AC /* AnotarCanvas */;
+			targetProxy = AC00000600000006000000AC /* PBXContainerItemProxy */;
+		};
 		FF0B344A2EEABCA500310EBB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FF0B34382EEABCA300310EBB /* texttool */;
@@ -281,6 +367,76 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		AC0000150000001500000AC0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 965F2J8B9J;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnotarCanvas;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AC0000160000001600000AC0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = 965F2J8B9J;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnotarCanvas;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		FF0B345A2EEABCA500310EBB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -550,6 +706,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AC0000110000001100000AC0 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC0000150000001500000AC0 /* Debug */,
+				AC0000160000001600000AC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FF0B34342EEABCA300310EBB /* Build configuration list for PBXProject "texttool" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -600,7 +765,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		FF0B65011EABCDEF00310EBB /* SVGPath */ = {
+		AC00000200000002000000AC /* SVGPath */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
 			productName = SVGPath;

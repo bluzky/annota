@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AnotarCanvas
 
 struct ToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel

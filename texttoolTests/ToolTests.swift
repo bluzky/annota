@@ -5,7 +5,7 @@
 
 import Testing
 import SwiftUI
-@testable import texttool
+@testable import AnotarCanvas
 
 @MainActor
 @Suite(.serialized)

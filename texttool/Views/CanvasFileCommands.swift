@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
+import AnotarCanvas
 
 struct CanvasFileCommands: Commands {
     @FocusedObject private var focusedViewModel: CanvasViewModel?

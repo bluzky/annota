@@ -10,7 +10,7 @@ import Testing
 import SwiftUI
 import CoreGraphics
 import Foundation
-@testable import texttool
+@testable import AnotarCanvas
 
 @MainActor
 struct RotationMathTests {

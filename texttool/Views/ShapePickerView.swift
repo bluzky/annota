@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import AnotarCanvas
 
 /// A popover panel showing a grid of shape preset thumbnails.
 /// Selecting a preset activates `.shape(preset)` on the view model.

@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import texttool
+@testable import AnotarCanvas
 
 struct texttoolTests {
 

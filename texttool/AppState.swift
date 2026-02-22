@@ -11,6 +11,7 @@ import Foundation
 import AppKit
 import UniformTypeIdentifiers
 import os.log
+import AnotarCanvas
 
 private let exportLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "texttool", category: "Export")
 
