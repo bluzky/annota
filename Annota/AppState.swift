@@ -1,6 +1,6 @@
 //
 //  AppState.swift
-//  texttool
+//  Annota
 //
 //  Global singleton that bridges the CanvasViewModel into Commands,
 //  working around the unreliability of @FocusedObject when AppKit views
@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 import os.log
 import AnotarCanvas
 
-private let exportLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "texttool", category: "Export")
+private let exportLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Annota", category: "Export")
 
 @MainActor
 final class AppState {

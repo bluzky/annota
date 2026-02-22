@@ -1,13 +1,13 @@
 //
-//  texttoolUITestsLaunchTests.swift
-//  texttoolUITests
+//  AnnotaUITestsLaunchTests.swift
+//  AnnotaUITests
 //
 //  Created by Flex on 12/11/25.
 //
 
 import XCTest
 
-final class texttoolUITestsLaunchTests: XCTestCase {
+final class AnnotaUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

@@ -1,6 +1,6 @@
 //
 //  FloatingFormatBar.swift
-//  texttool
+//  Annota
 //
 //  Created by Flex on 12/11/25.
 //

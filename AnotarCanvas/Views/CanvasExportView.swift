@@ -1,6 +1,6 @@
 //
 //  CanvasExportView.swift
-//  texttool
+//  AnotarCanvas
 //
 //  A headless SwiftUI view used exclusively for off-screen rendering during export.
 //  Renders all canvas objects without grid, selection UI, or interactive elements.

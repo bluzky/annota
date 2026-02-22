@@ -1,6 +1,6 @@
 //
 //  RotationMathTests.swift
-//  texttoolTests
+//  AnnotaTests
 //
 //  Unit tests for rotation math: coordinate transforms, angle calculation,
 //  15-degree snapping, and group orbit math.

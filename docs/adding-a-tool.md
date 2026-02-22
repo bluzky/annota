@@ -371,7 +371,7 @@ toolButton(.sticker, icon: "face.smiling", tooltip: "Sticker")
 ### Step 7 — Add tests
 
 ```swift
-// texttoolTests/ToolTests.swift
+// AnnotaTests/ToolTests.swift
 
 @MainActor
 @Suite(.serialized)

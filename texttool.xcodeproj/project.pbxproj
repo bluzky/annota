@@ -26,14 +26,14 @@
 			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FF0B34382EEABCA300310EBB;
-			remoteInfo = texttool;
+			remoteInfo = Annota;
 		};
 		FF0B34532EEABCA500310EBB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FF0B34382EEABCA300310EBB;
-			remoteInfo = texttool;
+			remoteInfo = Annota;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -53,9 +53,9 @@
 
 /* Begin PBXFileReference section */
 		AC00000400000004000000AC /* AnotarCanvas.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnotarCanvas.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34392EEABCA300310EBB /* texttool.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = texttool.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34482EEABCA500310EBB /* texttoolTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = texttoolTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34522EEABCA500310EBB /* texttoolUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = texttoolUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF0B34392EEABCA300310EBB /* Annota.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Annota.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -64,19 +64,19 @@
 			path = AnotarCanvas;
 			sourceTree = "<group>";
 		};
-		FF0B343B2EEABCA300310EBB /* texttool */ = {
+		FF0B343B2EEABCA300310EBB /* Annota */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = texttool;
+			path = Annota;
 			sourceTree = "<group>";
 		};
-		FF0B344B2EEABCA500310EBB /* texttoolTests */ = {
+		FF0B344B2EEABCA500310EBB /* AnnotaTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = texttoolTests;
+			path = AnnotaTests;
 			sourceTree = "<group>";
 		};
-		FF0B34552EEABCA500310EBB /* texttoolUITests */ = {
+		FF0B34552EEABCA500310EBB /* AnnotaUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = texttoolUITests;
+			path = AnnotaUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -120,9 +120,9 @@
 			isa = PBXGroup;
 			children = (
 				AC00000900000009000000AC /* AnotarCanvas */,
-				FF0B343B2EEABCA300310EBB /* texttool */,
-				FF0B344B2EEABCA500310EBB /* texttoolTests */,
-				FF0B34552EEABCA500310EBB /* texttoolUITests */,
+				FF0B343B2EEABCA300310EBB /* Annota */,
+				FF0B344B2EEABCA500310EBB /* AnnotaTests */,
+				FF0B34552EEABCA500310EBB /* AnnotaUITests */,
 				FF0B343A2EEABCA300310EBB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -131,9 +131,9 @@
 			isa = PBXGroup;
 			children = (
 				AC00000400000004000000AC /* AnotarCanvas.framework */,
-				FF0B34392EEABCA300310EBB /* texttool.app */,
-				FF0B34482EEABCA500310EBB /* texttoolTests.xctest */,
-				FF0B34522EEABCA500310EBB /* texttoolUITests.xctest */,
+				FF0B34392EEABCA300310EBB /* Annota.app */,
+				FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */,
+				FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,9 +164,9 @@
 			productReference = AC00000400000004000000AC /* AnotarCanvas.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		FF0B34382EEABCA300310EBB /* texttool */ = {
+		FF0B34382EEABCA300310EBB /* Annota */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttool" */;
+			buildConfigurationList = FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "Annota" */;
 			buildPhases = (
 				FF0B34352EEABCA300310EBB /* Sources */,
 				FF0B34362EEABCA300310EBB /* Frameworks */,
@@ -179,18 +179,18 @@
 				AC0000140000001400000AC0 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FF0B343B2EEABCA300310EBB /* texttool */,
+				FF0B343B2EEABCA300310EBB /* Annota */,
 			);
-			name = texttool;
+			name = Annota;
 			packageProductDependencies = (
 			);
-			productName = texttool;
-			productReference = FF0B34392EEABCA300310EBB /* texttool.app */;
+			productName = Annota;
+			productReference = FF0B34392EEABCA300310EBB /* Annota.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FF0B34472EEABCA500310EBB /* texttoolTests */ = {
+		FF0B34472EEABCA500310EBB /* AnnotaTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttoolTests" */;
+			buildConfigurationList = FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaTests" */;
 			buildPhases = (
 				FF0B34442EEABCA500310EBB /* Sources */,
 				FF0B34452EEABCA500310EBB /* Frameworks */,
@@ -202,19 +202,19 @@
 				FF0B344A2EEABCA500310EBB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FF0B344B2EEABCA500310EBB /* texttoolTests */,
+				FF0B344B2EEABCA500310EBB /* AnnotaTests */,
 			);
-			name = texttoolTests;
+			name = AnnotaTests;
 			packageProductDependencies = (
 				FF0B65031EABCDEF00310EBB /* SVGPath */,
 			);
-			productName = texttoolTests;
-			productReference = FF0B34482EEABCA500310EBB /* texttoolTests.xctest */;
+			productName = AnnotaTests;
+			productReference = FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FF0B34512EEABCA500310EBB /* texttoolUITests */ = {
+		FF0B34512EEABCA500310EBB /* AnnotaUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttoolUITests" */;
+			buildConfigurationList = FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaUITests" */;
 			buildPhases = (
 				FF0B344E2EEABCA500310EBB /* Sources */,
 				FF0B344F2EEABCA500310EBB /* Frameworks */,
@@ -226,13 +226,13 @@
 				FF0B34542EEABCA500310EBB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FF0B34552EEABCA500310EBB /* texttoolUITests */,
+				FF0B34552EEABCA500310EBB /* AnnotaUITests */,
 			);
-			name = texttoolUITests;
+			name = AnnotaUITests;
 			packageProductDependencies = (
 			);
-			productName = texttoolUITests;
-			productReference = FF0B34522EEABCA500310EBB /* texttoolUITests.xctest */;
+			productName = AnnotaUITests;
+			productReference = FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -279,9 +279,9 @@
 			projectRoot = "";
 			targets = (
 				AC00000700000007000000AC /* AnotarCanvas */,
-				FF0B34382EEABCA300310EBB /* texttool */,
-				FF0B34472EEABCA500310EBB /* texttoolTests */,
-				FF0B34512EEABCA500310EBB /* texttoolUITests */,
+				FF0B34382EEABCA300310EBB /* Annota */,
+				FF0B34472EEABCA500310EBB /* AnnotaTests */,
+				FF0B34512EEABCA500310EBB /* AnnotaUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -356,12 +356,12 @@
 		};
 		FF0B344A2EEABCA500310EBB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FF0B34382EEABCA300310EBB /* texttool */;
+			target = FF0B34382EEABCA300310EBB /* Annota */;
 			targetProxy = FF0B34492EEABCA500310EBB /* PBXContainerItemProxy */;
 		};
 		FF0B34542EEABCA500310EBB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FF0B34382EEABCA300310EBB /* texttool */;
+			target = FF0B34382EEABCA300310EBB /* Annota */;
 			targetProxy = FF0B34532EEABCA500310EBB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -562,7 +562,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = texttool/texttool.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -578,7 +578,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttool;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -595,7 +595,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = texttool/texttool.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -611,7 +611,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttool;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -633,14 +633,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttoolTests;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/texttool.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/texttool";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Annota";
 			};
 			name = Debug;
 		};
@@ -654,14 +654,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttoolTests;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/texttool.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/texttool";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Annota";
 			};
 			name = Release;
 		};
@@ -673,14 +673,14 @@
 				DEVELOPMENT_TEAM = 965F2J8B9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttoolUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = texttool;
+				TEST_TARGET_NAME = Annota;
 			};
 			name = Debug;
 		};
@@ -692,14 +692,14 @@
 				DEVELOPMENT_TEAM = 965F2J8B9J;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.texttoolUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = texttool;
+				TEST_TARGET_NAME = Annota;
 			};
 			name = Release;
 		};
@@ -724,7 +724,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttool" */ = {
+		FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "Annota" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FF0B345D2EEABCA500310EBB /* Debug */,
@@ -733,7 +733,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttoolTests" */ = {
+		FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FF0B34602EEABCA500310EBB /* Debug */,
@@ -742,7 +742,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "texttoolUITests" */ = {
+		FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FF0B34632EEABCA500310EBB /* Debug */,

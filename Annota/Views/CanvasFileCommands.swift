@@ -1,6 +1,6 @@
 //
 //  CanvasFileCommands.swift
-//  texttool
+//  Annota
 //
 //  Adds "Export as PNG…" and "Export as JPEG…" items to the File menu.
 //

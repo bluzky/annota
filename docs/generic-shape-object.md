@@ -614,11 +614,11 @@ ForEach(ShapePreset.builtIn, id: \.name) { preset in
 
 ---
 
-## 10. Tests (`texttoolTests/ShapeObjectTests.swift`)
+## 10. Tests (`AnnotaTests/ShapeObjectTests.swift`)
 
 ```swift
 import Testing
-@testable import texttool
+@testable import Annota
 
 @Suite("ShapeObject")
 struct ShapeObjectTests {

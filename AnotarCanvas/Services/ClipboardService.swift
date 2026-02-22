@@ -1,13 +1,13 @@
 //
 //  ClipboardService.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import AppKit
 import Foundation
 
 public enum ClipboardService {
-    private static let pasteboardType = NSPasteboard.PasteboardType("com.texttool.canvasobjects")
+    private static let pasteboardType = NSPasteboard.PasteboardType("co.onekg.Annota.canvasobjects")
 
     public static func copyObjects(_ objects: [CodableCanvasObject]) {
         guard !objects.isEmpty else { return }

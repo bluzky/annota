@@ -1,6 +1,6 @@
 //
 //  ShapePickerView.swift
-//  texttool
+//  Annota
 //
 
 import SwiftUI

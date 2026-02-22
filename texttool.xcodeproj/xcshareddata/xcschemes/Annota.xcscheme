@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
-               BuildableName = "texttool.app"
-               BlueprintName = "texttool"
+               BuildableName = "Annota.app"
+               BlueprintName = "Annota"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -35,8 +35,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FF0B34472EEABCA500310EBB"
-               BuildableName = "texttoolTests.xctest"
-               BlueprintName = "texttoolTests"
+               BuildableName = "AnnotaTests.xctest"
+               BlueprintName = "AnnotaTests"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -45,8 +45,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FF0B34512EEABCA500310EBB"
-               BuildableName = "texttoolUITests.xctest"
-               BlueprintName = "texttoolUITests"
+               BuildableName = "AnnotaUITests.xctest"
+               BlueprintName = "AnnotaUITests"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -67,8 +67,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
-            BuildableName = "texttool.app"
-            BlueprintName = "texttool"
+            BuildableName = "Annota.app"
+            BlueprintName = "Annota"
             ReferencedContainer = "container:texttool.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -84,8 +84,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
-            BuildableName = "texttool.app"
-            BlueprintName = "texttool"
+            BuildableName = "Annota.app"
+            BlueprintName = "Annota"
             ReferencedContainer = "container:texttool.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

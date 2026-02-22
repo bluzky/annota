@@ -1,6 +1,6 @@
 //
 //  ToolManifest.swift
-//  texttool
+//  AnotarCanvas
 //
 //  A ToolManifest bundles a CanvasTool together with all the registrations
 //  its produced object type requires: interactive view, export view, and

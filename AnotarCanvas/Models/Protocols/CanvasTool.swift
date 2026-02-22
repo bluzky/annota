@@ -1,6 +1,6 @@
 //
 //  CanvasTool.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
