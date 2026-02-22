@@ -1,9 +1,10 @@
 //
 //  TextTool.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
+import AppKit
 
 public extension DrawingTool {
     public static let text = DrawingTool(id: "text")
@@ -15,15 +16,9 @@ public extension DrawingTool {
 public struct TextTool: CanvasTool {
     public let toolType: DrawingTool = .text
 
-    public var metadata: ToolMetadata {
-        ToolMetadata(
-            name: "Text",
-            icon: "textformat",
-            category: .annotation,
-            cursorType: .iBeam,
-            shortcutKey: "T"
-        )
-    }
+    public let name: String = "Text"
+    public let category: ToolCategory = .annotation
+    public let cursor: NSCursor = .iBeam
 
     // MARK: - Manifest
 

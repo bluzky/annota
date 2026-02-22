@@ -47,7 +47,8 @@ struct ClipboardTests {
         let original = ShapeObject(
             position: CGPoint(x: 50, y: 75),
             size: CGSize(width: 200, height: 150),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue,
             strokeWidth: 3,
             fillOpacity: 0.5,
@@ -62,7 +63,8 @@ struct ClipboardTests {
         #expect(decoded.id == original.id)
         #expect(decoded.position == original.position)
         #expect(decoded.size == original.size)
-        #expect(decoded.preset == original.preset)
+        #expect(decoded.svgPath == original.svgPath)
+        #expect(decoded.toolId == original.toolId)
         #expect(decoded.strokeWidth == original.strokeWidth)
         #expect(decoded.fillOpacity == original.fillOpacity)
         #expect(decoded.text == original.text)
@@ -86,10 +88,17 @@ struct ClipboardTests {
             text: "Test",
             fontSize: 16
         )
+        let ovalPath = """
+            M 50 0 C 77.6 0 100 22.4 100 50
+            C 100 77.6 77.6 100 50 100
+            C 22.4 100 0 77.6 0 50
+            C 0 22.4 22.4 0 50 0 Z
+            """
         let shapeObj = ShapeObject(
             position: CGPoint(x: 30, y: 40),
             size: CGSize(width: 100, height: 80),
-            preset: .oval
+            svgPath: ovalPath,
+            toolId: "oval"
         )
 
         let textWrapped = AnyCanvasObject(textObj)
@@ -210,7 +219,7 @@ struct ClipboardTests {
     @Test func multiObjectCopyPaste() async throws {
         let vm = CanvasViewModel()
         let id1 = vm.addTextObject(at: CGPoint(x: 10, y: 10))
-        vm.addShape(preset: .rectangle, from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
+        vm.addRectangleShape(from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
         let shapeId = vm.objects.first(where: { $0.asShapeObject != nil })!.id
 
         vm.selectMultiple(ids: [id1, shapeId])
@@ -339,7 +348,7 @@ struct ClipboardTests {
         let vm = CanvasViewModel()
         // Add some existing objects
         _ = vm.addTextObject(at: CGPoint(x: 10, y: 10))
-        vm.addShape(preset: .rectangle, from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
+        vm.addRectangleShape(from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
 
         let maxExistingZIndex = vm.objects.map(\.zIndex).max() ?? 0
 
@@ -433,9 +442,14 @@ private extension CanvasViewModel {
 
     /// Convenience used by clipboard tests: creates a ShapeObject from a drag rect.
     @discardableResult
-    func addShape(preset: ShapePreset, from start: CGPoint, to end: CGPoint) -> UUID {
+    func addRectangleShape(from start: CGPoint, to end: CGPoint) -> UUID {
         let origin = CGPoint(x: min(start.x, end.x), y: min(start.y, end.y))
         let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
-        return addObject(ShapeObject(position: origin, size: size, preset: preset))
+        return addObject(ShapeObject(
+            position: origin,
+            size: size,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle"
+        ))
     }
 }

@@ -6,11 +6,20 @@
 import SwiftUI
 import AnotarCanvas
 
-/// A popover panel showing a grid of shape preset thumbnails.
-/// Selecting a preset activates `.shape(preset)` on the view model.
+/// A popover panel showing a grid of shape thumbnails.
+/// Selecting a shape activates the corresponding DrawingTool on the view model.
 struct ShapePickerView: View {
     @ObservedObject var viewModel: CanvasViewModel
     @Binding var isPresented: Bool
+
+    // App-defined icon mapping - framework doesn't handle UI concerns
+    private let shapeItems: [(tool: DrawingTool, icon: String, name: String)] = [
+        (.rectangle, "rectangle", "Rectangle"),
+        (.oval, "circle", "Oval"),
+        (.triangle, "triangle", "Triangle"),
+        (.diamond, "diamond", "Diamond"),
+        (.star, "star", "Star"),
+    ]
 
     private let columns = [
         GridItem(.fixed(72), spacing: 8),
@@ -19,13 +28,13 @@ struct ShapePickerView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(ShapePreset.builtIn, id: \.name) { preset in
-                ShapePresetCell(
-                    preset: preset,
-                    isSelected: viewModel.selectedTool == .shape(preset)
+            ForEach(shapeItems, id: \.tool) { item in
+                ShapeItemCell(
+                    item: item,
+                    isSelected: viewModel.selectedTool == item.tool
                 )
                 .onTapGesture {
-                    viewModel.selectedTool = .shape(preset)
+                    viewModel.selectedTool = item.tool
                     isPresented = false
                 }
             }
@@ -38,30 +47,18 @@ struct ShapePickerView: View {
 
 // MARK: - Individual cell
 
-private struct ShapePresetCell: View {
-    let preset: ShapePreset
+private struct ShapeItemCell: View {
+    let item: (tool: DrawingTool, icon: String, name: String)
     let isSelected: Bool
 
     var body: some View {
         VStack(spacing: 4) {
-            GeometryReader { geo in
-                let rect = CGRect(origin: .zero, size: geo.size)
-                ZStack {
-                    // Fill
-                    preset.path(in: rect)
-                        .fill(Color.accentColor.opacity(isSelected ? 0.25 : 0.08))
+            Image(systemName: item.icon)
+                .font(.system(size: 24))
+                .foregroundColor(isSelected ? .accentColor : .secondary)
+                .frame(width: 44, height: 36)
 
-                    // Stroke
-                    preset.path(in: rect)
-                        .stroke(
-                            isSelected ? Color.accentColor : Color.secondary,
-                            lineWidth: isSelected ? 2 : 1.5
-                        )
-                }
-            }
-            .frame(width: 44, height: 36)
-
-            Text(preset.name)
+            Text(item.name)
                 .font(.system(size: 10))
                 .foregroundColor(isSelected ? .accentColor : .secondary)
                 .lineLimit(1)

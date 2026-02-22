@@ -1,9 +1,10 @@
 //
 //  LineTool.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
+import AppKit
 
 public extension DrawingTool {
     public static let line = DrawingTool(id: "line")
@@ -14,15 +15,9 @@ public extension DrawingTool {
 public struct LineTool: CanvasTool {
     public let toolType: DrawingTool = .line
 
-    public var metadata: ToolMetadata {
-        ToolMetadata(
-            name: "Line",
-            icon: "line.diagonal",
-            category: .drawing,
-            cursorType: .crosshair,
-            shortcutKey: "L"
-        )
-    }
+    public let name: String = "Line"
+    public let category: ToolCategory = .drawing
+    public let cursor: NSCursor = .crosshair
 
     // MARK: - Manifest
 

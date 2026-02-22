@@ -79,10 +79,10 @@ struct ExportShapeObjectView: View {
         ZStack {
             let height = effectiveHeight
             let shapeRect = CGRect(origin: .zero, size: CGSize(width: object.size.width, height: height))
-            object.preset.path(in: shapeRect)
+            object.path(in: shapeRect)
                 .fill(object.fillColor.opacity(object.fillOpacity))
                 .frame(width: object.size.width, height: height)
-            object.preset.path(in: shapeRect)
+            object.path(in: shapeRect)
                 .stroke(object.strokeColor, lineWidth: object.strokeWidth)
                 .frame(width: object.size.width, height: height)
 

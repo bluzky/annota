@@ -15,10 +15,10 @@ struct ShapeObjectView: View {
         ZStack {
             let shapeRect = CGRect(origin: .zero, size: CGSize(width: object.size.width, height: effectiveHeight))
             // Shape fill + stroke — both framed identically so they overlap exactly
-            object.preset.path(in: shapeRect)
+            object.path(in: shapeRect)
                 .fill(object.fillColor.opacity(object.fillOpacity))
                 .frame(width: object.size.width, height: effectiveHeight)
-            object.preset.path(in: shapeRect)
+            object.path(in: shapeRect)
                 .stroke(object.strokeColor, lineWidth: object.strokeWidth)
                 .frame(width: object.size.width, height: effectiveHeight)
 

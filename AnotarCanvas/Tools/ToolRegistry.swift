@@ -61,7 +61,7 @@ public class ToolRegistry: ObservableObject {
 
     /// Get all tools in a specific category.
     public func tools(in category: ToolCategory) -> [any CanvasTool] {
-        registeredTools.values.filter { $0.metadata.category == category }
+        registeredTools.values.filter { $0.category == category }
     }
 
     /// All registered DrawingTool identifiers.
@@ -75,12 +75,14 @@ public class ToolRegistry: ObservableObject {
         register(HandTool())
         register(ArrowTool())
 
-        // Shape tools — one per preset, all sharing ShapeObject registrations.
-        // Only the first preset registration reaches the ObjectViewRegistry/CodableObjectRegistry
-        // calls; subsequent ones are no-ops for those registries (same ObjectIdentifier key).
-        for preset in ShapePreset.builtIn {
-            register(ShapeTool.manifest(preset: preset))
-        }
+        // Shape tools — each shape shares ShapeObject registrations
+        // Only the first shape registration reaches the ObjectViewRegistry/CodableObjectRegistry
+        // calls; subsequent ones are no-ops for those registries (same discriminator).
+        register(RectangleTool().manifest())
+        register(OvalTool().manifest())
+        register(TriangleTool().manifest())
+        register(DiamondTool().manifest())
+        register(StarTool().manifest())
 
         // Line and text tools carry their own object registrations
         register(LineTool.manifest)

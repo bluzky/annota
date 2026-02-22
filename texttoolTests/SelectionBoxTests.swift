@@ -24,7 +24,8 @@ struct SelectionBoxTests {
         let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 150),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         let objects = [AnyCanvasObject(rect)]
@@ -40,13 +41,15 @@ struct SelectionBoxTests {
         let rect1 = ShapeObject(
             position: CGPoint(x: 0, y: 0),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue
         )
         let rect2 = ShapeObject(
             position: CGPoint(x: 200, y: 150),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .red
         )
         let objects = [AnyCanvasObject(rect1), AnyCanvasObject(rect2)]
@@ -224,7 +227,8 @@ struct SelectionBoxTests {
         let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 200, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue,
             rotation: .pi / 4  // 45 degrees
         )
@@ -244,7 +248,8 @@ struct SelectionBoxTests {
         let rect = ShapeObject(
             position: CGPoint(x: 100, y: 100),
             size: CGSize(width: 100, height: 100),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .blue,
             rotation: .pi / 4  // 45 degrees
         )
@@ -252,7 +257,8 @@ struct SelectionBoxTests {
         let rect2 = ShapeObject(
             position: CGPoint(x: 300, y: 300),
             size: CGSize(width: 10, height: 10),
-            preset: .rectangle,
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle",
             color: .red
         )
         let objects = [AnyCanvasObject(rect), AnyCanvasObject(rect2)]

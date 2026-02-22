@@ -1,9 +1,10 @@
 //
 //  ArrowTool.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI
+import AppKit
 
 public extension DrawingTool {
     public static let arrow = DrawingTool(id: "arrow")
@@ -14,15 +15,9 @@ public extension DrawingTool {
 public struct ArrowTool: CanvasTool {
     public let toolType: DrawingTool = .arrow
 
-    public var metadata: ToolMetadata {
-        ToolMetadata(
-            name: "Arrow",
-            icon: "arrow.right",
-            category: .drawing,
-            cursorType: .crosshair,
-            shortcutKey: "A"
-        )
-    }
+    public let name: String = "Arrow"
+    public let category: ToolCategory = .drawing
+    public let cursor: NSCursor = .crosshair
 
     // MARK: - Note
     // ArrowTool produces LineObject — the same type as LineTool.
