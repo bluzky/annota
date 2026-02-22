@@ -72,10 +72,20 @@ public struct ArrowTool: CanvasTool {
     ) -> LineObject? {
         let length = hypot(end.x - start.x, end.y - start.y)
         guard length > 3 else { return nil }
+
+        // Get stored tool attributes
+        let attrs = viewModel.currentToolAttributes
+
+        let strokeColor = attrs["strokeColor"] as? Color ?? .black
+        let strokeWidth = attrs["strokeWidth"] as? CGFloat ?? 2.0
+        let strokeStyle = attrs["strokeStyle"] as? StrokeStyleType ?? .solid
+
         return LineObject(
             startPoint: start,
             endPoint: end,
-            strokeColor: viewModel.activeColor,
+            strokeColor: strokeColor,
+            strokeWidth: strokeWidth,
+            strokeStyle: strokeStyle,
             endArrowHead: .open
         )
     }

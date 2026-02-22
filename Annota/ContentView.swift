@@ -11,11 +11,19 @@ import AnotarCanvas
 
 struct ContentView: View {
     @StateObject private var viewModel = CanvasViewModel()
+    @StateObject private var toolRegistry = ToolRegistry.shared
     @State private var keyMonitor: Any?
 
     var body: some View {
         VStack(spacing: 0) {
-            ToolbarView(viewModel: viewModel, toolRegistry: ToolRegistry.shared)
+            ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+
+            Divider()
+
+            SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+
+            Divider()
+
             CanvasView(viewModel: viewModel)
         }
         .frame(minWidth: 800, minHeight: 600)

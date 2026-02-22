@@ -14,10 +14,11 @@ struct LineObjectView: View {
 
     var body: some View {
         ZStack {
-            // Line stroke
+            // Line stroke (shortened if arrowheads are filled/circle/diamond)
             Path { path in
-                path.move(to: object.startPoint)
-                path.addLine(to: object.endPoint)
+                let (adjustedStart, adjustedEnd) = adjustedLineEndpoints()
+                path.move(to: adjustedStart)
+                path.addLine(to: adjustedEnd)
             }
             .stroke(
                 object.strokeColor,
@@ -73,6 +74,65 @@ struct LineObjectView: View {
         }
     }
 
+    /// Calculate adjusted line endpoints to prevent line from extending through filled arrowheads
+    private func adjustedLineEndpoints() -> (CGPoint, CGPoint) {
+        var adjustedStart = object.startPoint
+        var adjustedEnd = object.endPoint
+
+        // Calculate angle from start to end
+        let angleToEnd = atan2(object.endPoint.y - object.startPoint.y,
+                               object.endPoint.x - object.startPoint.x)
+
+        // Shorten start point if start arrowhead is filled/circle/diamond
+        if needsLineShortening(style: object.startArrowHead) {
+            let shortenBy = arrowHeadShorteningDistance(style: object.startArrowHead)
+            adjustedStart = CGPoint(
+                x: object.startPoint.x + shortenBy * cos(angleToEnd),
+                y: object.startPoint.y + shortenBy * sin(angleToEnd)
+            )
+        }
+
+        // Shorten end point if end arrowhead is filled/circle/diamond
+        if needsLineShortening(style: object.endArrowHead) {
+            let shortenBy = arrowHeadShorteningDistance(style: object.endArrowHead)
+            adjustedEnd = CGPoint(
+                x: object.endPoint.x - shortenBy * cos(angleToEnd),
+                y: object.endPoint.y - shortenBy * sin(angleToEnd)
+            )
+        }
+
+        return (adjustedStart, adjustedEnd)
+    }
+
+    /// Check if arrowhead style requires line shortening
+    private func needsLineShortening(style: ArrowHead) -> Bool {
+        switch style {
+        case .filled, .circle, .diamond:
+            return true
+        case .none, .open:
+            return false
+        }
+    }
+
+    /// Get the distance to shorten the line for different arrowhead styles
+    private func arrowHeadShorteningDistance(style: ArrowHead) -> CGFloat {
+        switch style {
+        case .filled:
+            // Shorten by the height of the filled triangle
+            // Height = arrowHeadLength * cos(30°) ≈ arrowHeadLength * 0.866
+            return arrowHeadLength * 0.866
+        case .circle:
+            // Shorten by the radius
+            return arrowHeadLength / 2
+        case .diamond:
+            // Shorten by half the length so line stops at the center of the diamond
+            // Diamond extends arrowHeadLength behind tip, so we shorten by half
+            return arrowHeadLength / 2
+        default:
+            return 0
+        }
+    }
+
     @ViewBuilder
     private func arrowHeadView(at tip: CGPoint, angle: CGFloat, style: ArrowHead) -> some View {
         switch style {
@@ -119,21 +179,27 @@ struct LineObjectView: View {
                 .position(x: cx, y: cy)
 
         case .diamond:
-            // Tip of diamond sits at the line tip; body extends arrowHeadLength behind it
+            // Diamond with tip at arrow point, center at half-length back, back point at full length
             let half = arrowHeadLength / 2
+            let centerX = tip.x - half * cos(angle)
+            let centerY = tip.y - half * sin(angle)
             Path { path in
+                // Front tip (at the arrow point)
                 path.move(to: tip)
+                // Left side point (perpendicular at diamond center)
                 path.addLine(to: CGPoint(
-                    x: tip.x - half * cos(angle - .pi / 2),
-                    y: tip.y - half * sin(angle - .pi / 2)
+                    x: centerX - half * cos(angle - .pi / 2),
+                    y: centerY - half * sin(angle - .pi / 2)
                 ))
+                // Back point (full arrowHeadLength behind tip)
                 path.addLine(to: CGPoint(
                     x: tip.x - arrowHeadLength * cos(angle),
                     y: tip.y - arrowHeadLength * sin(angle)
                 ))
+                // Right side point (perpendicular at diamond center)
                 path.addLine(to: CGPoint(
-                    x: tip.x - half * cos(angle + .pi / 2),
-                    y: tip.y - half * sin(angle + .pi / 2)
+                    x: centerX - half * cos(angle + .pi / 2),
+                    y: centerY - half * sin(angle + .pi / 2)
                 ))
                 path.closeSubpath()
             }

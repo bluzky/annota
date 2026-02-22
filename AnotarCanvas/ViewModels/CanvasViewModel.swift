@@ -47,6 +47,41 @@ public class CanvasViewModel: ObservableObject {
     @Published public var activeColor: Color = .black
     @Published public var autoResizeShapes: Bool = true
 
+    // MARK: - Tool Attribute State
+
+    /// Stores last-used attributes for each tool (persists across tool switches)
+    @Published public var toolAttributes: [String: ObjectAttributes] = [:]
+
+    /// Get or set attributes for the currently selected tool
+    public var currentToolAttributes: ObjectAttributes {
+        get {
+            toolAttributes[selectedTool.id] ?? defaultToolAttributes
+        }
+        set {
+            toolAttributes[selectedTool.id] = newValue
+        }
+    }
+
+    /// Default attributes for new tools
+    private var defaultToolAttributes: ObjectAttributes {
+        [
+            ObjectAttributes.strokeColor: Color.black,
+            ObjectAttributes.strokeWidth: 2.0,
+            ObjectAttributes.strokeStyle: StrokeStyleType.solid,
+            ObjectAttributes.fillColor: Color.white,
+            ObjectAttributes.fillOpacity: 1.0,
+            ObjectAttributes.textColor: Color.black,
+            ObjectAttributes.fontSize: 16.0
+        ]
+    }
+
+    /// Update a specific attribute for the current tool
+    public func updateToolAttribute(key: String, value: Any) {
+        var attrs = currentToolAttributes
+        attrs[key] = value
+        toolAttributes[selectedTool.id] = attrs
+    }
+
     // MARK: - Viewport State
 
     @Published public var viewport = ViewportState()
@@ -72,6 +107,11 @@ public class CanvasViewModel: ObservableObject {
     public func editingObject() -> (id: UUID, contains: (CGPoint) -> Bool)? {
         guard let wrapper = objects.first(where: { $0.isEditing }) else { return nil }
         return (wrapper.id, { wrapper.contains($0) })
+    }
+
+    /// Get the capabilities of the current selection
+    public var selectionCapabilities: SelectionCapabilities {
+        SelectionCapabilities.from(objects: selectedObjects)
     }
 
     // MARK: - Object Retrieval
@@ -136,6 +176,124 @@ public class CanvasViewModel: ObservableObject {
     /// Remove object by ID
     public func removeObject(withId id: UUID) {
         objects.removeAll { $0.id == id }
+    }
+
+    // MARK: - Batch Attribute Updates
+
+    /// Update attributes on a specific object using type-erased mutation
+    public func updateObject(_ objectId: UUID, attributes: ObjectAttributes) {
+        guard let index = objectIndex(withId: objectId) else { return }
+        objects[index] = objects[index].applying(attributes)
+    }
+
+    /// Update attributes on all selected objects
+    public func updateSelected(_ attributes: ObjectAttributes) {
+        for id in selectedIds {
+            updateObject(id, attributes: attributes)
+        }
+    }
+
+    // MARK: - Selection Attribute Extraction
+
+    /// Extract common attributes from selected objects
+    /// Returns only attributes that are identical across all selected objects
+    /// Missing keys indicate mixed values (useful for "Mixed" state in UI)
+    public func getSelectionAttributes() -> ObjectAttributes {
+        guard !selectedIds.isEmpty else { return [:] }
+
+        let objects = selectedObjects
+        guard !objects.isEmpty else { return [:] }
+
+        var result: ObjectAttributes = [:]
+
+        // Extract from first object as baseline
+        if let first = objects.first {
+            // Stroke properties
+            if first.isStrokable {
+                if let shape = first.asShapeObject {
+                    result[ObjectAttributes.strokeColor] = shape.strokeColor
+                    result[ObjectAttributes.strokeWidth] = shape.strokeWidth
+                    result[ObjectAttributes.strokeStyle] = shape.strokeStyle
+                } else if let line = first.asLineObject {
+                    result[ObjectAttributes.strokeColor] = line.strokeColor
+                    result[ObjectAttributes.strokeWidth] = line.strokeWidth
+                    result[ObjectAttributes.strokeStyle] = line.strokeStyle
+                }
+            }
+
+            // Fill properties
+            if first.isFillable, let shape = first.asShapeObject {
+                result[ObjectAttributes.fillColor] = shape.fillColor
+                result[ObjectAttributes.fillOpacity] = shape.fillOpacity
+            }
+
+            // Text properties
+            if first.hasTextContent {
+                if let textObj = first.asTextObject {
+                    result[ObjectAttributes.textColor] = textObj.color
+                    result[ObjectAttributes.fontSize] = textObj.fontSize
+                } else if let shape = first.asShapeObject {
+                    result[ObjectAttributes.textColor] = shape.textAttributes.textColor.color
+                    result[ObjectAttributes.fontSize] = shape.textAttributes.fontSize
+                }
+            }
+        }
+
+        // Compare with remaining objects, remove mismatched attributes
+        for obj in objects.dropFirst() {
+            // Check stroke
+            if obj.isStrokable {
+                if let shape = obj.asShapeObject {
+                    if result[ObjectAttributes.strokeColor] as? Color != shape.strokeColor {
+                        result.removeValue(forKey: ObjectAttributes.strokeColor)
+                    }
+                    if result[ObjectAttributes.strokeWidth] as? CGFloat != shape.strokeWidth {
+                        result.removeValue(forKey: ObjectAttributes.strokeWidth)
+                    }
+                    if result[ObjectAttributes.strokeStyle] as? StrokeStyleType != shape.strokeStyle {
+                        result.removeValue(forKey: ObjectAttributes.strokeStyle)
+                    }
+                } else if let line = obj.asLineObject {
+                    if result[ObjectAttributes.strokeColor] as? Color != line.strokeColor {
+                        result.removeValue(forKey: ObjectAttributes.strokeColor)
+                    }
+                    if result[ObjectAttributes.strokeWidth] as? CGFloat != line.strokeWidth {
+                        result.removeValue(forKey: ObjectAttributes.strokeWidth)
+                    }
+                }
+            }
+
+            // Check fill
+            if obj.isFillable, let shape = obj.asShapeObject {
+                if result[ObjectAttributes.fillColor] as? Color != shape.fillColor {
+                    result.removeValue(forKey: ObjectAttributes.fillColor)
+                }
+                if result[ObjectAttributes.fillOpacity] as? CGFloat != shape.fillOpacity {
+                    result.removeValue(forKey: ObjectAttributes.fillOpacity)
+                }
+            }
+
+            // Check text
+            if obj.hasTextContent {
+                if let textObj = obj.asTextObject {
+                    if result[ObjectAttributes.textColor] as? Color != textObj.color {
+                        result.removeValue(forKey: ObjectAttributes.textColor)
+                    }
+                    if result[ObjectAttributes.fontSize] as? CGFloat != textObj.fontSize {
+                        result.removeValue(forKey: ObjectAttributes.fontSize)
+                    }
+                } else if let shape = obj.asShapeObject {
+                    if result[ObjectAttributes.textColor] as? Color != shape.textAttributes.textColor.color {
+                        result.removeValue(forKey: ObjectAttributes.textColor)
+                    }
+                    if result[ObjectAttributes.fontSize] as? CGFloat != shape.textAttributes.fontSize {
+                        result.removeValue(forKey: ObjectAttributes.fontSize)
+                    }
+                }
+            }
+        }
+
+        return result
     }
 
     // MARK: - Update Objects
@@ -416,6 +574,69 @@ public class CanvasViewModel: ObservableObject {
     /// Sort objects array by zIndex
     private func sortObjectsByZIndex() {
         objects.sort { $0.zIndex < $1.zIndex }
+    }
+
+    /// Move selected objects to the highest z-index (bring to front)
+    public func bringToFront() {
+        guard !selectedIds.isEmpty else { return }
+        let maxZ = objects.map { $0.zIndex }.max() ?? 0
+        var offset = 1
+        for id in selectedIds.sorted(by: {
+            guard let idx1 = objectIndex(withId: $0),
+                  let idx2 = objectIndex(withId: $1) else { return false }
+            return idx1 < idx2
+        }) {
+            guard let index = objectIndex(withId: id) else { continue }
+            objects[index] = objects[index].applying([ObjectAttributes.zIndex: maxZ + offset])
+            offset += 1
+        }
+        nextZIndex = maxZ + offset
+        sortObjectsByZIndex()
+    }
+
+    /// Move selected objects to the lowest z-index (send to back)
+    public func sendToBack() {
+        guard !selectedIds.isEmpty else { return }
+        let minZ = objects.map { $0.zIndex }.min() ?? 0
+        var offset = 0
+        for id in selectedIds.sorted(by: {
+            guard let idx1 = objectIndex(withId: $0),
+                  let idx2 = objectIndex(withId: $1) else { return false }
+            return idx1 < idx2
+        }) {
+            guard let index = objectIndex(withId: id) else { continue }
+            objects[index] = objects[index].applying([ObjectAttributes.zIndex: minZ - selectedIds.count + offset])
+            offset += 1
+        }
+        sortObjectsByZIndex()
+    }
+
+    /// Increase z-index of selected objects by 1 (bring one layer forward)
+    public func bringForward() {
+        guard !selectedIds.isEmpty else { return }
+        let sorted = selectedIds.sorted { id1, id2 in
+            (object(withId: id1)?.zIndex ?? 0) > (object(withId: id2)?.zIndex ?? 0)
+        }
+        for id in sorted {
+            guard let index = objectIndex(withId: id) else { continue }
+            let currentZ = objects[index].zIndex
+            objects[index] = objects[index].applying([ObjectAttributes.zIndex: currentZ + 1])
+        }
+        sortObjectsByZIndex()
+    }
+
+    /// Decrease z-index of selected objects by 1 (send one layer backward)
+    public func sendBackward() {
+        guard !selectedIds.isEmpty else { return }
+        let sorted = selectedIds.sorted { id1, id2 in
+            (object(withId: id1)?.zIndex ?? 0) < (object(withId: id2)?.zIndex ?? 0)
+        }
+        for id in sorted {
+            guard let index = objectIndex(withId: id) else { continue }
+            let currentZ = objects[index].zIndex
+            objects[index] = objects[index].applying([ObjectAttributes.zIndex: max(0, currentZ - 1)])
+        }
+        sortObjectsByZIndex()
     }
 
     // MARK: - Viewport Control

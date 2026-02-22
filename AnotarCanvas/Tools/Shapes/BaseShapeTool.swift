@@ -105,12 +105,25 @@ open class ShapeTool: CanvasTool {
         let origin = CGPoint(x: min(start.x, end.x), y: min(start.y, end.y))
         let size = CGSize(width: abs(end.x - start.x), height: abs(end.y - start.y))
         guard size.width > 1 && size.height > 1 else { return nil }
+
+        // Get stored tool attributes
+        let attrs = viewModel.currentToolAttributes
+
+        let strokeColor = attrs["strokeColor"] as? Color ?? .black
+        let strokeWidth = attrs["strokeWidth"] as? CGFloat ?? 2.0
+        let strokeStyle = attrs["strokeStyle"] as? StrokeStyleType ?? .solid
+        let fillColor = attrs["fillColor"] as? Color ?? .white
+        let fillOpacity = attrs["fillOpacity"] as? CGFloat ?? 1.0
+
         return ShapeObject(
             position: origin,
             size: size,
             svgPath: svgPath,
             toolId: toolType.id,
-            color: viewModel.activeColor,
+            color: strokeColor,  // Sets both strokeColor and fillColor
+            strokeWidth: strokeWidth,
+            strokeStyle: strokeStyle,
+            fillOpacity: fillOpacity,
             autoResizeHeight: viewModel.autoResizeShapes
         )
     }
