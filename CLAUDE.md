@@ -4,12 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a native macOS canvas drawing application built with SwiftUI. The app provides a FigJam-like interface for drawing text, rectangles, and circles on a canvas, with support for text inside shapes.
+This is a native macOS canvas drawing application built with SwiftUI, featuring a FigJam-like interface with an infinite canvas, multi-selection, pan/zoom, and comprehensive annotation tools.
+
+**Key Architecture:** The project consists of two targets:
+1. **AnotarCanvas** - Reusable SwiftUI framework for canvas functionality
+2. **texttool** - macOS application built on AnotarCanvas
 
 ## Development Commands
 
 ```bash
-# Build
+# Build framework
+xcodebuild -scheme AnotarCanvas -configuration Debug build
+
+# Build application
 xcodebuild -scheme texttool -configuration Debug build
 
 # Run all tests
@@ -18,46 +25,72 @@ xcodebuild test -scheme texttool
 # Run only unit tests
 xcodebuild test -scheme texttool -only-testing:texttoolTests
 
-# Run a specific test
-xcodebuild test -scheme texttool -only-testing:texttoolTests/texttoolTests/example
-
 # Clean
 xcodebuild -scheme texttool clean
 ```
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design, protocols, and implementation phases.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design and [docs/AnotarCanvas-API.md](docs/AnotarCanvas-API.md) for framework API reference.
 
-### State Management
-- `CanvasViewModel.swift`: @MainActor ObservableObject - single source of truth for all canvas state
-  - Published arrays: `textObjects`, `rectangleObjects`, `circleObjects`
-  - Tool state: `selectedTool`, `selectedObjectId`, `activeTextSize`, `activeColor`, `autoResizeShapes`
-  - Drag state: `dragStartPoint`, `currentDragPoint` (for shape preview during drag)
-  - Hit testing via `selectObject(at:)` checks objects in reverse z-order
+### AnotarCanvas Framework (Reusable Core)
 
-### Data Models (all structs with `contains(_ point:)` hit testing)
-- `TextObject`: position, text, fontSize, color, isEditing
-- `RectangleObject`: position, size, color, text, isEditing, autoResizeHeight
-- `CircleObject`: position, size, color, text, isEditing, autoResizeHeight (uses ellipse equation for hit testing)
-- `DrawingTool`: enum with `.select`, `.text`, `.rectangle`, `.circle`
+**State Management:**
+- `CanvasViewModel.swift`: @MainActor ObservableObject - single source of truth
+  - `objects: [AnyCanvasObject]` - Unified heterogeneous object storage
+  - `selectedTool: DrawingTool` - Current tool (lightweight value type)
+  - `selectionState: SelectionState` - Multi-selection support
+  - `viewport: ViewportState` - Pan/zoom state
+  - `dragStartPoint`, `currentDragPoint` - Preview state
 
-### Views
-- `ContentView.swift`: VStack with ToolbarView + CanvasView, owns CanvasViewModel via @StateObject
-- `CanvasView.swift`: GeometryReader/ZStack rendering, DragGesture with minimumDistance: 0 (distance < 5 = click)
-- `TextObjectView.swift`, `RectangleObjectView.swift`, `CircleObjectView.swift`: Conditional TextField/Text rendering based on isEditing
-- `FloatingFormatBar.swift`: Rich text formatting popup (font size, bold, italic, color) with `TextAttributes` struct
-- `AutoGrowingTextView.swift`: NSViewRepresentable wrapping NSTextView for auto-expanding text input
+**Object Model (Protocol-Based):**
+- `CanvasObject` protocol: Base protocol for all canvas objects
+  - Required: `id`, `position`, `size`, `rotation`, `zIndex`, `isLocked`
+  - Methods: `contains(_:)`, `boundingBox()`, `hitTest(_:threshold:)`
+- `AnyCanvasObject`: Type-erased wrapper for heterogeneous storage
+- Capability protocols: `TextContentObject`, `StrokableObject`, `FillableObject`
+- Built-in objects: `TextObject`, `ShapeObject`, `LineObject`, `ImageObject`
+
+**Tool Plugin System:**
+- `CanvasTool` protocol: All tools implement this
+- `DrawingTool`: Lightweight identifier (struct with `id: String`)
+- `ToolRegistry`: Dynamic tool registration (singleton)
+- `ToolManifest<Obj>`: Bundles tool + views + codable for new object types
+- Tool identities declared per-file via extensions (no central enum)
+
+**Shape Tools (Each Shape = Separate Tool):**
+- `RectangleTool`, `OvalTool`, `TriangleTool`, `DiamondTool`, `StarTool`
+- Each inherits from `BaseShapeTool`
+- Each defines its own SVG path geometry
+- `ShapeObject` stores `svgPath: String` and `toolId: String`
+
+**Views:**
+- `CanvasView`: Main rendering view (tool-agnostic)
+- `ObjectViewRegistry`: Maps object types to view factories
+- Object views: `ShapeObjectView`, `TextObjectView`, `LineObjectView`, etc.
+- `SelectionBoxView`: Multi-object selection with resize/rotate handles
+
+### texttool Application Layer
+
+**Application-Specific:**
+- `ToolbarView`: Tool buttons, shape picker, color pickers
+- `ContentView`: Composes toolbar + canvas
+- `AppState`: Export functionality, file commands
+- Icons, keyboard shortcuts, UI presentation
 
 ### Key Patterns
 
-**Gesture Handling**: Single DragGesture handles both clicks and drags - distance check distinguishes them. Tool-based filtering in handlers.
+**Plugin Architecture**: Add new tools by implementing `CanvasTool` protocol and registering with `ToolRegistry`. No modifications to core framework files required. See [docs/adding-a-tool.md](docs/adding-a-tool.md).
 
-**Text in Shapes**: Rectangles and circles support embedded text with auto-resize height when `autoResizeHeight` is true. Text editing uses same isEditing pattern as TextObject.
+**Gesture Handling**: Single DragGesture with distance threshold (< 5px = click). CanvasView delegates to tools via `ToolRegistry`.
 
-**Object Updates**: Mutable structs updated via array index assignment (e.g., `textObjects[index].text = newText`).
+**Object Storage**: All objects stored in unified `[AnyCanvasObject]` array. Type-safe access via `.asType(_:)` or pattern matching.
 
-**Coordinate System**: SwiftUI natural (top-left origin), absolute CGPoint positions, `.position()` modifier for placement.
+**Viewport**: Pan/zoom via `ViewportState`. All rendering transformed by viewport scale/offset.
+
+**Selection**: Multi-selection via Shift+click and marquee drag. Selection box supports resize (corners/edges) and rotation (outside corners).
+
+**Coordinate System**: SwiftUI natural (top-left origin), canvas coordinates transformed by viewport.
 
 ## Issue Tracking
 

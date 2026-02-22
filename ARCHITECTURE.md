@@ -1,1058 +1,592 @@
-# Annotation Tools Architecture Design
+# texttool Architecture
 
 ## Overview
 
-This document outlines the architecture for extending the existing canvas application with comprehensive annotation tools. The design maintains compatibility with existing patterns while introducing new capabilities for multi-selection, canvas pan/zoom, and diverse annotation types.
-
----
+**texttool** is a native macOS canvas drawing application built on **AnotarCanvas**, a reusable SwiftUI framework for canvas-based applications. The architecture follows a plugin-based design where tools and object types can be added without modifying core framework code.
 
 ## Table of Contents
 
-1. [Current State Analysis](#current-state-analysis)
-2. [Proposed Architecture Changes](#proposed-architecture-changes)
-3. [Data Models](#data-models)
-4. [Tool System](#tool-system)
-5. [Selection System](#selection-system)
-6. [Canvas Viewport System](#canvas-viewport-system)
-7. [View Components](#view-components)
+1. [System Architecture](#system-architecture)
+2. [AnotarCanvas Framework](#anotarcanvas-framework)
+3. [Application Layer](#application-layer)
+4. [Object Model](#object-model)
+5. [Tool System](#tool-system)
+6. [Selection System](#selection-system)
+7. [Viewport System](#viewport-system)
 8. [Gesture Handling](#gesture-handling)
-9. [Implementation Phases](#implementation-phases)
+9. [Extension Guide](#extension-guide)
 
 ---
 
-## 1. Current State Analysis
+## System Architecture
 
-### Existing Capabilities ✅
-- ✅ **Unified object protocol system** (`CanvasObject`, `TextContentObject`, `StrokableObject`, `FillableObject`)
-- ✅ **Type-erased wrapper** (`AnyCanvasObject`) for heterogeneous collections
-- ✅ **Multi-selection** with Shift+Click and marquee selection
-- ✅ **Resize/rotate transforms** via selection box with handles
-- ✅ **Canvas pan/zoom** (viewport system with trackpad gestures)
-- ✅ **Four tools**: Select, Text, Shape (Rectangle/Oval), with generic `ShapeObject`
-- ✅ **Advanced hit testing** with edge/corner/body detection
-- ✅ **Text editing** in shapes with auto-resize
-- ✅ **Drag-to-create** shapes and objects
-- ✅ **Rich styling**: Color, font size, stroke width, stroke styles (solid/dashed/dotted)
-- ✅ **Z-index management** for explicit rendering order
-- ✅ **Rotation support** with transform helpers in `CanvasObject` protocol
+### Two-Target Structure
 
-### Implementation Status
+```
+┌─────────────────────────────────────────────────────┐
+│                  texttool (App)                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │ ToolbarView  │  │   AppState   │  │  Hotkeys  │  │
+│  │  (UI layer)  │  │   (Export)   │  │(Shortcuts)│  │
+│  └──────────────┘  └──────────────┘  └───────────┘  │
+│                           │                          │
+│                           ▼                          │
+│              imports AnotarCanvas                   │
+└─────────────────────────┬───────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────┐
+│              AnotarCanvas (Framework)                │
+│  ┌──────────────────────────────────────────────┐   │
+│  │           CanvasViewModel                     │   │
+│  │  • objects: [AnyCanvasObject]                │   │
+│  │  • selectedTool: DrawingTool                 │   │
+│  │  • selectionState: SelectionState            │   │
+│  │  • viewport: ViewportState                   │   │
+│  └──────────────────────────────────────────────┘   │
+│          ▲                           ▲               │
+│          │                           │               │
+│  ┌───────┴─────────┐       ┌────────┴────────┐      │
+│  │   CanvasView    │       │  ToolRegistry   │      │
+│  │  (Rendering)    │       │  (Dispatch)     │      │
+│  └─────────────────┘       └─────────────────┘      │
+│          │                           │               │
+│  ┌───────┴─────────┐       ┌────────┴────────┐      │
+│  │ObjectViewReg    │       │   CanvasTool    │      │
+│  │(View Factories) │       │   (Protocol)    │      │
+│  └─────────────────┘       └─────────────────┘      │
+│                                      │               │
+│                         ┌────────────┴────────────┐  │
+│                         ▼                         ▼ │
+│              SelectTool  HandTool  TextTool       │
+│              LineTool   ArrowTool                 │
+│              RectangleTool  OvalTool  etc.        │
+└──────────────────────────────────────────────────────┘
+```
 
-**Phase 1: Foundation** - ✅ **COMPLETED**
-- Unified object system with protocols
-- Multi-selection with Shift+Click
-- Marquee drag-to-select
-- Selection box with resize/rotate handles
-- Viewport pan/zoom system
-- Gesture coordinator refactoring
+### Separation of Concerns
 
-**Phase 2: Selection Box Interactions** - ✅ **COMPLETED**
-- Corner/edge resize handles
-- Rotation handles
-- Cursor feedback
-- Multi-object resize
-
-**Current Phase: New Tools** - 🚧 **IN PROGRESS**
-- Shape tool with generic `ShapeObject` ✅
-- Line/arrow tools (next priority)
-
-### Remaining Features to Address
-- Line/arrow tools (Phase 3)
-- Freehand drawing: pencil, highlighter (Phase 3)
-- Special annotations: auto-number, mosaic, note, sticker (Phase 4)
-- Enhanced shape varieties (Phase 5)
-- Undo/redo, keyboard shortcuts, persistence (Phase 6)
+| Layer | Responsibility | Examples |
+|-------|---------------|----------|
+| **AnotarCanvas (Framework)** | Canvas behavior, object model, tool protocol, rendering | `CanvasView`, `CanvasViewModel`, `CanvasTool`, `CanvasObject` |
+| **texttool (Application)** | UI/UX, keyboard shortcuts, icons, export, commands | `ToolbarView`, hotkeys, SF Symbol mapping, PNG export |
 
 ---
 
-## 2. Proposed Architecture Changes
+## AnotarCanvas Framework
 
-### 2.1 Unified Object Model
+### Core Components
 
-Replace separate arrays with a unified object system using protocol-based polymorphism:
+#### CanvasViewModel
+
+`@MainActor` class managing all canvas state:
 
 ```swift
-// Base protocol for all canvas objects
-protocol CanvasObject: Identifiable {
+@MainActor
+public class CanvasViewModel: ObservableObject {
+    @Published public var objects: [AnyCanvasObject]
+    @Published public var selectedTool: DrawingTool
+    @Published public var selectionState: SelectionState
+    @Published public var viewport: ViewportState
+
+    // Active properties (for new objects)
+    @Published public var activeFillColor: Color?
+    @Published public var activeStrokeColor: Color?
+    @Published public var autoResizeShapes: Bool
+
+    // Drag state (for preview rendering)
+    public var dragStartPoint: CGPoint?
+    public var currentDragPoint: CGPoint?
+}
+```
+
+**Key Methods:**
+- `addObject(_:)` - Add any `CanvasObject`
+- `updateObject(_:)` - Update existing object
+- `deleteObject(id:)` - Remove object
+- `selectObject(at:)` - Hit test and select
+- `copySelected()`, `paste()`, `duplicate()` - Clipboard operations
+
+#### CanvasView
+
+Main rendering view:
+
+```swift
+public struct CanvasView: View {
+    @ObservedObject public var viewModel: CanvasViewModel
+}
+```
+
+**Rendering Pipeline:**
+1. Infinite grid background
+2. All objects (sorted by zIndex)
+3. Tool preview (via `ToolRegistry`)
+4. Selection box overlay
+5. Marquee selection overlay
+
+**Gesture Handling:**
+- Single `DragGesture` with `minimumDistance: 0`
+- Distance < 5px = click, else = drag
+- Delegates to tools via `ToolRegistry.tool(for:)`
+
+---
+
+## Object Model
+
+### Protocol Hierarchy
+
+```
+CanvasObject (base protocol)
+├── TextContentObject (adds text, textAttributes, isEditing)
+├── StrokableObject (adds strokeColor, strokeWidth, strokeStyle)
+├── FillableObject (adds fillColor, fillOpacity)
+└── CopyableCanvasObject (adds Codable + copied(newId:zIndex:offset:))
+```
+
+### CanvasObject Protocol
+
+```swift
+public protocol CanvasObject: Identifiable {
     var id: UUID { get }
     var position: CGPoint { get set }
     var size: CGSize { get set }
-    var rotation: CGFloat { get set }  // NEW: rotation in radians
-    var isLocked: Bool { get set }     // NEW: prevent editing
-    var zIndex: Int { get set }        // NEW: explicit z-ordering
+    var rotation: CGFloat { get set }
+    var isLocked: Bool { get set }
+    var zIndex: Int { get set }
 
     func contains(_ point: CGPoint) -> Bool
     func boundingBox() -> CGRect
     func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult?
 }
-
-// Objects that support text content
-protocol TextContentObject: CanvasObject {
-    var text: String { get set }
-    var textAttributes: TextAttributes { get set }
-    var isEditing: Bool { get set }
-}
-
-// Objects that support stroke styling
-protocol StrokableObject: CanvasObject {
-    var strokeColor: Color { get set }
-    var strokeWidth: CGFloat { get set }
-    var strokeStyle: StrokeStyle { get set }
-}
-
-// Objects that support fill
-protocol FillableObject: CanvasObject {
-    var fillColor: Color { get set }
-    var fillOpacity: CGFloat { get set }
-}
-
-// Type-erased wrapper for heterogeneous storage
-struct AnyCanvasObject: Identifiable {
-    let id: UUID
-    private let _object: any CanvasObject
-
-    var object: any CanvasObject { _object }
-
-    init<T: CanvasObject>(_ object: T) {
-        self.id = object.id
-        self._object = object
-    }
-}
 ```
 
-### 2.2 State Architecture
+**Default Implementations:**
+- `boundingBox()` returns `CGRect(origin: position, size: size)`
+- `hitTest(_:threshold:)` provides basic rectangular hit testing
+- Rotation-aware `transformToLocal(_:)` and `transformToCanvas(_:)` helpers
 
-```
-CanvasViewModel (@MainActor, ObservableObject)
-├── Objects
-│   └── objects: [AnyCanvasObject]  // Unified object storage
-│
-├── Selection State
-│   ├── selectedIds: Set<UUID>       // Multi-selection support
-│   └── editingId: UUID?             // Single object in edit mode
-│
-├── Tool State
-│   ├── activeTool: AnnotationTool
-│   ├── toolSettings: ToolSettings   // Per-tool configuration
-│   └── autoNumberCounter: Int       // For auto-number tool
-│
-├── Viewport State
-│   ├── viewportOffset: CGPoint      // Pan offset
-│   ├── viewportScale: CGFloat       // Zoom level (1.0 = 100%)
-│   └── viewportBounds: CGRect       // Visible area
-│
-├── Interaction State
-│   ├── interactionMode: InteractionMode
-│   ├── dragState: DragState?
-│   └── hoverState: HoverState?
-│
-└── History (Future)
-    ├── undoStack: [CanvasAction]
-    └── redoStack: [CanvasAction]
+**Capability Flags:**
+```swift
+var usesControlPoints: Bool { false }  // Override to true for line-like objects
 ```
 
----
+### AnyCanvasObject (Type Erasure)
 
-## 3. Data Models
-
-### 3.1 Common Types
+Enables heterogeneous storage while maintaining type safety:
 
 ```swift
-// Stroke styling
-enum StrokeStyle: Codable, Hashable {
-    case solid
-    case dashed(pattern: [CGFloat])  // e.g., [5, 3] for 5pt dash, 3pt gap
-    case dotted                       // Implemented as [1, 3]
+public struct AnyCanvasObject: Identifiable {
+    public let id: UUID
+    public var base: any CanvasObject
 
-    var dashPattern: [CGFloat] {
-        switch self {
-        case .solid: return []
-        case .dashed(let pattern): return pattern
-        case .dotted: return [2, 4]
-        }
-    }
-}
+    public init<T: CanvasObject>(_ object: T)
 
-// Text formatting
-struct TextAttributes: Codable, Hashable {
-    var fontFamily: String = "System"
-    var fontSize: CGFloat = 16
-    var fontWeight: Font.Weight = .regular
-    var isItalic: Bool = false
-    var textColor: Color = .black
-    var horizontalAlignment: HorizontalAlignment = .center
-    var verticalAlignment: VerticalAlignment = .center
-}
-
-// Hit test results for precise interaction
-enum HitTestResult {
-    case body                          // Interior of object
-    case edge(Edge)                    // Edge for resize
-    case corner(Corner)                // Corner for resize
-    case rotationHandle                // Outside corner for rotation
-    case controlPoint(index: Int)      // For lines/paths
-    case label                         // For line labels
-}
-
-enum Corner: CaseIterable {
-    case topLeft, topRight, bottomLeft, bottomRight
-}
-
-enum Edge: CaseIterable {
-    case top, right, bottom, left
+    // Type-safe casting
+    public func asType<T: CanvasObject>(_ type: T.Type) -> T?
 }
 ```
 
-### 3.2 Shape Objects
-
+**Usage:**
 ```swift
-// Rectangle shape (existing, enhanced)
-struct RectangleObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
+let rect = ShapeObject(...)
+let anyRect = AnyCanvasObject(rect)
+viewModel.addObject(anyRect)
 
-    // Stroke
-    var strokeColor: Color = .black
-    var strokeWidth: CGFloat = 2
-    var strokeStyle: StrokeStyle = .solid
-
-    // Fill
-    var fillColor: Color = .blue
-    var fillOpacity: CGFloat = 0.1
-
-    // Text
-    var text: String = ""
-    var textAttributes: TextAttributes = TextAttributes()
-    var isEditing: Bool = false
-    var autoResizeHeight: Bool = true
-
-    // Corner radius (NEW)
-    var cornerRadius: CGFloat = 0
-}
-
-// Circle/Ellipse shape (existing, enhanced)
-struct CircleObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
-    // Similar to RectangleObject
-    // Hit testing uses ellipse equation
-}
-
-// Generic shape for predefined shapes
-struct ShapeObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
-    let id: UUID
-    var shapeType: ShapeType
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    // ... other properties
-
-    enum ShapeType: String, CaseIterable {
-        case rectangle
-        case roundedRectangle
-        case circle
-        case ellipse
-        case triangle
-        case diamond
-        case pentagon
-        case hexagon
-        case star
-        case arrow
-        case callout
-        case cloud
-    }
+// Retrieve
+if let shape = anyRect.asType(ShapeObject.self) {
+    print(shape.svgPath)
 }
 ```
 
-### 3.3 Line Objects
+### Built-in Object Types
 
-**Design Decision**: Lines and arrows are implemented as **independent node objects** (not connection edges), following the industry-proven pattern from tldraw and Excalidraw.
-
-**Rationale**:
-- Phase 1 (current): Independent objects for annotation use cases
-- Phase 2 (future): Optional binding system if diagram features needed
-- See [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md) for full analysis
+#### ShapeObject (Rectangle, Oval, Triangle, Diamond, Star)
 
 ```swift
-struct LineObject: CanvasObject, StrokableObject {
-    let id: UUID
-    var startPoint: CGPoint    // Control point 1
-    var endPoint: CGPoint      // Control point 2
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
+public struct ShapeObject: CanvasObject, FillableObject, StrokableObject, TextContentObject {
+    public var svgPath: String      // "M 0,0 L 100,0 L 100,100 L 0,100 Z"
+    public var toolId: String        // "rectangle", "oval", etc.
 
-    // Stroke
-    var strokeColor: Color = .black
-    var strokeWidth: CGFloat = 2
-    var strokeStyle: StrokeStyle = .solid
+    // FillableObject
+    public var fillColor: Color
+    public var fillOpacity: Double
 
-    // Label (optional text annotation on line)
-    var label: String = ""
-    var labelAttributes: TextAttributes = TextAttributes()
-    var isEditingLabel: Bool = false
+    // StrokableObject
+    public var strokeColor: Color
+    public var strokeWidth: CGFloat
+    public var strokeStyle: StrokeStyle
 
-    // Computed properties (CanvasObject conformance)
-    var position: CGPoint {
-        CGPoint(x: min(startPoint.x, endPoint.x),
-                y: min(startPoint.y, endPoint.y))
-    }
+    // TextContentObject
+    public var text: String
+    public var textAttributes: TextAttributes
+    public var isEditing: Bool
+    public var autoResizeHeight: Bool
 
-    var size: CGSize {
-        CGSize(width: abs(endPoint.x - startPoint.x),
-               height: abs(endPoint.y - startPoint.y))
-    }
-
-    var midPoint: CGPoint {
-        CGPoint(x: (startPoint.x + endPoint.x) / 2,
-                y: (startPoint.y + endPoint.y) / 2)
-    }
-
-    func hitTest(_ point: CGPoint, threshold: CGFloat = 8) -> HitTestResult? {
-        // Check control points first (endpoints for reshaping)
-        if distance(point, startPoint) < threshold { return .controlPoint(index: 0) }
-        if distance(point, endPoint) < threshold { return .controlPoint(index: 1) }
-
-        // Check label area
-        if !label.isEmpty && labelBounds().contains(point) { return .label }
-
-        // Check line proximity using point-to-line-segment distance
-        if distanceToLineSegment(point, startPoint, endPoint) < threshold {
-            return .body
-        }
-
-        return nil
-    }
-}
-
-struct ArrowObject: CanvasObject, StrokableObject {
-    let id: UUID
-    var startPoint: CGPoint    // Control point 1
-    var endPoint: CGPoint      // Control point 2
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    // Stroke
-    var strokeColor: Color = .black
-    var strokeWidth: CGFloat = 2
-    var strokeStyle: StrokeStyle = .solid
-
-    // Arrow heads
-    var startArrowHead: ArrowHead = .none
-    var endArrowHead: ArrowHead = .filled
-
-    // Label (optional text annotation)
-    var label: String = ""
-    var labelAttributes: TextAttributes = TextAttributes()
-    var isEditingLabel: Bool = false
-
-    // Optional binding (Phase 2 - future)
-    // var binding: ArrowBinding? = nil
-
-    enum ArrowHead: String, CaseIterable {
-        case none
-        case open      // Simple V shape
-        case filled    // Filled triangle
-        case circle    // Circle endpoint
-        case diamond   // Diamond shape
-    }
-
-    // Computed properties (same as LineObject)
-    var position: CGPoint {
-        CGPoint(x: min(startPoint.x, endPoint.x),
-                y: min(startPoint.y, endPoint.y))
-    }
-
-    var size: CGSize {
-        CGSize(width: abs(endPoint.x - startPoint.x),
-               height: abs(endPoint.y - startPoint.y))
-    }
-
-    var midPoint: CGPoint {
-        CGPoint(x: (startPoint.x + endPoint.x) / 2,
-                y: (startPoint.y + endPoint.y) / 2)
-    }
+    // CanvasObject base
+    public let id: UUID
+    public var position: CGPoint
+    public var size: CGSize
+    public var rotation: CGFloat
+    public var isLocked: Bool
+    public var zIndex: Int
 }
 ```
 
-**Future Enhancement (Phase 2)**: Optional binding system for connection-aware arrows
+**Rendering:** `ShapeObjectView` parses `svgPath` with `SVGPath.parse()` and scales to object size.
+
+#### TextObject
 
 ```swift
-// Only implement if users request diagram/flowchart features
-struct ArrowBinding: Codable {
-    var sourceObjectId: UUID?
-    var targetObjectId: UUID?
-    var sourceAnchor: AnchorPoint = .auto
-    var targetAnchor: AnchorPoint = .auto
+public struct TextObject: CanvasObject, TextContentObject {
+    public var text: String
+    public var textAttributes: TextAttributes
+    public var isEditing: Bool
 
-    enum AnchorPoint {
-        case auto                    // Closest edge point
-        case center                  // Object center
-        case edge(Edge)             // Specific edge (top/right/bottom/left)
-        case point(CGPoint)         // Exact normalized point (0-1)
-    }
-}
-
-// Enhanced ArrowObject with optional binding
-extension ArrowObject {
-    var effectiveStartPoint: CGPoint {
-        if let binding = binding, let sourceId = binding.sourceObjectId {
-            return computeAnchorPoint(for: sourceId, anchor: binding.sourceAnchor)
-        }
-        return startPoint
-    }
-
-    var effectiveEndPoint: CGPoint {
-        if let binding = binding, let targetId = binding.targetObjectId {
-            return computeAnchorPoint(for: targetId, anchor: binding.targetAnchor)
-        }
-        return endPoint
-    }
+    // CanvasObject base
+    // ...
 }
 ```
 
-### 3.4 Freehand Objects
+#### LineObject & ArrowObject
 
 ```swift
-struct PencilObject: CanvasObject, StrokableObject {
-    let id: UUID
-    var points: [CGPoint]           // Raw points from drawing
-    var smoothedPath: Path?         // Cached smoothed path
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
+public struct LineObject: CanvasObject, StrokableObject {
+    public var startPoint: CGPoint
+    public var endPoint: CGPoint
+    public var label: String
+    public var isEditingLabel: Bool
 
-    // Stroke
-    var strokeColor: Color = .black
-    var strokeWidth: CGFloat = 2
-    var strokeStyle: StrokeStyle = .solid
+    // Computed
+    public var position: CGPoint { /* min of start/end */ }
+    public var size: CGSize { /* abs diff of start/end */ }
 
-    // Computed bounding box
-    var position: CGPoint {
-        guard let minX = points.map({ $0.x }).min(),
-              let minY = points.map({ $0.y }).min() else {
-            return .zero
-        }
-        return CGPoint(x: minX, y: minY)
-    }
-
-    var size: CGSize {
-        guard let minX = points.map({ $0.x }).min(),
-              let maxX = points.map({ $0.x }).max(),
-              let minY = points.map({ $0.y }).min(),
-              let maxY = points.map({ $0.y }).max() else {
-            return .zero
-        }
-        return CGSize(width: maxX - minX, height: maxY - minY)
-    }
-
-    // Smoothing algorithm: Catmull-Rom spline
-    mutating func smoothPath() {
-        guard points.count > 2 else { return }
-        smoothedPath = catmullRomSpline(points: points)
-    }
+    public var usesControlPoints: Bool { true }
 }
 
-struct HighlighterObject: CanvasObject, StrokableObject {
-    let id: UUID
-    var points: [CGPoint]
-    var smoothedPath: Path?
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    // Stroke (defaults for highlighter)
-    var strokeColor: Color = .yellow
-    var strokeWidth: CGFloat = 20      // Thicker
-    var strokeOpacity: CGFloat = 0.4   // Semi-transparent
-    var strokeStyle: StrokeStyle = .solid
-
-    // Line cap for rounded ends
-    var lineCap: CGLineCap = .round
+public struct ArrowObject: CanvasObject, StrokableObject {
+    public var startPoint: CGPoint
+    public var endPoint: CGPoint
+    public var startArrowHead: ArrowHead
+    public var endArrowHead: ArrowHead
+    // ...
 }
 ```
 
-### 3.5 Special Objects
+**Lines use control points instead of selection box** - `usesControlPoints` flag changes rendering.
+
+#### ImageObject
 
 ```swift
-struct TextObject: CanvasObject, TextContentObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize                   // Calculated from text
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    var text: String
-    var textAttributes: TextAttributes
-    var isEditing: Bool = false
-
-    var maxWidth: CGFloat = 200        // Default max width, fit to content after commit
-}
-
-struct NoteObject: CanvasObject, TextContentObject, FillableObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    // Fill (no stroke for notes)
-    var fillColor: Color = .yellow
-    var fillOpacity: CGFloat = 1.0
-
-    // Text
-    var text: String = ""
-    var textAttributes: TextAttributes = TextAttributes()
-    var isEditing: Bool = false
-}
-
-struct AutoNumberObject: CanvasObject, TextContentObject, StrokableObject, FillableObject {
-    let id: UUID
-    var position: CGPoint             // Center position
-    var radius: CGFloat = 20          // Circle radius
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    // Number
-    var number: Int
-    var textAttributes: TextAttributes = TextAttributes()
-    var isEditing: Bool = false       // Not typically editable
-
-    // Stroke & Fill
-    var strokeColor: Color = .blue
-    var strokeWidth: CGFloat = 2
-    var strokeStyle: StrokeStyle = .solid
-    var fillColor: Color = .white
-    var fillOpacity: CGFloat = 1.0
-
-    var text: String { "\(number)" }
-    var size: CGSize { CGSize(width: radius * 2, height: radius * 2) }
-}
-
-struct StickerObject: CanvasObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    var stickerName: String           // Reference to asset
-    var stickerImage: NSImage?        // Cached image
-}
-
-struct ImageObject: CanvasObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    var imagePath: URL?               // Local file reference
-    var imageData: Data?              // Embedded image data
-    var aspectRatio: CGFloat          // Original aspect ratio
-    var maintainAspectRatio: Bool = true
-}
-
-struct MosaicObject: CanvasObject {
-    let id: UUID
-    var position: CGPoint
-    var size: CGSize
-    var rotation: CGFloat = 0
-    var isLocked: Bool = false
-    var zIndex: Int = 0
-
-    var blurRadius: CGFloat = 10      // Blur intensity
-    var mosaicType: MosaicType = .blur
-
-    enum MosaicType {
-        case blur                      // Gaussian blur
-        case pixelate                  // Pixelation effect
-    }
+public struct ImageObject: CanvasObject {
+    public var imageData: Data?
+    public var aspectRatio: CGFloat
+    public var maintainAspectRatio: Bool
+    // ...
 }
 ```
 
 ---
 
-## 4. Tool System
+## Tool System
 
-### 4.1 Tool Definition
+### Plugin Architecture
+
+**Zero core modifications** to add tools. Tools declare their identity inline.
+
+#### DrawingTool (Identity)
+
+Lightweight value type:
 
 ```swift
-enum AnnotationTool: String, CaseIterable, Identifiable {
-    case select
-    case hand
-    case shape
-    case line
-    case arrow
-    case pencil
-    case highlighter
-    case mosaic
-    case text
-    case autoNumber
-    case sticker
-    case note
-    case image
+public struct DrawingTool: Hashable {
+    public let id: String
+    public init(id: String)
+}
+```
 
-    var id: String { rawValue }
+**Tool identities declared per-file via extensions:**
 
-    var icon: String {
-        switch self {
-        case .select: return "arrow.up.left.and.arrow.down.right"
-        case .hand: return "hand.raised"
-        case .shape: return "square.on.circle"
-        case .line: return "line.diagonal"
-        case .arrow: return "arrow.right"
-        case .pencil: return "pencil"
-        case .highlighter: return "highlighter"
-        case .mosaic: return "square.grid.3x3"
-        case .text: return "textformat"
-        case .autoNumber: return "number.circle"
-        case .sticker: return "face.smiling"
-        case .note: return "note.text"
-        case .image: return "photo"
-        }
-    }
+```swift
+// In SelectTool.swift
+extension DrawingTool {
+    public static let select = DrawingTool(id: "select")
+}
 
-    var cursor: NSCursor {
-        switch self {
-        case .select: return .arrow
-        case .hand: return .openHand
-        case .text: return .iBeam
-        default: return .crosshair
-        }
+// In RectangleTool.swift
+extension DrawingTool {
+    public static let rectangle = DrawingTool(id: "rectangle")
+}
+```
+
+**No central enum to modify.**
+
+#### CanvasTool Protocol
+
+```swift
+public protocol CanvasTool {
+    var toolType: DrawingTool { get }
+    var metadata: ToolMetadata { get }
+
+    // All methods have default no-op implementations
+    func handleDragChanged(start: CGPoint, current: CGPoint, viewModel: CanvasViewModel)
+    func handleDragEnded(start: CGPoint, end: CGPoint, viewModel: CanvasViewModel, shiftHeld: Bool)
+    func handleClick(at: CGPoint, viewModel: CanvasViewModel, shiftHeld: Bool)
+    func renderPreview(start: CGPoint, current: CGPoint, viewModel: CanvasViewModel) -> AnyView
+}
+```
+
+**Override only what you need** - all have default no-op implementations.
+
+#### ToolMetadata
+
+```swift
+public struct ToolMetadata {
+    public let name: String
+    public let category: ToolCategory
+    public let cursorType: NSCursor
+}
+
+public enum ToolCategory {
+    case selection      // Select, Hand
+    case shape          // Rectangle, Oval, etc.
+    case drawing        // Line, Arrow
+    case annotation     // Text, Note
+    case navigation     // Hand, Zoom
+}
+```
+
+**Framework concerns only** - no icons or keyboard shortcuts (those are app-specific).
+
+#### ToolRegistry
+
+Singleton managing tool registration:
+
+```swift
+@MainActor
+public class ToolRegistry: ObservableObject {
+    public static let shared: ToolRegistry
+
+    // Register tool (no new object type)
+    public func register(_ tool: any CanvasTool)
+
+    // Register tool with new object type (auto-registers views + codable)
+    public func register<Obj: CopyableCanvasObject>(_ manifest: ToolManifest<Obj>)
+
+    // Retrieve
+    public func tool(for type: DrawingTool) -> (any CanvasTool)?
+    public func tools(in category: ToolCategory) -> [any CanvasTool]
+}
+```
+
+**Built-in registrations:**
+```swift
+ToolRegistry.shared.register(SelectTool())
+ToolRegistry.shared.register(HandTool())
+ToolRegistry.shared.register(TextTool.manifest)
+ToolRegistry.shared.register(LineTool())
+ToolRegistry.shared.register(ArrowTool())
+ToolRegistry.shared.register(RectangleTool())
+ToolRegistry.shared.register(OvalTool())
+// etc.
+```
+
+#### ToolManifest (New Object Types)
+
+Bundles tool + views + codable discriminator:
+
+```swift
+public struct ToolManifest<Obj: CopyableCanvasObject> {
+    public let tool: any CanvasTool
+    public let discriminator: String
+    public let interactiveView: (Obj, Bool, CanvasViewModel) -> AnyView
+    public let exportView: (Obj) -> AnyView
+}
+```
+
+**Usage:**
+```swift
+// In StickerTool.swift
+static let manifest = ToolManifest(
+    tool: StickerTool(),
+    discriminator: "sticker",
+    interactiveView: { obj, sel, vm in AnyView(StickerObjectView(...)) },
+    exportView: { obj in AnyView(ExportStickerObjectView(...)) }
+)
+
+// Register
+ToolRegistry.shared.register(StickerTool.manifest)
+```
+
+**One call registers:**
+- Tool in `ToolRegistry`
+- Interactive view in `ObjectViewRegistry`
+- Export view in `ObjectViewRegistry`
+- Codable discriminator in `CodableObjectRegistry`
+
+### Shape Tools Architecture
+
+**Each shape is its own tool class:**
+
+```
+BaseShapeTool (abstract base class)
+├── RectangleTool
+├── OvalTool
+├── TriangleTool
+├── DiamondTool
+└── StarTool
+```
+
+**BaseShapeTool** provides shared drag-to-create logic:
+
+```swift
+open class BaseShapeTool: CanvasTool {
+    open var svgPath: String { fatalError("Override") }
+    open var toolType: DrawingTool { fatalError("Override") }
+    open var metadata: ToolMetadata { fatalError("Override") }
+
+    // Shared implementation
+    public func handleDragChanged(start: CGPoint, current: CGPoint, viewModel: CanvasViewModel) {
+        // Calculate size, position
+        // Create or update ShapeObject with svgPath
     }
 }
 ```
 
-### 4.2 Tool Settings
+**Concrete shape tools:**
 
 ```swift
-struct ToolSettings: ObservableObject {
-    // Shape tool
-    @Published var selectedShape: ShapeObject.ShapeType = .rectangle
+// RectangleTool.swift
+extension DrawingTool {
+    public static let rectangle = DrawingTool(id: "rectangle")
+}
 
-    // Common stroke settings
-    @Published var strokeColor: Color = .black
-    @Published var strokeWidth: CGFloat = 2
-    @Published var strokeStyle: StrokeStyle = .solid
+public class RectangleTool: BaseShapeTool {
+    public override var metadata: ToolMetadata {
+        ToolMetadata(name: "Rectangle", category: .shape)
+    }
 
-    // Common fill settings
-    @Published var fillColor: Color = .blue
-    @Published var fillOpacity: CGFloat = 0.1
+    public override var toolType: DrawingTool { .rectangle }
 
-    // Text settings
-    @Published var textAttributes: TextAttributes = TextAttributes()
-
-    // Auto-number
-    @Published var autoNumberCounter: Int = 1
-    @Published var autoNumberColor: Color = .blue
-
-    // Sticker
-    @Published var selectedSticker: String = "star"
-
-    // Highlighter
-    @Published var highlighterColor: Color = .yellow
-    @Published var highlighterOpacity: CGFloat = 0.4
-
-    // Mosaic
-    @Published var mosaicType: MosaicObject.MosaicType = .blur
-    @Published var mosaicIntensity: CGFloat = 10
-
-    func resetAutoNumber() {
-        autoNumberCounter = 1
+    public override var svgPath: String {
+        "M 0,0 L 100,0 L 100,100 L 0,100 Z"
     }
 }
 ```
+
+**ShapeObject stores path directly:**
+```swift
+let shape = ShapeObject(
+    svgPath: "M 0,0 L 100,0 ...",  // Geometry
+    toolId: "rectangle",            // For deserialization
+    ...
+)
+```
+
+**No intermediate enum** - tools define paths inline.
 
 ---
 
-## 5. Selection System
+## Selection System
 
-### 5.1 Selection State
+### SelectionState
 
 ```swift
-struct SelectionState {
-    var selectedIds: Set<UUID> = []
-    var editingId: UUID?
+public struct SelectionState {
+    public var selectedIds: Set<UUID>
+    public var editingId: UUID?
 
-    var isEmpty: Bool { selectedIds.isEmpty }
-    var count: Int { selectedIds.count }
-    var isSingleSelection: Bool { selectedIds.count == 1 }
-    var isMultiSelection: Bool { selectedIds.count > 1 }
+    public var isEmpty: Bool
+    public var count: Int
+    public var isSingleSelection: Bool
+    public var isMultiSelection: Bool
 
-    mutating func select(_ id: UUID, additive: Bool = false) {
-        if additive {
-            if selectedIds.contains(id) {
-                selectedIds.remove(id)
-            } else {
-                selectedIds.insert(id)
-            }
-        } else {
-            selectedIds = [id]
-        }
-        editingId = nil
-    }
-
-    mutating func selectMultiple(_ ids: Set<UUID>) {
-        selectedIds = ids
-        editingId = nil
-    }
-
-    mutating func deselectAll() {
-        selectedIds.removeAll()
-        editingId = nil
-    }
-
-    mutating func startEditing(_ id: UUID) {
-        selectedIds = [id]
-        editingId = id
-    }
-
-    mutating func stopEditing() {
-        editingId = nil
-    }
+    public mutating func select(_ id: UUID, additive: Bool)
+    public mutating func selectMultiple(_ ids: Set<UUID>)
+    public mutating func deselectAll()
+    public mutating func startEditing(_ id: UUID)
 }
 ```
 
-### 5.2 Selection Box
+### SelectionBox
+
+Computed from selected objects:
 
 ```swift
-struct SelectionBox {
-    let bounds: CGRect                 // Combined bounds of all selected objects
-    let individualBounds: [UUID: CGRect]  // Per-object bounds for transforms
-    let center: CGPoint
-    let rotation: CGFloat              // Only for single selection
+public struct SelectionBox {
+    public let bounds: CGRect
+    public let individualBounds: [UUID: CGRect]
+    public let center: CGPoint
+    public let rotation: CGFloat  // Only for single selection
 
-    // Hit test zones
-    func hitTest(_ point: CGPoint) -> SelectionHitZone? {
-        let handleSize: CGFloat = 8
-        let rotationOffset: CGFloat = 20
-
-        // Check rotation handles (outside corners)
-        for corner in Corner.allCases {
-            let handlePos = rotationHandlePosition(for: corner)
-            if distance(point, handlePos) < handleSize + rotationOffset {
-                return .rotation(corner)
-            }
-        }
-
-        // Check resize corners
-        for corner in Corner.allCases {
-            let handlePos = cornerHandlePosition(for: corner)
-            if distance(point, handlePos) < handleSize {
-                return .corner(corner)
-            }
-        }
-
-        // Check resize edges
-        for edge in Edge.allCases {
-            if edgeHitTest(point, edge: edge, threshold: handleSize) {
-                return .edge(edge)
-            }
-        }
-
-        // Check interior for move
-        if bounds.contains(point) {
-            return .move
-        }
-
-        return nil
-    }
+    public func hitTest(_ point: CGPoint) -> SelectionHitZone?
 }
 
-enum SelectionHitZone {
+public enum SelectionHitZone {
     case move
-    case corner(Corner)
-    case edge(Edge)
-    case rotation(Corner)
+    case corner(Corner)     // Resize
+    case edge(Edge)         // Resize
+    case rotation(Corner)   // Rotate (outside corners)
 }
 ```
 
-### 5.3 Marquee Selection
+**Selection box rendering:**
+- Corners: 8x8 handles for resize
+- Edges: Invisible hit zones for edge resize
+- Outside corners: Rotation handles with circular icon
+- Interior: Move cursor
 
-```swift
-struct MarqueeSelection {
-    var startPoint: CGPoint
-    var currentPoint: CGPoint
-
-    var rect: CGRect {
-        CGRect(
-            x: min(startPoint.x, currentPoint.x),
-            y: min(startPoint.y, currentPoint.y),
-            width: abs(currentPoint.x - startPoint.x),
-            height: abs(currentPoint.y - startPoint.y)
-        )
-    }
-
-    func selectsObject(_ object: any CanvasObject) -> Bool {
-        rect.intersects(object.boundingBox())
-    }
-}
-```
+**Multi-selection:**
+- Shift+click for additive selection
+- Marquee drag (empty canvas) for rect selection
+- All selected objects resize proportionally from center
 
 ---
 
-## 6. Canvas Viewport System
+## Viewport System
 
-### 6.1 Viewport State
+### ViewportState
 
 ```swift
-struct ViewportState {
-    var offset: CGPoint = .zero        // Pan offset
-    var scale: CGFloat = 1.0           // Zoom level
+public struct ViewportState {
+    public var offset: CGPoint      // Pan offset
+    public var scale: CGFloat       // Zoom level (1.0 = 100%)
 
-    let minScale: CGFloat = 0.1
-    let maxScale: CGFloat = 10.0
+    public let minScale: CGFloat = 0.1
+    public let maxScale: CGFloat = 10.0
 
-    // Convert screen coordinates to canvas coordinates
-    func canvasPoint(from screenPoint: CGPoint, canvasSize: CGSize) -> CGPoint {
-        CGPoint(
-            x: (screenPoint.x - offset.x) / scale,
-            y: (screenPoint.y - offset.y) / scale
-        )
-    }
+    // Coordinate conversion
+    public func canvasPoint(from screenPoint: CGPoint) -> CGPoint
+    public func screenPoint(from canvasPoint: CGPoint) -> CGPoint
 
-    // Convert canvas coordinates to screen coordinates
-    func screenPoint(from canvasPoint: CGPoint) -> CGPoint {
-        CGPoint(
-            x: canvasPoint.x * scale + offset.x,
-            y: canvasPoint.y * scale + offset.y
-        )
-    }
-
-    // Zoom centered on a point
-    mutating func zoom(by factor: CGFloat, centeredOn point: CGPoint) {
-        let newScale = (scale * factor).clamped(to: minScale...maxScale)
-        let scaleDiff = newScale / scale
-
-        offset.x = point.x - (point.x - offset.x) * scaleDiff
-        offset.y = point.y - (point.y - offset.y) * scaleDiff
-        scale = newScale
-    }
-
-    // Pan by delta
-    mutating func pan(by delta: CGPoint) {
-        offset.x += delta.x
-        offset.y += delta.y
-    }
-
-    // Reset to default
-    mutating func reset() {
-        offset = .zero
-        scale = 1.0
-    }
-
-    // Fit content in view
-    mutating func fitContent(_ contentBounds: CGRect, in viewSize: CGSize, padding: CGFloat = 50) {
-        let scaleX = (viewSize.width - padding * 2) / contentBounds.width
-        let scaleY = (viewSize.height - padding * 2) / contentBounds.height
-        scale = min(scaleX, scaleY, 1.0).clamped(to: minScale...maxScale)
-
-        offset = CGPoint(
-            x: (viewSize.width - contentBounds.width * scale) / 2 - contentBounds.origin.x * scale,
-            y: (viewSize.height - contentBounds.height * scale) / 2 - contentBounds.origin.y * scale
-        )
-    }
+    // Transformations
+    public mutating func zoom(by factor: CGFloat, centeredOn point: CGPoint)
+    public mutating func pan(by delta: CGPoint)
+    public mutating func reset()
+    public mutating func fitContent(_ bounds: CGRect, in viewSize: CGSize)
 }
 ```
 
-### 6.2 Gesture Handling for Viewport
-
+**Rendering transform:**
 ```swift
-// Two-finger pan (trackpad) - works with all tools
-// This is handled via NSResponder or magnification gesture
-
-extension CanvasView {
-    func handleMagnification(_ gesture: MagnificationGesture.Value) {
-        viewModel.viewport.zoom(by: gesture.magnification, centeredOn: gestureCenter)
-    }
-
-    func handleTwoFingerPan(_ delta: CGPoint) {
-        viewModel.viewport.pan(by: delta)
+ZStack {
+    // Objects layer
+    ForEach(viewModel.objects) { obj in
+        ObjectView(obj)
     }
 }
-
-// Hand tool specific - single finger/mouse drag pans
-func handleHandToolDrag(_ value: DragGesture.Value) {
-    let delta = CGPoint(
-        x: value.translation.width - (lastDragTranslation?.width ?? 0),
-        y: value.translation.height - (lastDragTranslation?.height ?? 0)
-    )
-    viewModel.viewport.pan(by: delta)
-    lastDragTranslation = value.translation
-}
+.scaleEffect(viewport.scale, anchor: .topLeading)
+.offset(x: viewport.offset.x, y: viewport.offset.y)
 ```
+
+**Gesture handling:**
+- Two-finger trackpad drag: pan
+- Pinch gesture: zoom centered on pinch center
+- Hand tool + single drag: pan
 
 ---
 
-## 7. View Components
+## Gesture Handling
 
-### 7.1 View Hierarchy
-
-```
-ContentView
-├── VStack
-│   ├── ToolbarView
-│   │   ├── ToolPicker (segmented/grid)
-│   │   ├── ToolSettingsView (context-sensitive)
-│   │   └── ViewportControls (zoom slider, fit, reset)
-│   │
-│   └── CanvasContainerView
-│       ├── GeometryReader
-│       │   └── CanvasView
-│       │       ├── ZStack (transformed by viewport)
-│       │       │   ├── CanvasBackground
-│       │       │   │   └── DotGrid (scaled with viewport)
-│       │       │   │
-│       │       │   ├── ObjectsLayer
-│       │       │   │   └── ForEach(objects sorted by zIndex)
-│       │       │   │       └── ObjectView (type-specific)
-│       │       │   │
-│       │       │   ├── SelectionOverlay
-│       │       │   │   ├── SelectionBox (single)
-│       │       │   │   │   ├── Border
-│       │       │   │   │   ├── CornerHandles
-│       │       │   │   │   └── RotationHandles
-│       │       │   │   └── MultiSelectionBox
-│       │       │   │       └── Combined bounds indicator
-│       │       │   │
-│       │       │   ├── MarqueeOverlay (during drag-select)
-│       │       │   └── DragPreviewOverlay (during creation)
-│       │       │
-│       │       └── GestureLayer (transparent, captures all input)
-│       │
-│       └── FloatingPanels
-│           ├── FormatBar (when editing text)
-│           └── ShapePickerPopover (when shape tool active)
-```
-
-### 7.2 Object View Factory
-
-```swift
-struct ObjectViewFactory {
-    @ViewBuilder
-    static func view(for object: AnyCanvasObject,
-                     viewModel: CanvasViewModel,
-                     isSelected: Bool) -> some View {
-        switch object.object {
-        case let rect as RectangleObject:
-            RectangleObjectView(object: rect, viewModel: viewModel, isSelected: isSelected)
-
-        case let circle as CircleObject:
-            CircleObjectView(object: circle, viewModel: viewModel, isSelected: isSelected)
-
-        case let text as TextObject:
-            TextObjectView(object: text, viewModel: viewModel, isSelected: isSelected)
-
-        case let line as LineObject:
-            LineObjectView(object: line, viewModel: viewModel, isSelected: isSelected)
-
-        case let arrow as ArrowObject:
-            ArrowObjectView(object: arrow, viewModel: viewModel, isSelected: isSelected)
-
-        case let pencil as PencilObject:
-            PencilObjectView(object: pencil, viewModel: viewModel, isSelected: isSelected)
-
-        case let highlighter as HighlighterObject:
-            HighlighterObjectView(object: highlighter, viewModel: viewModel, isSelected: isSelected)
-
-        case let autoNum as AutoNumberObject:
-            AutoNumberObjectView(object: autoNum, viewModel: viewModel, isSelected: isSelected)
-
-        case let sticker as StickerObject:
-            StickerObjectView(object: sticker, viewModel: viewModel, isSelected: isSelected)
-
-        case let note as NoteObject:
-            NoteObjectView(object: note, viewModel: viewModel, isSelected: isSelected)
-
-        case let image as ImageObject:
-            ImageObjectView(object: image, viewModel: viewModel, isSelected: isSelected)
-
-        case let mosaic as MosaicObject:
-            MosaicObjectView(object: mosaic, viewModel: viewModel, isSelected: isSelected)
-
-        default:
-            EmptyView()
-        }
-    }
-}
-```
-
-### 7.3 Selection Box View
-
-```swift
-struct SelectionBoxView: View {
-    let selectionBox: SelectionBox
-    let isSingleSelection: Bool
-    @ObservedObject var viewModel: CanvasViewModel
-
-    private let handleSize: CGFloat = 8
-    private let strokeColor = Color.blue
-
-    var body: some View {
-        ZStack {
-            // Selection rectangle
-            Rectangle()
-                .stroke(strokeColor, lineWidth: 1)
-                .frame(width: selectionBox.bounds.width,
-                       height: selectionBox.bounds.height)
-
-            // Corner handles (resize)
-            ForEach(Corner.allCases, id: \.self) { corner in
-                ResizeHandle(corner: corner, size: handleSize)
-                    .position(cornerPosition(corner))
-                    .onHover { hovering in
-                        if hovering {
-                            NSCursor.resize(for: corner).set()
-                        }
-                    }
-            }
-
-            // Edge handles (resize) - shown only for single selection
-            if isSingleSelection {
-                ForEach(Edge.allCases, id: \.self) { edge in
-                    EdgeHandle(edge: edge, size: handleSize)
-                        .position(edgePosition(edge))
-                        .onHover { hovering in
-                            if hovering {
-                                NSCursor.resize(for: edge).set()
-                            }
-                        }
-                }
-            }
-
-            // Rotation handles (outside corners) - shown only for single selection
-            if isSingleSelection {
-                ForEach(Corner.allCases, id: \.self) { corner in
-                    RotationHandle(size: handleSize)
-                        .position(rotationHandlePosition(corner))
-                        .onHover { hovering in
-                            if hovering {
-                                NSCursor.rotation.set()
-                            }
-                        }
-                }
-            }
-        }
-        .position(x: selectionBox.bounds.midX, y: selectionBox.bounds.midY)
-        .rotationEffect(.radians(isSingleSelection ? selectionBox.rotation : 0))
-    }
-}
-```
-
----
-
-## 8. Gesture Handling
-
-### 8.1 Interaction State Machine
+### Interaction State Machine
 
 ```swift
 enum InteractionMode {
@@ -1063,585 +597,410 @@ enum InteractionMode {
     case panning
     case editing(UUID)
 }
-
-struct DragContext {
-    let startPoint: CGPoint
-    let objectIds: Set<UUID>
-    let initialPositions: [UUID: CGPoint]
-    var currentPoint: CGPoint
-}
-
-struct DrawingContext {
-    let tool: AnnotationTool
-    let startPoint: CGPoint
-    var currentPoint: CGPoint
-    var points: [CGPoint]  // For freehand tools
-}
-
-struct MarqueeContext {
-    let startPoint: CGPoint
-    var currentPoint: CGPoint
-    let additive: Bool  // Shift was held
-}
 ```
 
-### 8.2 Gesture Coordinator
+### Gesture Flow
+
+1. **DragGesture starts** (`onChanged` first call)
+   - Check active tool
+   - If `.select`: hit test selection box handles, then objects
+   - If drawing tool: delegate to tool's `handleDragChanged`
+   - Store initial state in `DragContext` or `DrawingContext`
+
+2. **DragGesture updates** (`onChanged` subsequent calls)
+   - Update `currentDragPoint` on viewModel
+   - Tool renders preview via `renderPreview(start:current:viewModel:)`
+   - Selection box updates if resizing/rotating
+
+3. **DragGesture ends** (`onEnded`)
+   - Calculate distance: `hypot(translation.width, translation.height)`
+   - If distance < 5px → **click** → delegate to tool's `handleClick`
+   - Else → **drag** → delegate to tool's `handleDragEnded`
+   - Reset drag state
+
+### Tool Dispatch
+
+**CanvasView** delegates to tools via registry:
 
 ```swift
-class GestureCoordinator {
-    private var viewModel: CanvasViewModel
-    private var interactionMode: InteractionMode = .idle
-    private var lastTapTime: Date?
-    private var lastTapLocation: CGPoint?
+private func handleDragEnded(_ value: DragGesture.Value) {
+    let distance = hypot(value.translation.width, value.translation.height)
+    let canvasLocation = viewModel.viewport.canvasPoint(from: value.location)
 
-    // Constants
-    private let clickThreshold: CGFloat = 5
-    private let doubleClickTimeThreshold: TimeInterval = 0.3
-    private let doubleClickDistanceThreshold: CGFloat = 10
-
-    func handleDragStart(_ value: DragGesture.Value, shiftHeld: Bool) {
-        let canvasPoint = viewModel.viewport.canvasPoint(from: value.startLocation,
-                                                          canvasSize: viewModel.canvasSize)
-
-        switch viewModel.activeTool {
-        case .select:
-            handleSelectToolDragStart(canvasPoint, shiftHeld: shiftHeld)
-
-        case .hand:
-            interactionMode = .panning
-
-        case .shape, .line, .arrow, .mosaic:
-            interactionMode = .drawing(DrawingContext(
-                tool: viewModel.activeTool,
-                startPoint: canvasPoint,
-                currentPoint: canvasPoint,
-                points: [canvasPoint]
-            ))
-
-        case .pencil, .highlighter:
-            interactionMode = .drawing(DrawingContext(
-                tool: viewModel.activeTool,
-                startPoint: canvasPoint,
-                currentPoint: canvasPoint,
-                points: [canvasPoint]
-            ))
-
-        case .text, .autoNumber, .sticker, .note:
-            // These are click-to-place, handle in dragEnd
-            break
-
-        case .image:
-            // Opens file picker
-            break
+    if distance < 5 {
+        // Click
+        if let tool = ToolRegistry.shared.tool(for: viewModel.selectedTool) {
+            tool.handleClick(at: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
         }
-    }
-
-    func handleDragChanged(_ value: DragGesture.Value) {
-        let canvasPoint = viewModel.viewport.canvasPoint(from: value.location,
-                                                          canvasSize: viewModel.canvasSize)
-
-        switch interactionMode {
-        case .dragging(var context):
-            context.currentPoint = canvasPoint
-            interactionMode = .dragging(context)
-            updateObjectPositions(context)
-
-        case .drawing(var context):
-            context.currentPoint = canvasPoint
-            if viewModel.activeTool == .pencil || viewModel.activeTool == .highlighter {
-                context.points.append(canvasPoint)
-            }
-            interactionMode = .drawing(context)
-            viewModel.updateDrawingPreview(context)
-
-        case .selecting(var context):
-            context.currentPoint = canvasPoint
-            interactionMode = .selecting(context)
-            viewModel.updateMarqueeSelection(context)
-
-        case .panning:
-            viewModel.viewport.pan(by: CGPoint(
-                x: value.translation.width - (lastPanTranslation?.width ?? 0),
-                y: value.translation.height - (lastPanTranslation?.height ?? 0)
-            ))
-            lastPanTranslation = value.translation
-
-        default:
-            break
+    } else {
+        // Drag
+        if let tool = ToolRegistry.shared.tool(for: viewModel.selectedTool) {
+            tool.handleDragEnded(start: canvasStart, end: canvasLocation, viewModel: viewModel, shiftHeld: shiftHeld)
         }
-    }
-
-    func handleDragEnd(_ value: DragGesture.Value, shiftHeld: Bool) {
-        let canvasPoint = viewModel.viewport.canvasPoint(from: value.location,
-                                                          canvasSize: viewModel.canvasSize)
-        let distance = hypot(value.translation.width, value.translation.height)
-        let isClick = distance < clickThreshold
-
-        switch viewModel.activeTool {
-        case .select:
-            if isClick {
-                handleSelectToolClick(canvasPoint, shiftHeld: shiftHeld)
-            } else {
-                finalizeInteraction()
-            }
-
-        case .hand:
-            interactionMode = .idle
-
-        case .shape, .line, .arrow, .mosaic:
-            if !isClick {
-                finalizeDrawing(shiftHeld: shiftHeld)
-            }
-
-        case .pencil, .highlighter:
-            if !isClick {
-                finalizeFreehandDrawing()
-            }
-
-        case .text:
-            if isClick {
-                handleTextToolClick(canvasPoint)
-            }
-
-        case .autoNumber:
-            if isClick {
-                viewModel.placeAutoNumber(at: canvasPoint)
-            }
-
-        case .sticker:
-            if isClick {
-                viewModel.placeSticker(at: canvasPoint)
-            }
-
-        case .note:
-            if isClick {
-                viewModel.placeNote(at: canvasPoint)
-            }
-
-        case .image:
-            if isClick {
-                viewModel.showImagePicker(at: canvasPoint)
-            }
-        }
-
-        interactionMode = .idle
-    }
-
-    private func handleSelectToolDragStart(_ point: CGPoint, shiftHeld: Bool) {
-        // Check if clicking on selection box handles first
-        if let selectionBox = viewModel.selectionBox,
-           let hitZone = selectionBox.hitTest(point) {
-            handleSelectionBoxInteraction(hitZone, startPoint: point)
-            return
-        }
-
-        // Check if clicking on an object
-        if let hitObject = viewModel.hitTest(point) {
-            if shiftHeld {
-                viewModel.selection.select(hitObject.id, additive: true)
-            } else if !viewModel.selection.selectedIds.contains(hitObject.id) {
-                viewModel.selection.select(hitObject.id, additive: false)
-            }
-
-            // Start dragging selected objects
-            interactionMode = .dragging(DragContext(
-                startPoint: point,
-                objectIds: viewModel.selection.selectedIds,
-                initialPositions: viewModel.getObjectPositions(viewModel.selection.selectedIds),
-                currentPoint: point
-            ))
-        } else {
-            // Start marquee selection
-            if !shiftHeld {
-                viewModel.selection.deselectAll()
-            }
-            interactionMode = .selecting(MarqueeContext(
-                startPoint: point,
-                currentPoint: point,
-                additive: shiftHeld
-            ))
-        }
-    }
-
-    private func handleSelectToolClick(_ point: CGPoint, shiftHeld: Bool) {
-        let isDoubleClick = checkDoubleClick(at: point)
-
-        if isDoubleClick {
-            // Double-click: start editing
-            if let hitObject = viewModel.hitTest(point),
-               hitObject is TextContentObject {
-                viewModel.selection.startEditing(hitObject.id)
-            }
-        } else {
-            // Single click: select/deselect
-            if let hitObject = viewModel.hitTest(point) {
-                viewModel.selection.select(hitObject.id, additive: shiftHeld)
-            } else if !shiftHeld {
-                viewModel.selection.deselectAll()
-            }
-        }
-
-        updateTapTracking(at: point)
     }
 }
 ```
 
-### 8.3 Keyboard Modifiers
+**No hardcoded tool logic in CanvasView.**
+
+---
+
+## Extension Guide
+
+### Adding a Custom Tool (Existing Object Type)
+
+**Example:** A "Pencil" tool that creates `LineObject`
 
 ```swift
-struct KeyboardModifiers {
-    var shift: Bool = false      // Additive selection, constrain proportions
-    var command: Bool = false    // Reserved for shortcuts
-    var option: Bool = false     // Clone while dragging (future)
-    var control: Bool = false    // Reserved
+// PencilTool.swift (in your application or plugin)
+
+import AnotarCanvas
+
+// 1. Declare tool identity
+extension DrawingTool {
+    public static let pencil = DrawingTool(id: "pencil")
 }
 
-extension CanvasView {
-    func handleKeyDown(_ event: NSEvent) {
-        switch event.keyCode {
-        case 56: // Shift
-            viewModel.modifiers.shift = true
-        case 55: // Command
-            viewModel.modifiers.command = true
-        case 58: // Option
-            viewModel.modifiers.option = true
-        default:
-            break
-        }
+// 2. Implement CanvasTool
+public struct PencilTool: CanvasTool {
+    public let toolType: DrawingTool = .pencil
+
+    public var metadata: ToolMetadata {
+        ToolMetadata(name: "Pencil", category: .drawing)
     }
 
-    func handleKeyUp(_ event: NSEvent) {
-        switch event.keyCode {
-        case 56:
-            viewModel.modifiers.shift = false
-        case 55:
-            viewModel.modifiers.command = false
-        case 58:
-            viewModel.modifiers.option = false
-        default:
-            break
+    // 3. Override only needed methods
+    public func handleDragEnded(
+        start: CGPoint,
+        end: CGPoint,
+        viewModel: CanvasViewModel,
+        shiftHeld: Bool
+    ) {
+        let line = LineObject(startPoint: start, endPoint: end, strokeColor: viewModel.activeStrokeColor ?? .black)
+        viewModel.addObject(line)
+    }
+}
+
+// 4. Register
+ToolRegistry.shared.register(PencilTool())
+```
+
+**Files modified:** Zero framework files. Just add `PencilTool.swift`.
+
+### Adding a Custom Object Type
+
+**Example:** A "Sticker" tool with `StickerObject`
+
+```swift
+// 1. Object model
+public struct StickerObject: CopyableCanvasObject {
+    public let id: UUID
+    public var position: CGPoint
+    public var size: CGSize
+    public var rotation: CGFloat = 0
+    public var isLocked: Bool = false
+    public var zIndex: Int = 0
+
+    public var emoji: String
+
+    public func contains(_ point: CGPoint) -> Bool { ... }
+    public func boundingBox() -> CGRect { ... }
+
+    public func copied(newId: UUID, zIndex: Int, offset: CGPoint) -> StickerObject {
+        StickerObject(id: newId, position: position + offset, emoji: emoji, ...)
+    }
+}
+
+// 2. Interactive view
+struct StickerObjectView: View {
+    let object: StickerObject
+    let isSelected: Bool
+    @ObservedObject var viewModel: CanvasViewModel
+
+    var body: some View {
+        Text(object.emoji)
+            .font(.system(size: 40))
+            .position(...)
+    }
+}
+
+// 3. Export view (can reuse StickerObjectView for simple cases)
+
+// 4. Tool with manifest
+extension DrawingTool {
+    public static let sticker = DrawingTool(id: "sticker")
+}
+
+public struct StickerTool: CanvasTool {
+    public let toolType: DrawingTool = .sticker
+    public var metadata: ToolMetadata { ... }
+
+    public func handleClick(at point: CGPoint, viewModel: CanvasViewModel, shiftHeld: Bool) {
+        let sticker = StickerObject(position: point, emoji: "⭐️")
+        viewModel.addObject(sticker)
+    }
+
+    public static let manifest = ToolManifest(
+        tool: StickerTool(),
+        discriminator: "sticker",
+        interactiveView: { obj, sel, vm in AnyView(StickerObjectView(object: obj, isSelected: sel, viewModel: vm)) },
+        exportView: { obj in AnyView(ExportStickerObjectView(object: obj)) }
+    )
+}
+
+// 5. Register (one call registers tool + views + clipboard)
+ToolRegistry.shared.register(StickerTool.manifest)
+```
+
+**Files modified:** Zero framework files. Add `StickerObject.swift`, `StickerObjectView.swift`, `StickerTool.swift`.
+
+See [docs/adding-a-tool.md](docs/adding-a-tool.md) for complete guide.
+
+---
+
+## Application Layer (texttool)
+
+### ToolbarView
+
+Application-specific UI for tool selection:
+
+- **Tool buttons** with icons (SF Symbols)
+- **Shape picker** popover (maps DrawingTool → icon)
+- **Color pickers** for fill/stroke
+- **Viewport controls** (zoom slider, fit, reset)
+
+**Icon mapping (app concern):**
+```swift
+let shapeIcons: [DrawingTool: String] = [
+    .rectangle: "rectangle",
+    .oval: "circle",
+    .triangle: "triangle",
+    .diamond: "diamond",
+    .star: "star",
+]
+```
+
+### Keyboard Shortcuts (app concern)
+
+```swift
+// HotkeyManager.swift
+class HotkeyManager {
+    func installHotkeys(viewModel: CanvasViewModel) {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            switch event.charactersIgnoringModifiers {
+            case "v": viewModel.selectedTool = .select
+            case "h": viewModel.selectedTool = .hand
+            case "t": viewModel.selectedTool = .text
+            case "r": viewModel.selectedTool = .rectangle
+            // ...
+            }
         }
     }
 }
 ```
 
----
+**Framework has no keyboard handling** - app controls all shortcuts.
 
-## 9. Implementation Phases
+### Export (app concern)
 
-### Phase 1: Foundation (Core Infrastructure) - ✅ **COMPLETED**
-**Goal**: Establish the new architecture without breaking existing functionality
-
-1. **Unified Object System** ✅
-   - Created `CanvasObject` protocol hierarchy
-   - Created `AnyCanvasObject` wrapper with type erasure
-   - Migrated existing models to conform to protocols
-   - Updated `CanvasViewModel` to use unified storage
-
-2. **Enhanced Selection System** ✅
-   - Implemented `SelectionState` with multi-selection
-   - Added Shift+Click for additive selection
-   - Implemented marquee (drag-to-select) selection
-   - Created `SelectionBoxView` with handles
-
-3. **Viewport System** ✅
-   - Implemented `ViewportState` with pan/zoom
-   - Added two-finger trackpad gestures
-   - Added zoom controls to toolbar
-   - Transform canvas content by viewport
-
-4. **Gesture Refactoring** ✅
-   - Implemented `InteractionMode` state machine
-   - Created `GestureCoordinator`
-   - Handle keyboard modifiers
-
-**Deliverables**: ✅ Working multi-selection, pan/zoom, all existing tools functional
+```swift
+// AppState.swift
+func exportToPNG() {
+    let exportView = CanvasExportView(objects: viewModel.objects)
+    let renderer = ImageRenderer(content: exportView)
+    // ...
+}
+```
 
 ---
 
-### Phase 2: Selection Box Interactions - ✅ **COMPLETED**
-**Goal**: Full selection box manipulation
+## Design Principles
 
-1. **Resize Functionality** ✅
-   - Corner resize (diagonal)
-   - Edge resize (horizontal/vertical)
-   - Shift+resize for proportional scaling
-   - Multi-object resize (scale from center)
+### 1. Zero Core Modifications for Extensions
 
-2. **Rotation Functionality** ✅
-   - Rotation handles outside corners
-   - Rotation cursor feedback
-   - Shift+rotate for 15° snapping
-   - Single-object rotation
+Adding a tool or object type **requires zero modifications to framework files**:
+- ✅ No changes to `DrawingTool.swift` (identities declared per-file)
+- ✅ No changes to `CanvasView.swift` (dispatches via registry)
+- ✅ No changes to `CanvasViewModel.swift` (generic `addObject(_:)`)
+- ✅ No changes to `CanvasObjectView.swift` (uses `ObjectViewRegistry`)
 
-3. **Cursor Feedback** ✅
-   - Resize cursors on edges/corners
-   - Rotation cursor outside corners
-   - Move cursor inside selection
-   - Tool-specific cursors
+### 2. Protocol-Based Capabilities
 
-**Deliverables**: ✅ Fully interactive selection box with resize/rotate
+Objects opt-in to capabilities via protocols:
+- `TextContentObject` → text editing
+- `StrokableObject` → stroke styling
+- `FillableObject` → fill styling
+- `CopyableCanvasObject` → clipboard support
 
----
+### 3. Type Safety with Type Erasure
 
-### Phase 3: New Drawing Tools - 🚧 **IN PROGRESS**
-**Goal**: Add line, arrow, pencil, highlighter
+- All objects stored in `[AnyCanvasObject]` (heterogeneous)
+- Type-safe retrieval via `.asType(_:)` (no force casting)
+- Protocol-based dispatch where possible
 
-**Note**: Lines/arrows implemented as **independent node objects** (Phase 3.1), with optional binding system deferred to future phase if needed (see [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md)).
+### 4. Tool-Agnostic Rendering
 
-**Phase 3.1: Lines/Arrows as Independent Nodes** - 📋 **NEXT**
+`CanvasView` has **zero hardcoded tool logic**:
+- Preview rendering: `tool.renderPreview()`
+- Gesture handling: `tool.handleDragChanged()` / `tool.handleDragEnded()`
+- Object rendering: `ObjectViewRegistry`
 
-1. **Line Tool** (3-4 days)
-   - `LineObject` data model with `startPoint`/`endPoint` control points
-   - Two-point drag-to-create gesture
-   - Stroke styles (solid, dashed, dotted) via existing `StrokeStyleType`
-   - Selection shows two control points for endpoint dragging
-   - Optional label support (double-click midpoint to add/edit)
-   - Hit testing: control points, line segment, label area
-   - `LineObjectView` for rendering
+### 5. Separation of Framework and Application
 
-2. **Arrow Tool** (2-3 days)
-   - `ArrowObject` data model (extends line pattern)
-   - Arrowhead rendering: none, open (V), filled (triangle), circle, diamond
-   - `startArrowHead` and `endArrowHead` properties (both/either/neither)
-   - Arrowhead size scales with `strokeWidth`
-   - `ArrowObjectView` for rendering arrow with heads
-   - Toolbar controls for arrowhead style selection
-
-3. **Pencil Tool** (3-4 days)
-   - `PencilObject` data model with `points: [CGPoint]` array
-   - Freehand point collection during drag gesture
-   - Catmull-Rom spline smoothing algorithm
-   - Cached `smoothedPath: Path?` for performance
-   - Stroke customization (color, width, style)
-   - Bounding box computed from points
-
-4. **Highlighter Tool** (1-2 days)
-   - `HighlighterObject` data model (similar to `PencilObject`)
-   - Thick stroke (default 20pt), semi-transparent (0.4 opacity)
-   - Default yellow color
-   - Round line caps for highlighter aesthetic
-   - Optimized for annotation use
-
-**Estimated Total**: 9-13 days
-
-**Phase 3.2: Optional Binding System** - 🔮 **FUTURE** (only if needed)
-- Add `ArrowBinding` struct with source/target object IDs
-- Optional `binding` property on `ArrowObject`
-- Auto-update arrow positions when bound objects move
-- Snap-to-bind UX during arrow creation
-- Connection point rendering on shapes
-- Bind/unbind toggle in UI
-- See [NODE_ARCHITECTURE_PROPOSAL.md](NODE_ARCHITECTURE_PROPOSAL.md) for details
-
-**Decision Point**: Only implement Phase 3.2 if users request diagram/flowchart features or show pain points with manual arrow repositioning.
-
-**Deliverables (Phase 3.1)**: Four new drawing tools (line, arrow, pencil, highlighter) as independent annotation objects
+| Concern | Layer |
+|---------|-------|
+| Canvas behavior | Framework |
+| Tool protocol | Framework |
+| Object model | Framework |
+| Icons | Application |
+| Keyboard shortcuts | Application |
+| Export formats | Application |
+| Toolbar UI | Application |
 
 ---
 
-### Phase 4: Special Annotation Tools
-**Goal**: Add specialized annotation objects
+## Implementation Status
 
-1. **Auto-Number Tool**
-   - Click to place numbered circle
-   - Auto-increment counter
-   - Reset counter option
-   - Style customization
+### ✅ Completed (Production)
 
-2. **Mosaic/Blur Tool**
-   - Rectangular blur region
-   - Blur vs pixelate options
-   - Adjustable intensity
-   - No border/text support
+**Phase 1: Foundation**
+- Unified object system with `CanvasObject` protocol
+- Type-erased `AnyCanvasObject` wrapper
+- Multi-selection with Shift+click
+- Marquee drag-to-select
+- Viewport pan/zoom system
+- Tool-agnostic `CanvasView`
 
-3. **Note Tool**
-   - Colored rectangle background
-   - No border
-   - Text editing support
-   - Default yellow color
+**Phase 2: Selection Box Interactions**
+- Corner/edge resize handles
+- Rotation handles (outside corners)
+- Cursor feedback
+- Multi-object resize
 
-4. **Sticker Tool**
-   - Predefined sticker library
-   - Click to place
-   - Resize support
+**Phase 3: Tool Plugin Architecture**
+- `CanvasTool` protocol with default implementations
+- `ToolRegistry` with dynamic registration
+- `ToolManifest` for new object types
+- Framework extraction as `AnotarCanvas`
 
-5. **Image Tool**
-   - File picker integration
-   - Aspect ratio maintenance
-   - Resize support
+**Phase 4: Shape Tool Refactor**
+- Each shape is its own tool (RectangleTool, OvalTool, etc.)
+- `BaseShapeTool` provides shared logic
+- `ShapeObject` stores SVG path directly (no preset enum)
+- Icons/shortcuts moved to application layer
 
-**Deliverables**: All special annotation tools working
+**Phase 5: Built-in Tools**
+- SelectTool, HandTool
+- TextTool with auto-growing input
+- LineTool, ArrowTool with angle snapping
+- RectangleTool, OvalTool, TriangleTool, DiamondTool, StarTool
 
----
+**Phase 6: Clipboard & Persistence**
+- Copy/paste/duplicate
+- `CodableCanvasObject` with discriminator registry
+- PNG/PDF export (application layer)
 
-### Phase 5: Enhanced Shape Tool
-**Goal**: Shape picker and advanced shape features
+### 🚧 Potential Future Enhancements
 
-1. **Shape Picker UI**
-   - Grid/list of predefined shapes
-   - Quick access popover
-   - Recently used shapes
-
-2. **Shape Types**
-   - Rectangle, rounded rectangle
-   - Circle, ellipse
-   - Triangle, diamond
-   - Pentagon, hexagon, star
-   - Callout, cloud, arrow shapes
-
-3. **Shape Properties Panel**
-   - Stroke color, width, style
-   - Fill color, opacity
-   - Corner radius (for applicable shapes)
-   - Text alignment options
-
-**Deliverables**: Full shape tool with variety
+- Undo/redo system (action-based history)
+- Pencil/highlighter tools (freehand drawing)
+- Auto-number tool (numbered annotations)
+- Note tool (sticky notes)
+- Image paste support
+- Arrow binding (optional connect-to-shape feature)
+- Keyboard command recording/playback
+- Plugin API for third-party tools
 
 ---
 
-### Phase 6: Polish and Refinement
-**Goal**: Production-ready quality
-
-1. **Undo/Redo System**
-   - Action-based history
-   - Grouping related actions
-   - Memory-efficient storage
-
-2. **Keyboard Shortcuts**
-   - Tool switching (V, H, R, L, etc.)
-   - Delete, duplicate, copy/paste
-   - Undo/redo (Cmd+Z, Cmd+Shift+Z)
-   - Zoom controls (Cmd+/-, Cmd+0)
-
-3. **Performance Optimization**
-   - Object culling (only render visible)
-   - Efficient hit testing (spatial index)
-   - Smooth freehand drawing
-
-4. **Persistence**
-   - Save/load canvas state
-   - Export to image formats
-   - Auto-save draft
-
-**Deliverables**: Polished, production-ready annotation tool
-
----
-
-## File Structure (Proposed)
+## File Structure
 
 ```
 texttool/
-├── texttool/
-│   ├── texttoolApp.swift
-│   ├── ContentView.swift
-│   │
+├── AnotarCanvas/                      # Framework
 │   ├── Models/
 │   │   ├── Protocols/
 │   │   │   ├── CanvasObject.swift
+│   │   │   ├── CanvasTool.swift
 │   │   │   ├── TextContentObject.swift
 │   │   │   ├── StrokableObject.swift
 │   │   │   └── FillableObject.swift
-│   │   │
-│   │   ├── Objects/
-│   │   │   ├── RectangleObject.swift
-│   │   │   ├── CircleObject.swift
-│   │   │   ├── ShapeObject.swift
-│   │   │   ├── TextObject.swift
-│   │   │   ├── LineObject.swift
-│   │   │   ├── ArrowObject.swift
-│   │   │   ├── PencilObject.swift
-│   │   │   ├── HighlighterObject.swift
-│   │   │   ├── AutoNumberObject.swift
-│   │   │   ├── StickerObject.swift
-│   │   │   ├── NoteObject.swift
-│   │   │   ├── ImageObject.swift
-│   │   │   └── MosaicObject.swift
-│   │   │
 │   │   ├── AnyCanvasObject.swift
-│   │   ├── DrawingTool.swift → AnnotationTool.swift
-│   │   ├── ToolSettings.swift
-│   │   ├── StrokeStyle.swift
-│   │   └── TextAttributes.swift
+│   │   ├── DrawingTool.swift          # Lightweight struct
+│   │   ├── TextObject.swift
+│   │   ├── ShapeObject.swift
+│   │   ├── LineObject.swift
+│   │   ├── ArrowObject.swift
+│   │   ├── ImageObject.swift
+│   │   ├── SelectionState.swift
+│   │   ├── SelectionBox.swift
+│   │   ├── ViewportState.swift
+│   │   └── CodableCanvasObject.swift
 │   │
 │   ├── ViewModels/
-│   │   ├── CanvasViewModel.swift
-│   │   ├── SelectionState.swift
-│   │   ├── ViewportState.swift
-│   │   └── GestureCoordinator.swift
+│   │   └── CanvasViewModel.swift
 │   │
 │   ├── Views/
-│   │   ├── Canvas/
-│   │   │   ├── CanvasView.swift
-│   │   │   ├── CanvasBackground.swift
-│   │   │   ├── ObjectsLayer.swift
-│   │   │   └── OverlayLayer.swift
-│   │   │
-│   │   ├── Objects/
-│   │   │   ├── ObjectViewFactory.swift
-│   │   │   ├── RectangleObjectView.swift
-│   │   │   ├── CircleObjectView.swift
-│   │   │   ├── TextObjectView.swift
-│   │   │   ├── LineObjectView.swift
-│   │   │   ├── ArrowObjectView.swift
-│   │   │   ├── PencilObjectView.swift
-│   │   │   ├── HighlighterObjectView.swift
-│   │   │   ├── AutoNumberObjectView.swift
-│   │   │   ├── StickerObjectView.swift
-│   │   │   ├── NoteObjectView.swift
-│   │   │   ├── ImageObjectView.swift
-│   │   │   └── MosaicObjectView.swift
-│   │   │
+│   │   ├── CanvasView.swift           # Tool-agnostic rendering
+│   │   ├── CanvasObjectView.swift     # Dispatcher
+│   │   ├── ShapeObjectView.swift
+│   │   ├── TextObjectView.swift
+│   │   ├── LineObjectView.swift
+│   │   ├── ArrowObjectView.swift
+│   │   ├── ImageObjectView.swift
+│   │   ├── InfiniteGridView.swift
+│   │   ├── MarqueeView.swift
 │   │   ├── Selection/
 │   │   │   ├── SelectionBoxView.swift
-│   │   │   ├── ResizeHandle.swift
-│   │   │   ├── RotationHandle.swift
-│   │   │   └── MarqueeView.swift
-│   │   │
-│   │   ├── Toolbar/
-│   │   │   ├── ToolbarView.swift
-│   │   │   ├── ToolPicker.swift
-│   │   │   ├── ToolSettingsView.swift
-│   │   │   ├── ShapePicker.swift
-│   │   │   ├── StickerPicker.swift
-│   │   │   └── ViewportControls.swift
-│   │   │
-│   │   ├── Panels/
-│   │   │   ├── FloatingFormatBar.swift
-│   │   │   └── PropertiesPanel.swift
-│   │   │
-│   │   └── Common/
-│   │       ├── AutoGrowingTextView.swift
-│   │       └── ColorPickerButton.swift
+│   │   │   └── ResizeHandle.swift
+│   │   └── CanvasExportView.swift
 │   │
-│   ├── Utilities/
-│   │   ├── GeometryHelpers.swift
-│   │   ├── PathSmoothing.swift
-│   │   ├── HitTesting.swift
-│   │   └── CursorManager.swift
+│   ├── Tools/
+│   │   ├── ToolRegistry.swift
+│   │   ├── ToolManifest.swift
+│   │   ├── ObjectViewRegistry.swift
+│   │   ├── SelectTool.swift
+│   │   ├── HandTool.swift
+│   │   ├── TextTool.swift
+│   │   ├── LineTool.swift
+│   │   ├── ArrowTool.swift
+│   │   └── Shapes/
+│   │       ├── BaseShapeTool.swift
+│   │       ├── RectangleTool.swift
+│   │       ├── OvalTool.swift
+│   │       ├── TriangleTool.swift
+│   │       ├── DiamondTool.swift
+│   │       └── StarTool.swift
 │   │
-│   └── Assets.xcassets/
-│       ├── Stickers/
-│       └── Icons/
+│   └── Services/
+│       └── ClipboardService.swift
 │
-└── texttoolTests/
-    ├── Models/
-    ├── ViewModels/
-    └── Utilities/
+├── texttool/                          # Application
+│   ├── texttoolApp.swift
+│   ├── ContentView.swift
+│   ├── AppState.swift
+│   ├── Views/
+│   │   ├── ToolbarView.swift
+│   │   ├── ShapePickerView.swift
+│   │   ├── FloatingFormatBar.swift
+│   │   └── CanvasFileCommands.swift
+│   └── Assets.xcassets/
+│
+├── docs/
+│   ├── AnotarCanvas-API.md            # Framework API reference
+│   ├── adding-a-tool.md               # Extension guide
+│   └── archive/                       # Implemented proposals
+│
+├── ARCHITECTURE.md                    # This file
+├── CLAUDE.md                          # Quick reference
+└── README.md                          # Project overview
 ```
 
 ---
 
-## Summary
+## References
 
-This architecture design provides a comprehensive plan for building annotation tools with:
-
-1. **Unified object model** using protocols for flexible, type-safe object handling
-2. **Multi-selection support** with Shift+Click and marquee selection
-3. **Full transform capabilities** including resize and rotation
-4. **Canvas viewport** with pan/zoom for large documents
-5. **12 annotation tools** covering shapes, lines, freehand, and special annotations
-6. **Extensible design** allowing easy addition of new tools and features
-7. **Phased implementation** to deliver value incrementally while maintaining stability
-
-The design preserves existing functionality while providing a clear migration path to the enhanced architecture.
+- **[docs/AnotarCanvas-API.md](docs/AnotarCanvas-API.md)** - Complete framework API documentation
+- **[docs/adding-a-tool.md](docs/adding-a-tool.md)** - Step-by-step extension guide
+- **[CLAUDE.md](CLAUDE.md)** - Quick reference for AI assistants
+- **[README.md](README.md)** - Project overview and getting started
