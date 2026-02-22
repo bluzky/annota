@@ -1,6 +1,6 @@
 //
 //  ShapeObjectTests.swift
-//  texttoolTests
+//  AnnotaTests
 //
 //  Unit tests for ShapeObject: contains(), hitTest(), rotation, and custom SVG paths.
 //

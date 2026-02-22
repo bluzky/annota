@@ -1,6 +1,6 @@
 //
 //  ClipboardTests.swift
-//  texttoolTests
+//  AnnotaTests
 //
 
 import Testing

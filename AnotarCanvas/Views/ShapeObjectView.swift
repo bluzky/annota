@@ -1,6 +1,6 @@
 //
 //  ShapeObjectView.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI

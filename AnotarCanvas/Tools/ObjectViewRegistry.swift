@@ -1,6 +1,6 @@
 //
 //  ObjectViewRegistry.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI

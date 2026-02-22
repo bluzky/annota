@@ -1,6 +1,6 @@
 //
 //  LineToolHelpers.swift
-//  texttool
+//  AnotarCanvas
 //
 //  Shared geometry helpers for line and arrow tools.
 //

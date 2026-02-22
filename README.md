@@ -1,4 +1,4 @@
-# texttool
+# Annota
 
 A native macOS canvas drawing application built with SwiftUI, featuring an infinite canvas, multi-selection, pan/zoom, and comprehensive annotation tools. Built on **AnotarCanvas**, a reusable framework for canvas-based applications.
 
@@ -34,7 +34,7 @@ A SwiftUI framework providing:
 - **Viewport system** - Pan/zoom with coordinate transformation
 - **Selection system** - Multi-select with transform handles
 
-### **texttool** (Application)
+### **Annota** (Application)
 The macOS app built on AnotarCanvas:
 - **Toolbar** - Tool buttons, shape picker, color controls
 - **Hotkeys** - Keyboard shortcut management
@@ -66,13 +66,13 @@ The macOS app built on AnotarCanvas:
 xcodebuild -scheme AnotarCanvas -configuration Debug build
 
 # Build application
-xcodebuild -scheme texttool -configuration Debug build
+xcodebuild -scheme Annota -configuration Debug build
 
 # Run all tests
-xcodebuild test -scheme texttool
+xcodebuild test -scheme Annota
 
 # Clean
-xcodebuild -scheme texttool clean
+xcodebuild -scheme Annota clean
 ```
 
 ## Documentation
@@ -144,16 +144,16 @@ texttool/
 │   │   └── Shapes/            # RectangleTool, OvalTool, etc.
 │   └── Services/              # Clipboard, utilities
 │
-├── texttool/                  # macOS application
+├── Annota/                    # macOS application
 │   ├── Views/                 # ToolbarView, app-specific UI
 │   ├── AppState.swift         # Export, file commands
-│   └── texttoolApp.swift      # App entry point
+│   └── AnnotaApp.swift        # App entry point
 │
 ├── docs/                      # Documentation
 │   ├── AnotarCanvas-API.md    # Framework API reference
 │   └── adding-a-tool.md       # Tool development guide
 │
-└── texttoolTests/             # Tests
+└── AnnotaTests/               # Tests
 ```
 
 ## License

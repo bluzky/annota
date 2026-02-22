@@ -1,8 +1,8 @@
-# texttool Architecture
+# Annota Architecture
 
 ## Overview
 
-**texttool** is a native macOS canvas drawing application built on **AnotarCanvas**, a reusable SwiftUI framework for canvas-based applications. The architecture follows a plugin-based design where tools and object types can be added without modifying core framework code.
+**Annota** is a native macOS canvas drawing application built on **AnotarCanvas**, a reusable SwiftUI framework for canvas-based applications. The architecture follows a plugin-based design where tools and object types can be added without modifying core framework code.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  texttool (App)                      │
+│                   Annota (App)                       │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │
 │  │ ToolbarView  │  │   AppState   │  │  Hotkeys  │  │
 │  │  (UI layer)  │  │   (Export)   │  │(Shortcuts)│  │
@@ -68,7 +68,7 @@
 | Layer | Responsibility | Examples |
 |-------|---------------|----------|
 | **AnotarCanvas (Framework)** | Canvas behavior, object model, tool protocol, rendering | `CanvasView`, `CanvasViewModel`, `CanvasTool`, `CanvasObject` |
-| **texttool (Application)** | UI/UX, keyboard shortcuts, icons, export, commands | `ToolbarView`, hotkeys, SF Symbol mapping, PNG export |
+| **Annota (Application)** | UI/UX, keyboard shortcuts, icons, export, commands | `ToolbarView`, hotkeys, SF Symbol mapping, PNG export |
 
 ---
 
@@ -758,7 +758,7 @@ See [docs/adding-a-tool.md](docs/adding-a-tool.md) for complete guide.
 
 ---
 
-## Application Layer (texttool)
+## Application Layer (Annota)
 
 ### ToolbarView
 
@@ -975,8 +975,8 @@ texttool/
 │   └── Services/
 │       └── ClipboardService.swift
 │
-├── texttool/                          # Application
-│   ├── texttoolApp.swift
+├── Annota/                            # Application
+│   ├── AnnotaApp.swift
 │   ├── ContentView.swift
 │   ├── AppState.swift
 │   ├── Views/

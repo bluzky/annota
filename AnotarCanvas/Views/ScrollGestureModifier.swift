@@ -1,6 +1,6 @@
 //
 //  ScrollGestureModifier.swift
-//  texttool
+//  AnotarCanvas
 //
 //  Created by Claude on 2026-02-18.
 //

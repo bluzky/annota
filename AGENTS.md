@@ -4,54 +4,54 @@
 This is a native macOS canvas drawing application built with SwiftUI, providing a FigJam-like interface for drawing text, rectangles, and circles on an infinite canvas. The app uses the Swift Testing framework (not XCTest) for unit tests.
 
 ## Project Structure & Module Organization
-The SwiftUI entry point lives in `texttool/texttoolApp.swift`, with feature code split between:
+The SwiftUI entry point lives in `Annota/AnnotaApp.swift`, with feature code split between:
 - `Models/` - Data models and protocols (`TextObject`, `RectangleObject`, `CircleObject`, `CanvasObject` protocol)
 - `ViewModels/` - State management (`CanvasViewModel` as @MainActor ObservableObject)
 - `Views/` - SwiftUI surfaces (`CanvasView`, `ToolbarView`, object rendering views)
 - `Models/Protocols/` - Protocol definitions (`CanvasObject`, `TextContentObject`, `FillableObject`, `StrokableObject`)
 
-Assets are stored in `texttool/Assets.xcassets`, while previews and sample types (e.g., `Item.swift`) stay beside the feature they exercise. Unit targets reside under `texttoolTests/` and UI automation fixtures under `texttoolUITests/`.
+Assets are stored in `Annota/Assets.xcassets`, while previews and sample types (e.g., `Item.swift`) stay beside the feature they exercise. Unit targets reside under `AnnotaTests/` and UI automation fixtures under `AnnotaUITests/`.
 
 ## Build, Test, and Development Commands
 
 ### Building
 ```bash
 # Open in Xcode 15+
-xed texttool.xcodeproj
+xed Annota.xcodeproj
 
 # Debug build
-xcodebuild -scheme texttool -configuration Debug build
+xcodebuild -scheme Annota -configuration Debug build
 
 # Clean build artifacts
-xcodebuild -scheme texttool clean
+xcodebuild -scheme Annota clean
 
 # Release build
-xcodebuild -scheme texttool -configuration Release build
+xcodebuild -scheme Annota -configuration Release build
 ```
 
 ### Running Tests (Swift Testing Framework)
 ```bash
 # Run all tests
-xcodebuild test -scheme texttool
+xcodebuild test -scheme Annota
 
 # Run only unit tests (exclude UI tests)
-xcodebuild test -scheme texttool -only-testing:texttoolTests
+xcodebuild test -scheme Annota -only-testing:AnnotaTests
 
 # Run specific test file
-xcodebuild test -scheme texttool -only-testing:texttoolTests/ViewportStateTests
+xcodebuild test -scheme Annota -only-testing:AnnotaTests/ViewportStateTests
 
 # Run specific test function
-xcodebuild test -scheme texttool -only-testing:texttoolTests/ViewportStateTests/defaultState
+xcodebuild test -scheme Annota -only-testing:AnnotaTests/ViewportStateTests/defaultState
 
 # Run UI tests only
-xcodebuild test -scheme texttool -only-testing:texttoolUITests
+xcodebuild test -scheme Annota -only-testing:AnnotaUITests
 ```
 
 ### Testing Guidelines
 Tests use Swift Testing framework (not XCTest):
 ```swift
 import Testing
-@testable import texttool
+@testable import Annota
 
 struct ExampleTests {
     @Test func specificBehavior() async throws {
@@ -60,7 +60,7 @@ struct ExampleTests {
 }
 ```
 
-Unit tests use `@Test` functions with `#expect` for assertions. UI tests use XCTest (`texttoolUITests/`). Strive for meaningful test names like `testAddingRectangleShowsHandles` or `screenToCanvasWithOffset` and maintain coverage on core Canvas interactions.
+Unit tests use `@Test` functions with `#expect` for assertions. UI tests use XCTest (`AnnotaUITests/`). Strive for meaningful test names like `testAddingRectangleShowsHandles` or `screenToCanvasWithOffset` and maintain coverage on core Canvas interactions.
 
 ## Coding Style & Naming Conventions
 
@@ -92,7 +92,7 @@ Unit tests use `@Test` functions with `#expect` for assertions. UI tests use XCT
 import SwiftUI
 import CoreGraphics
 import Combine
-@testable import texttool
+@testable import Annota
 ```
 
 ### Error Handling
@@ -142,12 +142,12 @@ bd close <id> --reason "done in Foo.swift"   # mark complete
 bd dep add <blocked-id> <blocker-id>         # record ordering dependency
 ```
 
-Reference issue IDs in commit messages: `git commit -m "Add ShapeObject (texttool-g4y)"`
+Reference issue IDs in commit messages: `git commit -m "Add ShapeObject (Annota-g4y)"`
 
 `bd sync` is part of the mandatory session-end push — see **Landing the Plane** below.
 
 ## Commit & Pull Request Guidelines
-Git history currently contains a single conventional subject line ("Initial Commit"), so continue using short, imperative summaries (e.g., "Add circle drag preview"). Group related file changes per commit, reference issue IDs from `bd` when available (e.g., `texttool-g4y`), and avoid WIP commits in shared branches. Pull requests should outline the motivation, list user-visible changes, call out testing evidence/`xcodebuild test` output, and attach screenshots or short clips when UI changes affect Canvas rendering.
+Git history currently contains a single conventional subject line ("Initial Commit"), so continue using short, imperative summaries (e.g., "Add circle drag preview"). Group related file changes per commit, reference issue IDs from `bd` when available (e.g., `Annota-g4y`), and avoid WIP commits in shared branches. Pull requests should outline the motivation, list user-visible changes, call out testing evidence/`xcodebuild test` output, and attach screenshots or short clips when UI changes affect Canvas rendering.
 
 ## Architecture & State Management
 The app follows a lightweight MVVM split where `CanvasViewModel` orchestrates editing state and view structs focus on rendering. Add new tools or formatting controls by extending the model first, then threading bindings into `ToolbarView` and the relevant object views to keep gesture handling centralized in `CanvasView`.

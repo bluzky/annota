@@ -8,7 +8,7 @@ This is a native macOS canvas drawing application built with SwiftUI, featuring 
 
 **Key Architecture:** The project consists of two targets:
 1. **AnotarCanvas** - Reusable SwiftUI framework for canvas functionality
-2. **texttool** - macOS application built on AnotarCanvas
+2. **Annota** - macOS application built on AnotarCanvas
 
 ## Development Commands
 
@@ -17,16 +17,16 @@ This is a native macOS canvas drawing application built with SwiftUI, featuring 
 xcodebuild -scheme AnotarCanvas -configuration Debug build
 
 # Build application
-xcodebuild -scheme texttool -configuration Debug build
+xcodebuild -scheme Annota -configuration Debug build
 
 # Run all tests
-xcodebuild test -scheme texttool
+xcodebuild test -scheme Annota
 
 # Run only unit tests
-xcodebuild test -scheme texttool -only-testing:texttoolTests
+xcodebuild test -scheme Annota -only-testing:AnnotaTests
 
 # Clean
-xcodebuild -scheme texttool clean
+xcodebuild -scheme Annota clean
 ```
 
 ## Architecture
@@ -70,7 +70,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design and [docs/Anot
 - Object views: `ShapeObjectView`, `TextObjectView`, `LineObjectView`, etc.
 - `SelectionBoxView`: Multi-object selection with resize/rotate handles
 
-### texttool Application Layer
+### Annota Application Layer
 
 **Application-Specific:**
 - `ToolbarView`: Tool buttons, shape picker, color pickers
@@ -110,7 +110,7 @@ For full workflow details: `bd prime`
 Uses Swift Testing framework (not XCTest):
 ```swift
 import Testing
-@testable import texttool
+@testable import Annota
 
 @Test func example() async throws {
     #expect(condition)

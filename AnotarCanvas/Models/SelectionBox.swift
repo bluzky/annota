@@ -1,6 +1,6 @@
 //
 //  SelectionBox.swift
-//  texttool
+//  AnotarCanvas
 //
 //  Created by Claude on 2/18/26.
 //

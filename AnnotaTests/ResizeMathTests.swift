@@ -1,6 +1,6 @@
 //
 //  ResizeMathTests.swift
-//  texttoolTests
+//  AnnotaTests
 //
 //  Unit tests for resize math: proportional scaling, aspect ratio,
 //  anchor point preservation, and rotation-aware resize.

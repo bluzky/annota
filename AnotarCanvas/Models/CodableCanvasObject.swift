@@ -1,6 +1,6 @@
 //
 //  CodableCanvasObject.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import Foundation

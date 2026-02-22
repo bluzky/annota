@@ -1,6 +1,6 @@
 //
 //  LineObjectView.swift
-//  texttool
+//  AnotarCanvas
 //
 
 import SwiftUI

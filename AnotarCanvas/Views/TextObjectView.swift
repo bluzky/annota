@@ -1,6 +1,6 @@
 //
 //  TextObjectView.swift
-//  texttool
+//  AnotarCanvas
 //
 //  Created by Flex on 12/11/25.
 //
