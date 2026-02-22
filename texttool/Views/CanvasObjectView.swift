@@ -12,32 +12,7 @@ struct CanvasObjectView: View {
     let isSelected: Bool
     @ObservedObject var viewModel: CanvasViewModel
 
-    @ViewBuilder
     var body: some View {
-        if let imageObj = object.asImageObject {
-            ImageObjectView(
-                object: imageObj,
-                isSelected: isSelected,
-                viewModel: viewModel
-            )
-        } else if let shapeObj = object.asShapeObject {
-            ShapeObjectView(
-                object: shapeObj,
-                isSelected: isSelected,
-                viewModel: viewModel
-            )
-        } else if let lineObj = object.asLineObject {
-            LineObjectView(
-                object: lineObj,
-                isSelected: isSelected,
-                viewModel: viewModel
-            )
-        } else if let textObj = object.asTextObject {
-            TextObjectView(
-                object: textObj,
-                viewModel: viewModel,
-                isSelected: isSelected
-            )
-        }
+        ObjectViewRegistry.view(for: object, isSelected: isSelected, viewModel: viewModel)
     }
 }

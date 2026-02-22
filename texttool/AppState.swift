@@ -10,6 +10,9 @@
 import Foundation
 import AppKit
 import UniformTypeIdentifiers
+import os.log
+
+private let exportLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "texttool", category: "Export")
 
 @MainActor
 final class AppState {
@@ -48,17 +51,17 @@ final class AppState {
     /// Called from Commands — renders the image immediately (while the view model
     /// is still accessible) and then defers the NSSavePanel until the menu runloop exits.
     func requestExport(format: ExportFormat) {
-        print("[Export] requestExport called for format: \(format)")
+        exportLogger.debug("requestExport called for format: \(String(describing: format))")
 
         guard let viewModel = canvasViewModel else {
-            print("[Export] ERROR: canvasViewModel is nil")
+            exportLogger.error("canvasViewModel is nil")
             return
         }
         guard let image = viewModel.renderToImage() else {
-            print("[Export] ERROR: renderToImage returned nil")
+            exportLogger.error("renderToImage returned nil")
             return
         }
-        print("[Export] Image rendered: \(image.size)")
+        exportLogger.debug("Image rendered: \(image.size.debugDescription)")
 
         // Use CFRunLoopPerformBlock to schedule panel creation in the default
         // run loop mode. This ensures we wait until the menu-tracking mode
@@ -71,26 +74,31 @@ final class AppState {
     }
 
     private func showSavePanel(image: NSImage, format: ExportFormat) {
-        print("[Export] Creating NSSavePanel...")
+        exportLogger.debug("Creating NSSavePanel...")
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "canvas.\(format.fileExtension)"
         panel.allowedContentTypes = [format.contentType]
         panel.canCreateDirectories = true
 
         guard let window = NSApp.keyWindow else {
-            print("[Export] ERROR: No key window")
+            // No key window available — inform the user instead of silently dropping the export.
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Export Unavailable"
+            alert.informativeText = "The canvas window could not be found. Please bring the app to the foreground and try again."
+            alert.runModal()
             return
         }
-        print("[Export] Presenting sheet on window: \(window)")
+        exportLogger.debug("Presenting sheet on window: \(window.debugDescription)")
 
         panel.beginSheetModal(for: window) { [weak self] response in
-            print("[Export] Sheet completed with response: \(response)")
+            exportLogger.debug("Sheet completed with response: \(response.rawValue)")
             guard response == .OK, let url = panel.url else { return }
             do {
                 try self?.writeImage(image, format: format, to: url)
-                print("[Export] Successfully wrote to: \(url)")
+                exportLogger.debug("Successfully wrote to: \(url.path)")
             } catch {
-                print("[Export] ERROR writing image: \(error)")
+                exportLogger.error("Error writing image: \(error.localizedDescription)")
                 let alert = NSAlert()
                 alert.messageText = "Export Failed"
                 alert.informativeText = error.localizedDescription

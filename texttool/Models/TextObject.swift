@@ -6,8 +6,9 @@
 //
 
 import SwiftUI
+import AppKit
 
-struct TextObject: CanvasObject, TextContentObject, Codable {
+struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject {
     // MARK: - CanvasObject Properties
     let id: UUID
     var position: CGPoint
@@ -63,10 +64,17 @@ struct TextObject: CanvasObject, TextContentObject, Codable {
         self.isLocked = isLocked
         self.zIndex = zIndex
 
-        // Calculate initial size based on text
-        let approximateWidth = max(CGFloat(text.count) * fontSize * 0.6, fontSize * 2)
-        let height = fontSize * 1.2
-        self.size = CGSize(width: approximateWidth + 8, height: height + 8)
+        // Calculate initial size using NSAttributedString for accurate measurement
+        let font = NSFont.systemFont(ofSize: fontSize)
+        let attrs: [NSAttributedString.Key: Any] = [.font: font]
+        let measured = (text as NSString).boundingRect(
+            with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin],
+            attributes: attrs
+        )
+        let measuredWidth = max(measured.width, fontSize * 2)
+        let measuredHeight = max(measured.height, fontSize * 1.2)
+        self.size = CGSize(width: measuredWidth + 8, height: measuredHeight + 8)
     }
 
     // MARK: - Codable

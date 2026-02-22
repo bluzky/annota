@@ -11,6 +11,12 @@ import SwiftUI
 @Suite(.serialized)
 struct ClipboardTests {
 
+    init() {
+        // Ensure CodableObjectRegistry types are registered before any test runs.
+        // ToolRegistry.shared triggers registerBuiltInObjectTypes() in its private init.
+        _ = ToolRegistry.shared
+    }
+
     // MARK: - TextObject Codable Round-Trip
 
     @Test func textObjectCodableRoundTrip() async throws {
@@ -86,15 +92,24 @@ struct ClipboardTests {
             preset: .oval
         )
 
+        let textWrapped = AnyCanvasObject(textObj)
+        let shapeWrapped = AnyCanvasObject(shapeObj)
+
         let codables: [CodableCanvasObject] = [
-            .text(textObj),
-            .shape(shapeObj)
+            CodableCanvasObject.from(textWrapped)!,
+            CodableCanvasObject.from(shapeWrapped)!
         ]
 
         let data = try JSONEncoder().encode(codables)
         let decoded = try JSONDecoder().decode([CodableCanvasObject].self, from: data)
 
         #expect(decoded.count == 2)
+
+        // Verify round-trip produces valid objects
+        let restored0 = decoded[0].toAnyCanvasObject(newId: UUID(), zIndex: 0, offset: .zero)
+        let restored1 = decoded[1].toAnyCanvasObject(newId: UUID(), zIndex: 0, offset: .zero)
+        #expect(restored0 != nil)
+        #expect(restored1 != nil)
     }
 
     // MARK: - ViewModel: deleteSelected
@@ -177,19 +192,13 @@ struct ClipboardTests {
         vm.updateText(objectId: id, text: "Cut me")
         vm.selectObjectOnly(id: id)
 
-        // Verify selection and object state before cut
         #expect(vm.selectedIds.count == 1)
         #expect(vm.objects.count == 1)
 
-        // Manually copy first to verify clipboard works
-        vm.copySelection()
-        let clipboardData = ClipboardService.pasteObjects()
-        #expect(clipboardData != nil)
-        #expect(clipboardData?.count == 1)
-
-        // Now do the actual cut
-        vm.deleteSelected()
+        // Single cutSelection() copies to clipboard and deletes the selection
+        vm.cutSelection()
         #expect(vm.objects.isEmpty)
+        #expect(!vm.selectionState.hasSelection)
 
         // Paste should restore from clipboard
         vm.pasteFromClipboard()
@@ -253,17 +262,18 @@ struct ClipboardTests {
             aspectRatio: 1.0
         )
 
-        let codables: [CodableCanvasObject] = [.image(imageObj)]
+        let wrapped = AnyCanvasObject(imageObj)
+        let codable = CodableCanvasObject.from(wrapped)!
+        let codables: [CodableCanvasObject] = [codable]
         let data = try JSONEncoder().encode(codables)
         let decoded = try JSONDecoder().decode([CodableCanvasObject].self, from: data)
 
         #expect(decoded.count == 1)
-        if case .image(let decodedImage) = decoded[0] {
-            #expect(decodedImage.id == imageObj.id)
-            #expect(decodedImage.imageData == imageObj.imageData)
-        } else {
-            Issue.record("Expected .image case")
-        }
+        let restored = decoded[0].toAnyCanvasObject(newId: UUID(), zIndex: 0, offset: .zero)
+        #expect(restored != nil)
+        let decodedImage = restored?.asType(ImageObject.self)
+        #expect(decodedImage != nil)
+        #expect(decodedImage?.imageData == imageObj.imageData)
     }
 
     @Test func imageObjectFittingSizePreservesAspectRatio() {
@@ -296,7 +306,7 @@ struct ClipboardTests {
 
         let id = vm.addImageObject(imageData: pngData, imageSize: imageSize, at: center)
 
-        let obj = vm.imageObjects.first { $0.id == id }
+        let obj = vm.objects.compactMap { $0.asType(ImageObject.self) }.first { $0.id == id }
         #expect(obj != nil)
 
         // Size should match real pixel dimensions when no maxSize is given
@@ -317,7 +327,7 @@ struct ClipboardTests {
         let center = CGPoint(x: 400, y: 300)
 
         let id = vm.addImageObject(imageData: pngData, imageSize: imageSize, at: center, maxSize: maxSize)
-        let obj = vm.imageObjects.first { $0.id == id }!
+        let obj = vm.objects.compactMap { $0.asType(ImageObject.self) }.first { $0.id == id }!
 
         // Should fit within the min(maxSize) dimension while preserving aspect ratio
         #expect(obj.size.width <= maxSize.width)
@@ -328,17 +338,71 @@ struct ClipboardTests {
     @Test func pastedImageIsHighestZIndex() async throws {
         let vm = CanvasViewModel()
         // Add some existing objects
-        vm.addTextObject(at: CGPoint(x: 10, y: 10))
+        _ = vm.addTextObject(at: CGPoint(x: 10, y: 10))
         vm.addShape(preset: .rectangle, from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
 
         let maxExistingZIndex = vm.objects.map(\.zIndex).max() ?? 0
 
         let pngData = makeSinglePixelPNG()
         let id = vm.addImageObject(imageData: pngData, imageSize: CGSize(width: 100, height: 100), at: .zero)
-        let imageObj = vm.imageObjects.first { $0.id == id }!
+        let imageObj = vm.objects.compactMap { $0.asType(ImageObject.self) }.first { $0.id == id }!
 
         #expect(imageObj.zIndex > maxExistingZIndex)
     }
+    // MARK: - LineObject Codable Round-Trip
+
+    @Test func lineObjectCodableRoundTrip() async throws {
+        let original = LineObject(
+            startPoint: CGPoint(x: 10, y: 20),
+            endPoint: CGPoint(x: 200, y: 150),
+            strokeColor: .blue,
+            strokeWidth: 3,
+            strokeStyle: .dashed(pattern: [8, 4]),
+            startArrowHead: .open,
+            endArrowHead: .filled,
+            label: "Edge",
+            rotation: 0.3,
+            zIndex: 4
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(LineObject.self, from: data)
+
+        #expect(decoded.id == original.id)
+        #expect(decoded.startPoint == original.startPoint)
+        #expect(decoded.endPoint == original.endPoint)
+        #expect(decoded.strokeWidth == original.strokeWidth)
+        #expect(decoded.strokeStyle == original.strokeStyle)
+        #expect(decoded.startArrowHead == original.startArrowHead)
+        #expect(decoded.endArrowHead == original.endArrowHead)
+        #expect(decoded.label == original.label)
+        #expect(decoded.rotation == original.rotation)
+        #expect(decoded.zIndex == original.zIndex)
+        #expect(decoded.isEditingLabel == false)
+    }
+
+    @Test func lineObjectCodableCanvasObjectRoundTrip() async throws {
+        let original = LineObject(
+            startPoint: CGPoint(x: 0, y: 0),
+            endPoint: CGPoint(x: 100, y: 100),
+            strokeColor: .red,
+            endArrowHead: .filled
+        )
+        let wrapped = AnyCanvasObject(original)
+        let codable = CodableCanvasObject.from(wrapped)
+        #expect(codable != nil)
+
+        let data = try JSONEncoder().encode([codable!])
+        let decoded = try JSONDecoder().decode([CodableCanvasObject].self, from: data)
+        #expect(decoded.count == 1)
+
+        let restored = decoded[0].toAnyCanvasObject(newId: UUID(), zIndex: 0, offset: .zero)
+        #expect(restored != nil)
+        let restoredLine = restored?.asType(LineObject.self)
+        #expect(restoredLine != nil)
+        #expect(restoredLine?.endArrowHead == .filled)
+    }
+
 }
 
 // MARK: - Helpers

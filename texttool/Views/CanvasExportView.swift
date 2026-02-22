@@ -27,26 +27,18 @@ struct CanvasExportView: View {
     }
 }
 
-/// Dispatches export rendering for any AnyCanvasObject.
+/// Dispatches export rendering for any AnyCanvasObject via the ObjectViewRegistry.
 private struct CanvasObjectExportView: View {
     let object: AnyCanvasObject
 
     var body: some View {
-        if let imageObj = object.asImageObject {
-            ExportImageObjectView(object: imageObj)
-        } else if let shapeObj = object.asShapeObject {
-            ExportShapeObjectView(object: shapeObj)
-        } else if let lineObj = object.asLineObject {
-            ExportLineObjectView(object: lineObj)
-        } else if let textObj = object.asTextObject {
-            ExportTextObjectView(object: textObj)
-        }
+        ObjectViewRegistry.exportView(for: object)
     }
 }
 
 // MARK: - Image
 
-private struct ExportImageObjectView: View {
+struct ExportImageObjectView: View {
     let object: ImageObject
 
     var body: some View {
@@ -65,7 +57,7 @@ private struct ExportImageObjectView: View {
 
 // MARK: - Shape
 
-private struct ExportShapeObjectView: View {
+struct ExportShapeObjectView: View {
     let object: ShapeObject
 
     private var effectiveHeight: CGFloat {
@@ -114,7 +106,7 @@ private struct ExportShapeObjectView: View {
 
 // MARK: - Line
 
-private struct ExportLineObjectView: View {
+struct ExportLineObjectView: View {
     let object: LineObject
     private let arrowHeadLength: CGFloat = 14
 
@@ -126,41 +118,21 @@ private struct ExportLineObjectView: View {
             }
             .stroke(object.strokeColor, style: object.swiftUIStrokeStyle)
 
-            if object.startArrowHead == .filled {
-                let angle = atan2(object.startPoint.y - object.endPoint.y,
-                                  object.startPoint.x - object.endPoint.x)
-                Path { path in
-                    path.move(to: object.startPoint)
-                    path.addLine(to: CGPoint(
-                        x: object.startPoint.x - arrowHeadLength * cos(angle - .pi / 6),
-                        y: object.startPoint.y - arrowHeadLength * sin(angle - .pi / 6)
-                    ))
-                    path.addLine(to: CGPoint(
-                        x: object.startPoint.x - arrowHeadLength * cos(angle + .pi / 6),
-                        y: object.startPoint.y - arrowHeadLength * sin(angle + .pi / 6)
-                    ))
-                    path.closeSubpath()
-                }
-                .fill(object.strokeColor)
-            }
+            // Start arrowhead
+            arrowHeadView(
+                at: object.startPoint,
+                pointing: atan2(object.startPoint.y - object.endPoint.y,
+                                object.startPoint.x - object.endPoint.x),
+                style: object.startArrowHead
+            )
 
-            if object.endArrowHead == .filled {
-                let angle = atan2(object.endPoint.y - object.startPoint.y,
-                                  object.endPoint.x - object.startPoint.x)
-                Path { path in
-                    path.move(to: object.endPoint)
-                    path.addLine(to: CGPoint(
-                        x: object.endPoint.x - arrowHeadLength * cos(angle - .pi / 6),
-                        y: object.endPoint.y - arrowHeadLength * sin(angle - .pi / 6)
-                    ))
-                    path.addLine(to: CGPoint(
-                        x: object.endPoint.x - arrowHeadLength * cos(angle + .pi / 6),
-                        y: object.endPoint.y - arrowHeadLength * sin(angle + .pi / 6)
-                    ))
-                    path.closeSubpath()
-                }
-                .fill(object.strokeColor)
-            }
+            // End arrowhead
+            arrowHeadView(
+                at: object.endPoint,
+                pointing: atan2(object.endPoint.y - object.startPoint.y,
+                                object.endPoint.x - object.startPoint.x),
+                style: object.endArrowHead
+            )
 
             if !object.label.isEmpty {
                 Text(object.label)
@@ -170,11 +142,78 @@ private struct ExportLineObjectView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private func arrowHeadView(at tip: CGPoint, pointing angle: CGFloat, style: ArrowHead) -> some View {
+        switch style {
+        case .none:
+            EmptyView()
+
+        case .filled:
+            Path { path in
+                path.move(to: tip)
+                path.addLine(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle - .pi / 6),
+                    y: tip.y - arrowHeadLength * sin(angle - .pi / 6)
+                ))
+                path.addLine(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle + .pi / 6),
+                    y: tip.y - arrowHeadLength * sin(angle + .pi / 6)
+                ))
+                path.closeSubpath()
+            }
+            .fill(object.strokeColor)
+
+        case .open:
+            Path { path in
+                path.move(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle - .pi / 6),
+                    y: tip.y - arrowHeadLength * sin(angle - .pi / 6)
+                ))
+                path.addLine(to: tip)
+                path.addLine(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle + .pi / 6),
+                    y: tip.y - arrowHeadLength * sin(angle + .pi / 6)
+                ))
+            }
+            .stroke(object.strokeColor, lineWidth: object.strokeWidth)
+
+        case .circle:
+            // Draw a filled circle centered one radius behind the tip
+            let radius = arrowHeadLength / 2
+            let cx = tip.x - radius * cos(angle)
+            let cy = tip.y - radius * sin(angle)
+            Circle()
+                .fill(object.strokeColor)
+                .frame(width: radius * 2, height: radius * 2)
+                .position(x: cx, y: cy)
+
+        case .diamond:
+            let half = arrowHeadLength / 2
+            Path { path in
+                path.move(to: tip)
+                path.addLine(to: CGPoint(
+                    x: tip.x - half * cos(angle - .pi / 2),
+                    y: tip.y - half * sin(angle - .pi / 2)
+                ))
+                path.addLine(to: CGPoint(
+                    x: tip.x - arrowHeadLength * cos(angle),
+                    y: tip.y - arrowHeadLength * sin(angle)
+                ))
+                path.addLine(to: CGPoint(
+                    x: tip.x - half * cos(angle + .pi / 2),
+                    y: tip.y - half * sin(angle + .pi / 2)
+                ))
+                path.closeSubpath()
+            }
+            .fill(object.strokeColor)
+        }
+    }
 }
 
 // MARK: - Text
 
-private struct ExportTextObjectView: View {
+struct ExportTextObjectView: View {
     let object: TextObject
 
     var body: some View {

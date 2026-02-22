@@ -16,7 +16,7 @@ enum ArrowHead: String, Codable, Hashable, CaseIterable {
 
 /// A single struct for both lines and arrows.
 /// A plain line has `.none` arrowheads; an arrow typically has `endArrowHead = .filled`.
-struct LineObject: CanvasObject, StrokableObject, Codable {
+struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
     // MARK: - CanvasObject Properties
     let id: UUID
     var rotation: CGFloat = 0
@@ -42,6 +42,8 @@ struct LineObject: CanvasObject, StrokableObject, Codable {
     var isEditingLabel: Bool = false
 
     // MARK: - Computed Properties
+
+    var usesControlPoints: Bool { true }
 
     /// Whether this line object acts as an arrow (has at least one arrowhead)
     var isArrow: Bool {
@@ -76,10 +78,29 @@ struct LineObject: CanvasObject, StrokableObject, Codable {
         }
         set {
             let currentSize = size
-            guard currentSize.width > 0, currentSize.height > 0 else { return }
+            let origin = position
+
+            // For axis-aligned lines (horizontal or vertical), only scale the non-degenerate axis.
+            // Scaling a zero-width or zero-height axis would divide by zero and leave the line unchanged.
+            if currentSize.width == 0 {
+                // Vertical line: only scale height
+                guard currentSize.height > 0 else { return }
+                let scaleY = newValue.height / currentSize.height
+                startPoint = CGPoint(x: origin.x, y: origin.y + (startPoint.y - origin.y) * scaleY)
+                endPoint   = CGPoint(x: origin.x, y: origin.y + (endPoint.y   - origin.y) * scaleY)
+                return
+            }
+            if currentSize.height == 0 {
+                // Horizontal line: only scale width
+                guard currentSize.width > 0 else { return }
+                let scaleX = newValue.width / currentSize.width
+                startPoint = CGPoint(x: origin.x + (startPoint.x - origin.x) * scaleX, y: origin.y)
+                endPoint   = CGPoint(x: origin.x + (endPoint.x   - origin.x) * scaleX, y: origin.y)
+                return
+            }
+
             let scaleX = newValue.width / currentSize.width
             let scaleY = newValue.height / currentSize.height
-            let origin = position
             startPoint = CGPoint(
                 x: origin.x + (startPoint.x - origin.x) * scaleX,
                 y: origin.y + (startPoint.y - origin.y) * scaleY

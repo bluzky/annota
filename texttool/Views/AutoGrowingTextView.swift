@@ -198,8 +198,12 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ textView: NSTextView, context: Context) {
-        if textView.string != text {
-            textView.string = text
+        // NEVER update text while editing - mirrors AutoGrowingTextView guard to prevent
+        // lost keystrokes when SwiftUI re-renders during active typing.
+        if !context.coordinator.isEditing {
+            if textView.string != text {
+                textView.string = text
+            }
         }
         textView.font = NSFont.systemFont(ofSize: fontSize)
         textView.textColor = NSColor(textColor)
@@ -233,6 +237,9 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
 
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: ConstrainedAutoGrowingTextView
+        /// Mirror of AutoGrowingTextView.Coordinator: set during textDidChange to block
+        /// updateNSView from clobbering in-flight keystrokes.
+        var isEditing = false
 
         init(_ parent: ConstrainedAutoGrowingTextView) {
             self.parent = parent
@@ -241,7 +248,14 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+
+            // Block updateNSView from overwriting the text we are about to publish
+            isEditing = true
             parent.text = textView.string
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
+                self?.isEditing = false
+            }
 
             // Notify about height change
             if let container = textView.textContainer,

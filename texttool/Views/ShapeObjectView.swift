@@ -53,7 +53,7 @@ struct ShapeObjectView: View {
             x: object.position.x + object.size.width / 2,
             y: object.position.y + effectiveHeight / 2
         )
-        .onChange(of: object.text) { _ in
+        .onChange(of: object.text) { _, _ in
             if object.autoResizeHeight {
                 updateHeight()
             }
