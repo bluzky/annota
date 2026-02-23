@@ -100,12 +100,10 @@ struct SubToolbarView: View {
     private func strokeControls(attributes: ObjectAttributes) -> some View {
         // Color picker - always shown with first stroke color
         let strokeColor = attributes["strokeColor"] as? Color ?? .black
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { strokeColor },
             set: { viewModel.updateSelected([ObjectAttributes.strokeColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
 
         // Width input - always shown with first stroke width
         let strokeWidth = attributes["strokeWidth"] as? CGFloat ?? 2.0
@@ -143,12 +141,10 @@ struct SubToolbarView: View {
     private func fillControls(attributes: ObjectAttributes) -> some View {
         // Fill color picker - always shown with first fill color
         let fillColor = attributes["fillColor"] as? Color ?? .white
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { fillColor },
             set: { viewModel.updateSelected([ObjectAttributes.fillColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
 
         // Fill opacity slider - always shown with first fill opacity
         let fillOpacity = attributes["fillOpacity"] as? CGFloat ?? 1.0
@@ -199,12 +195,10 @@ struct SubToolbarView: View {
 
         // Text color picker - always shown with first text color
         let textColor = attributes[ObjectAttributes.textColor] as? Color ?? .black
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { textColor },
             set: { viewModel.updateSelected([ObjectAttributes.textColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
     }
 
     private var toolFontFamily: String {
@@ -245,12 +239,10 @@ struct SubToolbarView: View {
         )
 
         // Text color picker
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { attrs[ObjectAttributes.textColor] as? Color ?? .black },
             set: { updateToolAttr(key: ObjectAttributes.textColor, value: $0) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
     }
 
     @ViewBuilder
@@ -295,12 +287,10 @@ struct SubToolbarView: View {
 
         // Shape tools - show stroke + fill + text controls
         if tool?.category == .shape {
-            ColorPicker("", selection: Binding(
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
 
             ValueInputView(
                 value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
@@ -315,12 +305,10 @@ struct SubToolbarView: View {
 
             Divider().frame(height: 20)
 
-            ColorPicker("", selection: Binding(
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
                 set: { updateToolAttr(key: ObjectAttributes.fillColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
 
             Slider(value: Binding(
                 get: { attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0 },
@@ -341,12 +329,10 @@ struct SubToolbarView: View {
         }
         // Line tools - show only stroke controls
         else if tool?.category == .drawing {
-            ColorPicker("", selection: Binding(
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
 
             ValueInputView(
                 value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
