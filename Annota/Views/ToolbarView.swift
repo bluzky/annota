@@ -65,7 +65,7 @@ struct ToolbarView: View {
         .buttonStyle(.plain)
         .background(isShapeActive ? Color.accentColor.opacity(0.2) : Color.clear)
         .cornerRadius(6)
-        .help("Shapes")
+        .tooltip("Shapes")
     }
 
     @ViewBuilder
@@ -80,6 +80,6 @@ struct ToolbarView: View {
         .buttonStyle(.plain)
         .background(viewModel.selectedTool == tool ? Color.accentColor.opacity(0.2) : Color.clear)
         .cornerRadius(6)
-        .help(tooltip)
+        .tooltip(tooltip)
     }
 }

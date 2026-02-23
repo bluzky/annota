@@ -117,16 +117,19 @@ private struct ColorCircleCell: View {
     let onTap: () -> Void
 
     var body: some View {
-        Circle()
-            .fill(color)
-            .frame(width: 22, height: 22)
-            .overlay(
-                Circle()
-                    .stroke(borderColor, lineWidth: 1)
-            )
-            .contentShape(Circle())
-            .onTapGesture(perform: onTap)
-            .help(name)
+        Button(action: onTap) {
+            Circle()
+                .fill(color)
+                .frame(width: 22, height: 22)
+                .overlay(
+                    Circle()
+                        .stroke(borderColor, lineWidth: 1)
+                )
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(name))
+        .tooltip(name)
     }
 
     private var borderColor: Color {
@@ -138,6 +141,10 @@ private struct ColorCircleCell: View {
 // MARK: - Custom Color Button
 
 private struct CustomColorButton: View {
+    /// Minimal opacity to keep ColorPicker interactive while visually hidden.
+    /// Fully invisible (opacity 0.0) breaks macOS ColorPicker interactivity.
+    private static let hiddenButInteractiveOpacity = 0.015
+
     @Binding var selection: Color
     var onChange: ((Color) -> Void)?
 
@@ -152,7 +159,7 @@ private struct CustomColorButton: View {
                 }
             ))
             .labelsHidden()
-            .opacity(0.015)
+            .opacity(Self.hiddenButInteractiveOpacity)
 
             // Visual "+" circle overlay (non-interactive, lets clicks through)
             Circle()
@@ -170,7 +177,7 @@ private struct CustomColorButton: View {
                 .allowsHitTesting(false)
         }
         .frame(width: 22, height: 22)
-        .help("Custom color")
+        .tooltip("Custom color")
     }
 }
 

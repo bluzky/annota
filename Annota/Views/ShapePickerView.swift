@@ -23,14 +23,16 @@ struct ShapePickerStrip: View {
     var body: some View {
         HStack(spacing: 2) {
             ForEach(shapeItems, id: \.tool) { item in
-                ShapeItemCell(
-                    item: item,
-                    isSelected: viewModel.selectedTool == item.tool
-                )
-                .onTapGesture {
+                Button(action: {
                     viewModel.selectedTool = item.tool
                     lastShapeTool = item.tool
+                }) {
+                    ShapeItemCell(
+                        item: item,
+                        isSelected: viewModel.selectedTool == item.tool
+                    )
                 }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -56,6 +58,7 @@ private struct ShapeItemCell: View {
                     .stroke(isSelected ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
             )
             .contentShape(Rectangle())
-            .help(item.name)
+            .accessibilityLabel(Text(item.name))
+            .tooltip(item.name)
     }
 }
