@@ -12,6 +12,7 @@ import AnotarCanvas
 struct ContentView: View {
     @StateObject private var viewModel = CanvasViewModel()
     @StateObject private var toolRegistry = ToolRegistry.shared
+    @StateObject private var attributeStore = ToolAttributeStore()
     @State private var keyMonitor: Any?
 
     var body: some View {
@@ -31,7 +32,7 @@ struct ContentView: View {
                     // Sub toolbar - floating directly below main toolbar (no spacing)
                     // Only show when there's content to display
                     if showSubToolbar {
-                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, attributeStore: attributeStore)
                     }
 
                     Spacer()
@@ -43,7 +44,15 @@ struct ContentView: View {
         .focusedSceneObject(viewModel)
         .onAppear {
             AppState.shared.canvasViewModel = viewModel
+            attributeStore.sync(to: viewModel)
             installKeyMonitor()
+        }
+        .onChange(of: viewModel.selectedTool) { _, _ in
+            attributeStore.sync(to: viewModel)
+        }
+        .onReceive(viewModel.$currentToolAttributes) { _ in
+            // Persist changes made by framework-side controls (e.g. ArrowToolControls)
+            attributeStore.persist(from: viewModel)
         }
         .onDisappear {
             if let monitor = keyMonitor {

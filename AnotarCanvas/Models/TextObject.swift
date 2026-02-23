@@ -46,6 +46,7 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
         position: CGPoint,
         text: String = "",
         fontSize: CGFloat = 16,
+        fontFamily: String = "System",
         color: Color = .black,
         isEditing: Bool = false,
         rotation: CGFloat = 0,
@@ -56,6 +57,7 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
         self.position = position
         self.text = text
         self.textAttributes = TextAttributes(
+            fontFamily: fontFamily,
             fontSize: fontSize,
             textColor: CodableColor(color)
         )
@@ -65,7 +67,7 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
         self.zIndex = zIndex
 
         // Calculate initial size using NSAttributedString for accurate measurement
-        let font = NSFont.systemFont(ofSize: fontSize)
+        let font = textAttributes.nsFont
         let attrs: [NSAttributedString.Key: Any] = [.font: font]
         let measured = (text as NSString).boundingRect(
             with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),

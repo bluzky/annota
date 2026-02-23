@@ -9,9 +9,45 @@
 import SwiftUI
 import AnotarCanvas
 
+private let availableFontFamilies = [
+    "System", "Helvetica Neue", "Times New Roman", "Courier New", "Georgia", "Arial", "Menlo", "Comic Sans MS"
+]
+
+// Preset values for font size input
+private let fontSizePresets: [CGFloat] = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 96, 120]
+
+// Preset values for stroke width input
+private let strokeWidthPresets: [CGFloat] = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
+
+/// Simplified stroke style cases for picker UI (avoids associated-value issues with Picker)
+private enum StrokeStyleOption: String, CaseIterable, Identifiable {
+    case solid = "Solid"
+    case dashed = "Dashed"
+    case dotted = "Dotted"
+
+    var id: String { rawValue }
+
+    var strokeStyleType: StrokeStyleType {
+        switch self {
+        case .solid: return .solid
+        case .dashed: return .defaultDashed
+        case .dotted: return .dotted
+        }
+    }
+
+    init(from type: StrokeStyleType) {
+        switch type {
+        case .solid: self = .solid
+        case .dashed: self = .dashed
+        case .dotted: self = .dotted
+        }
+    }
+}
+
 struct SubToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
     @ObservedObject var toolRegistry: ToolRegistry
+    @ObservedObject var attributeStore: ToolAttributeStore
 
     var body: some View {
         HStack(spacing: 16) {
@@ -23,6 +59,7 @@ struct SubToolbarView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
+        .frame(minWidth: 260)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
@@ -41,12 +78,6 @@ struct SubToolbarView: View {
         let capabilities = viewModel.selectionCapabilities
         let attrs = viewModel.getSelectionAttributes()
 
-        Text("\(capabilities.objectCount) selected")
-            .font(.caption)
-            .foregroundColor(.secondary)
-
-        Divider().frame(height: 20)
-
         if capabilities.canStroke {
             strokeControls(attributes: attrs)
             Divider().frame(height: 20)
@@ -57,89 +88,169 @@ struct SubToolbarView: View {
             Divider().frame(height: 20)
         }
 
-        zOrderControls
-
-        Button(action: { viewModel.deleteSelected() }) {
-            Image(systemName: "trash")
-                .foregroundColor(.red)
+        if capabilities.canEditText {
+            selectionTextControls(attributes: attrs)
+            Divider().frame(height: 20)
         }
-        .buttonStyle(.plain)
-        .help("Delete")
+
+        zOrderControls
     }
 
     @ViewBuilder
     private func strokeControls(attributes: ObjectAttributes) -> some View {
-        Label("Stroke", systemImage: "pencil.line")
-            .font(.caption)
-            .foregroundColor(.secondary)
+        // Color picker - always shown with first stroke color
+        let strokeColor = attributes["strokeColor"] as? Color ?? .black
+        ColorPicker("", selection: Binding(
+            get: { strokeColor },
+            set: { viewModel.updateSelected([ObjectAttributes.strokeColor: $0]) }
+        ))
+        .labelsHidden()
+        .frame(width: 40)
 
-        // Color picker - shows current or "Mixed"
-        if let strokeColor = attributes["strokeColor"] as? Color {
-            ColorPicker("", selection: Binding(
-                get: { strokeColor },
-                set: { viewModel.updateSelected([ObjectAttributes.strokeColor: $0]) }
-            ))
-            .labelsHidden()
-            .frame(width: 40)
-        } else {
-            Text("Mixed")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .frame(width: 40)
-        }
+        // Width input - always shown with first stroke width
+        let strokeWidth = attributes["strokeWidth"] as? CGFloat ?? 2.0
+        ValueInputView(
+            value: strokeWidth,
+            min: 1, max: 30,
+            presets: strokeWidthPresets,
+            onChange: { viewModel.updateSelected([ObjectAttributes.strokeWidth: $0]) }
+        )
 
-        // Width stepper - shows current or "Mixed"
-        if let strokeWidth = attributes["strokeWidth"] as? CGFloat {
-            Stepper(value: Binding(
-                get: { strokeWidth },
-                set: { viewModel.updateSelected([ObjectAttributes.strokeWidth: $0]) }
-            ), in: 0...20, step: 0.5) {
-                Text("\(Int(strokeWidth))pt")
-                    .font(.caption)
-                    .frame(width: 30)
+        // Stroke style picker - always shown with first stroke style
+        let strokeStyle = attributes[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid
+        let currentOption = StrokeStyleOption(from: strokeStyle)
+        Menu {
+            ForEach(StrokeStyleOption.allCases) { option in
+                Button(action: {
+                    viewModel.updateSelected([ObjectAttributes.strokeStyle: option.strokeStyleType])
+                }) {
+                    if option == currentOption {
+                        Label(option.rawValue, systemImage: "checkmark")
+                    } else {
+                        Text(option.rawValue)
+                    }
+                }
             }
-        } else {
-            Text("Mixed")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+        } label: {
+            Text(currentOption.rawValue)
+                .font(.body)
+                .frame(minWidth: 50)
         }
+        .menuStyle(.borderlessButton)
     }
 
     @ViewBuilder
     private func fillControls(attributes: ObjectAttributes) -> some View {
-        Label("Fill", systemImage: "paintbrush.fill")
+        // Fill color picker - always shown with first fill color
+        let fillColor = attributes["fillColor"] as? Color ?? .white
+        ColorPicker("", selection: Binding(
+            get: { fillColor },
+            set: { viewModel.updateSelected([ObjectAttributes.fillColor: $0]) }
+        ))
+        .labelsHidden()
+        .frame(width: 40)
+
+        // Fill opacity slider - always shown with first fill opacity
+        let fillOpacity = attributes["fillOpacity"] as? CGFloat ?? 1.0
+        Slider(value: Binding(
+            get: { fillOpacity },
+            set: { viewModel.updateSelected([ObjectAttributes.fillOpacity: $0]) }
+        ), in: 0...1)
+        .frame(width: 80)
+
+        Text("\(Int(fillOpacity * 100))%")
             .font(.caption)
-            .foregroundColor(.secondary)
+            .frame(width: 35)
+    }
 
-        if let fillColor = attributes["fillColor"] as? Color {
-            ColorPicker("", selection: Binding(
-                get: { fillColor },
-                set: { viewModel.updateSelected([ObjectAttributes.fillColor: $0]) }
-            ))
-            .labelsHidden()
-            .frame(width: 40)
-        } else {
-            Text("Mixed")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .frame(width: 40)
+    @ViewBuilder
+    private func selectionTextControls(attributes: ObjectAttributes) -> some View {
+        // Font family picker - always shown with first font family
+        let fontFamily = attributes[ObjectAttributes.fontFamily] as? String ?? "System"
+        Menu {
+            ForEach(availableFontFamilies, id: \.self) { family in
+                Button(action: {
+                    viewModel.updateSelected([ObjectAttributes.fontFamily: family])
+                }) {
+                    if family == fontFamily {
+                        Label(family, systemImage: "checkmark")
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    } else {
+                        Text(family)
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    }
+                }
+            }
+        } label: {
+            Text("Font")
+                .font(fontFamily == "System" ? .body : .custom(fontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
+                .frame(minWidth: 40)
         }
+        .menuStyle(.borderlessButton)
 
-        if let fillOpacity = attributes["fillOpacity"] as? CGFloat {
-            Slider(value: Binding(
-                get: { fillOpacity },
-                set: { viewModel.updateSelected([ObjectAttributes.fillOpacity: $0]) }
-            ), in: 0...1)
-            .frame(width: 80)
+        // Font size input - always shown with first font size
+        let fontSize = attributes[ObjectAttributes.fontSize] as? CGFloat ?? 16.0
+        ValueInputView(
+            value: fontSize,
+            min: 8, max: 200,
+            presets: fontSizePresets,
+            onChange: { viewModel.updateSelected([ObjectAttributes.fontSize: $0]) }
+        )
 
-            Text("\(Int(fillOpacity * 100))%")
-                .font(.caption)
-                .frame(width: 35)
-        } else {
-            Text("Mixed")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+        // Text color picker - always shown with first text color
+        let textColor = attributes[ObjectAttributes.textColor] as? Color ?? .black
+        ColorPicker("", selection: Binding(
+            get: { textColor },
+            set: { viewModel.updateSelected([ObjectAttributes.textColor: $0]) }
+        ))
+        .labelsHidden()
+        .frame(width: 40)
+    }
+
+    private var toolFontFamily: String {
+        attributeStore.attributes(for: viewModel.selectedTool)[ObjectAttributes.fontFamily] as? String ?? "System"
+    }
+
+    @ViewBuilder
+    private func toolTextControls(attrs: ObjectAttributes) -> some View {
+        // Font family picker
+        Menu {
+            ForEach(availableFontFamilies, id: \.self) { family in
+                Button(action: {
+                    updateToolAttr(key: ObjectAttributes.fontFamily, value: family)
+                }) {
+                    if family == toolFontFamily {
+                        Label(family, systemImage: "checkmark")
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    } else {
+                        Text(family)
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    }
+                }
+            }
+        } label: {
+            Text("Font")
+                .font(toolFontFamily == "System" ? .body : .custom(toolFontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
+                .frame(minWidth: 40)
         }
+        .menuStyle(.borderlessButton)
+        .id(toolFontFamily)
+
+        // Font size input with presets and direct entry
+        ValueInputView(
+            value: attrs[ObjectAttributes.fontSize] as? CGFloat ?? 16.0,
+            min: 8, max: 200,
+            presets: fontSizePresets,
+            onChange: { updateToolAttr(key: ObjectAttributes.fontSize, value: $0) }
+        )
+
+        // Text color picker
+        ColorPicker("", selection: Binding(
+            get: { attrs[ObjectAttributes.textColor] as? Color ?? .black },
+            set: { updateToolAttr(key: ObjectAttributes.textColor, value: $0) }
+        ))
+        .labelsHidden()
+        .frame(width: 40)
     }
 
     @ViewBuilder
@@ -180,75 +291,72 @@ struct SubToolbarView: View {
     @ViewBuilder
     private var toolControls: some View {
         let tool = toolRegistry.tool(for: viewModel.selectedTool)
-        let attrs = viewModel.currentToolAttributes
+        let attrs = attributeStore.attributes(for: viewModel.selectedTool)
 
-        // Shape and annotation tools
-        if tool?.category == .shape || tool?.category == .annotation {
-            Label("Stroke", systemImage: "pencil.line")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
+        // Shape tools - show stroke + fill + text controls
+        if tool?.category == .shape {
             ColorPicker("", selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
-                set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeColor, value: $0) }
+                set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
             ))
             .labelsHidden()
             .frame(width: 40)
 
-            Stepper(value: Binding(
-                get: { attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0 },
-                set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeWidth, value: $0) }
-            ), in: 0...20, step: 0.5) {
-                Text("\(Int(attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0))pt")
-                    .font(.caption)
-                    .frame(width: 30)
+            ValueInputView(
+                value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
+                min: 1, max: 30,
+                presets: strokeWidthPresets,
+                onChange: { updateToolAttr(key: ObjectAttributes.strokeWidth, value: $0) }
+            )
+
+            strokeStyleMenu(currentStyle: attrs[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid) { option in
+                updateToolAttr(key: ObjectAttributes.strokeStyle, value: option.strokeStyleType)
             }
 
             Divider().frame(height: 20)
 
-            if tool?.category == .shape {
-                Label("Fill", systemImage: "paintbrush.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                ColorPicker("", selection: Binding(
-                    get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
-                    set: { viewModel.updateToolAttribute(key: ObjectAttributes.fillColor, value: $0) }
-                ))
-                .labelsHidden()
-                .frame(width: 40)
-
-                Slider(value: Binding(
-                    get: { attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0 },
-                    set: { viewModel.updateToolAttribute(key: ObjectAttributes.fillOpacity, value: $0) }
-                ), in: 0...1)
-                .frame(width: 80)
-
-                Text("\(Int((attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0) * 100))%")
-                    .font(.caption)
-                    .frame(width: 35)
-            }
-        }
-        // Line tools
-        else if tool?.category == .drawing {
-            Label("Line", systemImage: "pencil.line")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
             ColorPicker("", selection: Binding(
-                get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
-                set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeColor, value: $0) }
+                get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
+                set: { updateToolAttr(key: ObjectAttributes.fillColor, value: $0) }
             ))
             .labelsHidden()
             .frame(width: 40)
 
-            Stepper(value: Binding(
-                get: { attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0 },
-                set: { viewModel.updateToolAttribute(key: ObjectAttributes.strokeWidth, value: $0) }
-            ), in: 0...20, step: 0.5) {
-                Text("\(Int(attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0))pt")
-                    .font(.caption)
-                    .frame(width: 30)
+            Slider(value: Binding(
+                get: { attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0 },
+                set: { updateToolAttr(key: ObjectAttributes.fillOpacity, value: $0) }
+            ), in: 0...1)
+            .frame(width: 80)
+
+            Text("\(Int((attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0) * 100))%")
+                .font(.caption)
+                .frame(width: 35)
+
+            Divider().frame(height: 20)
+            toolTextControls(attrs: attrs)
+        }
+        // Annotation tools (Text) - show only text controls
+        else if tool?.category == .annotation {
+            toolTextControls(attrs: attrs)
+        }
+        // Line tools - show only stroke controls
+        else if tool?.category == .drawing {
+            ColorPicker("", selection: Binding(
+                get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
+                set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
+            ))
+            .labelsHidden()
+            .frame(width: 40)
+
+            ValueInputView(
+                value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
+                min: 1, max: 30,
+                presets: strokeWidthPresets,
+                onChange: { updateToolAttr(key: ObjectAttributes.strokeWidth, value: $0) }
+            )
+
+            strokeStyleMenu(currentStyle: attrs[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid) { option in
+                updateToolAttr(key: ObjectAttributes.strokeStyle, value: option.strokeStyleType)
             }
         }
 
@@ -257,5 +365,34 @@ struct SubToolbarView: View {
             Divider().frame(height: 20)
             customControls
         }
+    }
+
+    // MARK: - Helpers
+
+    /// Update a tool attribute in the store and sync to the view model
+    private func updateToolAttr(key: String, value: Any) {
+        attributeStore.updateAttribute(for: viewModel.selectedTool, key: key, value: value)
+        attributeStore.sync(to: viewModel)
+    }
+
+    @ViewBuilder
+    private func strokeStyleMenu(currentStyle: StrokeStyleType, onSelect: @escaping (StrokeStyleOption) -> Void) -> some View {
+        let current = StrokeStyleOption(from: currentStyle)
+        Menu {
+            ForEach(StrokeStyleOption.allCases) { option in
+                Button(action: { onSelect(option) }) {
+                    if option == current {
+                        Label(option.rawValue, systemImage: "checkmark")
+                    } else {
+                        Text(option.rawValue)
+                    }
+                }
+            }
+        } label: {
+            Text(current.rawValue)
+                .font(.body)
+                .frame(minWidth: 50)
+        }
+        .menuStyle(.borderlessButton)
     }
 }

@@ -115,6 +115,16 @@ open class ShapeTool: CanvasTool {
         let fillColor = attrs["fillColor"] as? Color ?? .white
         let fillOpacity = attrs["fillOpacity"] as? CGFloat ?? 1.0
 
+        // Build text attributes from tool settings
+        let textColor = attrs["textColor"] as? Color ?? .black
+        let fontSize = attrs["fontSize"] as? CGFloat ?? 16.0
+        let fontFamily = attrs["fontFamily"] as? String ?? "System"
+        let textAttrs = TextAttributes(
+            fontFamily: fontFamily,
+            fontSize: fontSize,
+            textColor: CodableColor(textColor)
+        )
+
         // Use memberwise initializer to set stroke and fill independently
         return ShapeObject(
             id: UUID(),
@@ -128,7 +138,7 @@ open class ShapeTool: CanvasTool {
             strokeStyle: strokeStyle,
             fillOpacity: fillOpacity,
             text: "",
-            textAttributes: .default,
+            textAttributes: textAttrs,
             isEditing: false,
             autoResizeHeight: false,
             rotation: 0,

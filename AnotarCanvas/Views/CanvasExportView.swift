@@ -63,7 +63,7 @@ struct ExportShapeObjectView: View {
     private var effectiveHeight: CGFloat {
         if object.autoResizeHeight && !object.text.isEmpty {
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: 16)
+                .font: object.textAttributes.nsFont
             ]
             let attributed = NSAttributedString(string: object.text, attributes: attributes)
             let bounds = attributed.boundingRect(
@@ -88,8 +88,8 @@ struct ExportShapeObjectView: View {
 
             if !object.text.isEmpty {
                 Text(object.text)
-                    .font(.system(size: 16))
-                    .foregroundColor(.black)
+                    .font(object.textAttributes.font)
+                    .foregroundColor(object.textAttributes.color)
                     .multilineTextAlignment(.center)
                     .lineLimit(nil)
                     .frame(width: object.size.width - 16)
@@ -286,7 +286,7 @@ struct ExportTextObjectView: View {
 
     var body: some View {
         Text(object.text.isEmpty ? "" : object.text)
-            .font(.system(size: object.fontSize))
+            .font(object.textAttributes.font)
             .foregroundColor(object.color)
             .fixedSize()
             .padding(4)

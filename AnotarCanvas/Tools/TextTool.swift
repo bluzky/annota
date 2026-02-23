@@ -57,11 +57,13 @@ public struct TextTool: CanvasTool {
 
             let textColor = attrs["textColor"] as? Color ?? .black
             let fontSize = attrs["fontSize"] as? CGFloat ?? 16.0
+            let fontFamily = attrs["fontFamily"] as? String ?? "System"
 
             let newObj = TextObject(
                 position: CGPoint(x: point.x - 4, y: point.y - 10),
                 text: "",
                 fontSize: fontSize,
+                fontFamily: fontFamily,
                 color: textColor,
                 isEditing: true
             )

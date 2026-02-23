@@ -257,6 +257,10 @@ public struct AnyCanvasObject: Identifiable {
                 textContent.textAttributes.fontSize = size
                 modified = true
             }
+            if let family = attributes["fontFamily"] as? String {
+                textContent.textAttributes.fontFamily = family
+                modified = true
+            }
             if modified, let updated = textContent as? T {
                 object = updated
             }

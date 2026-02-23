@@ -61,6 +61,9 @@ public extension ObjectAttributes {
     /// Font size in points
     static let fontSize = "fontSize"
 
+    /// Font family name (use "System" for system font)
+    static let fontFamily = "fontFamily"
+
     // MARK: - Custom Attributes (Tool-specific)
 
     /// Namespace for tool-specific custom attributes

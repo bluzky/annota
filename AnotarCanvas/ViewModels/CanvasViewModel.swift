@@ -48,59 +48,31 @@ public class CanvasViewModel: ObservableObject {
 
     // MARK: - Tool Attribute State
 
-    /// Stores last-used attributes for each tool (persists across tool switches)
-    @Published public var toolAttributes: [String: ObjectAttributes] = [:]
+    /// Current tool attributes — set by the application layer, read by tools.
+    /// The app layer is responsible for persisting/restoring these when tools change.
+    @Published public var currentToolAttributes: ObjectAttributes = [:]
 
-    /// Get or set attributes for the currently selected tool
-    public var currentToolAttributes: ObjectAttributes {
-        get {
-            toolAttributes[selectedTool.id] ?? defaultToolAttributes
-        }
-        set {
-            toolAttributes[selectedTool.id] = newValue
-        }
-    }
-
-    /// Default attributes for new tools
-    private var defaultToolAttributes: ObjectAttributes {
-        [
-            ObjectAttributes.strokeColor: Color.black,
-            ObjectAttributes.strokeWidth: 2.0,
-            ObjectAttributes.strokeStyle: StrokeStyleType.solid,
-            ObjectAttributes.fillColor: Color.white,
-            ObjectAttributes.fillOpacity: 1.0,
-            ObjectAttributes.textColor: Color.black,
-            ObjectAttributes.fontSize: 16.0
-        ]
-    }
-
-    /// Update a specific attribute for the current tool
+    /// Update a specific attribute within currentToolAttributes
     public func updateToolAttribute(key: String, value: Any) {
-        var attrs = currentToolAttributes
-        attrs[key] = value
-        toolAttributes[selectedTool.id] = attrs
+        currentToolAttributes[key] = value
     }
 
-    /// Update a custom attribute for the current tool
+    /// Update a custom attribute within the customAttributes namespace
     public func updateCustomToolAttribute(key: String, value: Any) {
-        var attrs = currentToolAttributes
-        var customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        var customAttrs = (currentToolAttributes[ObjectAttributes.customAttributes] as? [String: Any]) ?? [:]
         customAttrs[key] = value
-        attrs[ObjectAttributes.customAttributes] = customAttrs
-        toolAttributes[selectedTool.id] = attrs
+        currentToolAttributes[ObjectAttributes.customAttributes] = customAttrs
     }
 
-    /// Get a custom attribute value for the current tool
+    /// Get a custom attribute value with a default
     public func getCustomToolAttribute<T>(key: String, default defaultValue: T) -> T {
-        let attrs = currentToolAttributes
-        let customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        let customAttrs = (currentToolAttributes[ObjectAttributes.customAttributes] as? [String: Any]) ?? [:]
         return customAttrs[key] as? T ?? defaultValue
     }
 
     /// Get a custom attribute value (optional)
     public func getCustomToolAttribute<T>(key: String) -> T? {
-        let attrs = currentToolAttributes
-        let customAttrs = attrs[ObjectAttributes.customAttributes] as? [String: Any] ?? [:]
+        let customAttrs = (currentToolAttributes[ObjectAttributes.customAttributes] as? [String: Any]) ?? [:]
         return customAttrs[key] as? T
     }
 
@@ -254,9 +226,11 @@ public class CanvasViewModel: ObservableObject {
                 if let textObj = first.asTextObject {
                     result[ObjectAttributes.textColor] = textObj.color
                     result[ObjectAttributes.fontSize] = textObj.fontSize
+                    result[ObjectAttributes.fontFamily] = textObj.textAttributes.fontFamily
                 } else if let shape = first.asShapeObject {
                     result[ObjectAttributes.textColor] = shape.textAttributes.textColor.color
                     result[ObjectAttributes.fontSize] = shape.textAttributes.fontSize
+                    result[ObjectAttributes.fontFamily] = shape.textAttributes.fontFamily
                 }
             }
         }
@@ -282,6 +256,9 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.strokeWidth] as? CGFloat != line.strokeWidth {
                         result.removeValue(forKey: ObjectAttributes.strokeWidth)
                     }
+                    if result[ObjectAttributes.strokeStyle] as? StrokeStyleType != line.strokeStyle {
+                        result.removeValue(forKey: ObjectAttributes.strokeStyle)
+                    }
                 }
             }
 
@@ -304,12 +281,18 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.fontSize] as? CGFloat != textObj.fontSize {
                         result.removeValue(forKey: ObjectAttributes.fontSize)
                     }
+                    if result[ObjectAttributes.fontFamily] as? String != textObj.textAttributes.fontFamily {
+                        result.removeValue(forKey: ObjectAttributes.fontFamily)
+                    }
                 } else if let shape = obj.asShapeObject {
                     if result[ObjectAttributes.textColor] as? Color != shape.textAttributes.textColor.color {
                         result.removeValue(forKey: ObjectAttributes.textColor)
                     }
                     if result[ObjectAttributes.fontSize] as? CGFloat != shape.textAttributes.fontSize {
                         result.removeValue(forKey: ObjectAttributes.fontSize)
+                    }
+                    if result[ObjectAttributes.fontFamily] as? String != shape.textAttributes.fontFamily {
+                        result.removeValue(forKey: ObjectAttributes.fontFamily)
                     }
                 }
             }
@@ -510,8 +493,20 @@ public class CanvasViewModel: ObservableObject {
 
     /// End all text editing without clearing selection
     private func endAllEditing() {
+        // Collect IDs of text objects that are empty and should be removed
+        var idsToRemove: [UUID] = []
         for index in objects.indices where objects[index].isEditing {
-            mutateTextContent(at: index) { $0.isEditing = false }
+            // Check if this is a TextObject with empty text
+            if let textObj = objects[index].asTextObject,
+               textObj.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                idsToRemove.append(objects[index].id)
+            } else {
+                mutateTextContent(at: index) { $0.isEditing = false }
+            }
+        }
+        // Remove empty text objects
+        for id in idsToRemove {
+            objects.removeAll { $0.id == id }
         }
     }
 

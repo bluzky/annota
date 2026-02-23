@@ -128,43 +128,43 @@ public struct ArrowTool: CanvasTool {
 struct ArrowToolControls: View {
     @ObservedObject var viewModel: CanvasViewModel
 
+    private var currentStart: ArrowHead {
+        ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead) ?? "none") ?? .none
+    }
+
+    private var currentEnd: ArrowHead {
+        ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead) ?? "open") ?? .open
+    }
+
     var body: some View {
         Group {
-            Label("Arrow Style", systemImage: "arrow.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Picker("Start", selection: Binding(
-                get: {
-                    ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead) ?? "none") ?? .none
-                },
-                set: {
-                    viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead, value: $0.rawValue)
-                }
-            )) {
-                ForEach(ArrowHead.allCases, id: \.self) { style in
-                    Text(style.rawValue.capitalized).tag(style)
-                }
+            arrowHeadMenu(label: "Start", current: currentStart) { style in
+                viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.startArrowHead, value: style.rawValue)
             }
-            .pickerStyle(.menu)
-            .frame(width: 80)
-            .help("Start arrowhead")
 
-            Picker("End", selection: Binding(
-                get: {
-                    ArrowHead(rawValue: viewModel.getCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead) ?? "open") ?? .open
-                },
-                set: {
-                    viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead, value: $0.rawValue)
-                }
-            )) {
-                ForEach(ArrowHead.allCases, id: \.self) { style in
-                    Text(style.rawValue.capitalized).tag(style)
-                }
+            arrowHeadMenu(label: "End", current: currentEnd) { style in
+                viewModel.updateCustomToolAttribute(key: ArrowTool.CustomAttr.endArrowHead, value: style.rawValue)
             }
-            .pickerStyle(.menu)
-            .frame(width: 80)
-            .help("End arrowhead")
         }
+    }
+
+    @ViewBuilder
+    private func arrowHeadMenu(label: String, current: ArrowHead, onSelect: @escaping (ArrowHead) -> Void) -> some View {
+        Menu {
+            ForEach(ArrowHead.allCases, id: \.self) { style in
+                Button(action: { onSelect(style) }) {
+                    if style == current {
+                        Label(style.rawValue.capitalized, systemImage: "checkmark")
+                    } else {
+                        Text(style.rawValue.capitalized)
+                    }
+                }
+            }
+        } label: {
+            Text("\(label): \(current.rawValue.capitalized)")
+                .font(.body)
+                .frame(minWidth: 60)
+        }
+        .menuStyle(.borderlessButton)
     }
 }
