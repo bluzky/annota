@@ -48,6 +48,7 @@ struct SubToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
     @ObservedObject var toolRegistry: ToolRegistry
     @ObservedObject var attributeStore: ToolAttributeStore
+    @Binding var lastShapeTool: DrawingTool
 
     var body: some View {
         HStack(spacing: 16) {
@@ -285,8 +286,11 @@ struct SubToolbarView: View {
         let tool = toolRegistry.tool(for: viewModel.selectedTool)
         let attrs = attributeStore.attributes(for: viewModel.selectedTool)
 
-        // Shape tools - show stroke + fill + text controls
+        // Shape tools - show shape selector + stroke + fill + text controls
         if tool?.category == .shape {
+            ShapePickerStrip(viewModel: viewModel, lastShapeTool: $lastShapeTool)
+            Divider().frame(height: 20)
+
             ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }

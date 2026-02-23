@@ -6,20 +6,19 @@
 import SwiftUI
 import AnotarCanvas
 
-/// A popover panel showing a grid of shape thumbnails.
-/// Selecting a shape activates the corresponding DrawingTool on the view model.
-struct ShapePickerView: View {
-    @ObservedObject var viewModel: CanvasViewModel
-    @Binding var isPresented: Bool
+// App-defined icon mapping - framework doesn't handle UI concerns
+private let shapeItems: [(tool: DrawingTool, icon: String, name: String)] = [
+    (.rectangle, "rectangle", "Rectangle"),
+    (.oval, "circle", "Oval"),
+    (.triangle, "triangle", "Triangle"),
+    (.diamond, "diamond", "Diamond"),
+    (.star, "star", "Star"),
+]
 
-    // App-defined icon mapping - framework doesn't handle UI concerns
-    private let shapeItems: [(tool: DrawingTool, icon: String, name: String)] = [
-        (.rectangle, "rectangle", "Rectangle"),
-        (.oval, "circle", "Oval"),
-        (.triangle, "triangle", "Triangle"),
-        (.diamond, "diamond", "Diamond"),
-        (.star, "star", "Star"),
-    ]
+/// Inline shape picker strip shown in the sub-toolbar when a shape tool is active.
+struct ShapePickerStrip: View {
+    @ObservedObject var viewModel: CanvasViewModel
+    @Binding var lastShapeTool: DrawingTool
 
     var body: some View {
         HStack(spacing: 2) {
@@ -30,11 +29,10 @@ struct ShapePickerView: View {
                 )
                 .onTapGesture {
                     viewModel.selectedTool = item.tool
-                    isPresented = false
+                    lastShapeTool = item.tool
                 }
             }
         }
-        .padding(4)
     }
 }
 

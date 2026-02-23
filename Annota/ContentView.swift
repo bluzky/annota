@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject private var toolRegistry = ToolRegistry.shared
     @StateObject private var attributeStore = ToolAttributeStore()
     @State private var keyMonitor: Any?
+    @State private var lastShapeTool: DrawingTool = .rectangle
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -26,13 +27,13 @@ struct ContentView: View {
                 Spacer()
                 VStack(spacing: 0) {
                     // Main toolbar - floating with top spacing
-                    ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+                    ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, lastShapeTool: $lastShapeTool)
                         .padding(.top, 12)
 
                     // Sub toolbar - floating directly below main toolbar (no spacing)
                     // Only show when there's content to display
                     if showSubToolbar {
-                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, attributeStore: attributeStore)
+                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, attributeStore: attributeStore, lastShapeTool: $lastShapeTool)
                     }
 
                     Spacer()
@@ -47,8 +48,12 @@ struct ContentView: View {
             attributeStore.sync(to: viewModel)
             installKeyMonitor()
         }
-        .onChange(of: viewModel.selectedTool) { _, _ in
+        .onChange(of: viewModel.selectedTool) { _, newTool in
             attributeStore.sync(to: viewModel)
+            // Track the last-used shape tool
+            if toolRegistry.tool(for: newTool)?.category == .shape {
+                lastShapeTool = newTool
+            }
         }
         .onReceive(viewModel.$currentToolAttributes) { _ in
             // Persist changes made by framework-side controls (e.g. ArrowToolControls)

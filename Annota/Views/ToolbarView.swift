@@ -11,7 +11,8 @@ import AnotarCanvas
 struct ToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
     @ObservedObject var toolRegistry: ToolRegistry
-    @State private var showShapePicker = false
+    /// Tracks the last-used shape tool so clicking the shape button re-selects it.
+    @Binding var lastShapeTool: DrawingTool
 
     var body: some View {
         HStack(spacing: 20) {
@@ -44,16 +45,10 @@ struct ToolbarView: View {
             "diamond": "diamond",
             "star": "star",
         ]
-
-        let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
-        if activeTool?.category == .shape {
-            return shapeIcons[viewModel.selectedTool.id] ?? "square.on.square"
-        }
-        return "square.on.square"
+        return shapeIcons[lastShapeTool.id] ?? "square.on.square"
     }
 
-    /// A single toolbar button that shows the active shape's icon (or a generic squares icon
-    /// when no shape tool is selected) and opens the shape picker popover on tap.
+    /// A single toolbar button that activates the last-used shape tool on click.
     @ViewBuilder
     private var shapePickerButton: some View {
         let activeTool = toolRegistry.tool(for: viewModel.selectedTool)
@@ -61,7 +56,7 @@ struct ToolbarView: View {
         let icon = activeShapeIcon
 
         Button(action: {
-            showShapePicker.toggle()
+            viewModel.selectedTool = lastShapeTool
         }) {
             Image(systemName: icon)
                 .font(.system(size: 14))
@@ -71,9 +66,6 @@ struct ToolbarView: View {
         .background(isShapeActive ? Color.accentColor.opacity(0.2) : Color.clear)
         .cornerRadius(6)
         .help("Shapes")
-        .popover(isPresented: $showShapePicker, arrowEdge: .bottom) {
-            ShapePickerView(viewModel: viewModel, isPresented: $showShapePicker)
-        }
     }
 
     @ViewBuilder
