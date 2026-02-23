@@ -29,6 +29,10 @@ public struct AnyCanvasObject: Identifiable {
     // Store the underlying object
     private let _object: Any
 
+    // Closures for type-erased mutation
+    private let _mutate: (ObjectAttributes) -> Any
+    private let _rebuild: (Any) -> AnyCanvasObject
+
     // Store closures for protocol methods
     private let _getPosition: () -> CGPoint
     private let _getSize: () -> CGSize
@@ -71,6 +75,21 @@ public struct AnyCanvasObject: Identifiable {
         self._boundingBox = { object.boundingBox() }
         self._hitTest = { object.hitTest($0, threshold: $1) }
         self._intersectsRect = { object.intersectsRect($0) }
+
+        // Capture mutation logic for type T
+        self._mutate = { attributes in
+            var mutableCopy = object
+            Self.applyAttributesGeneric(attributes, to: &mutableCopy)
+            return mutableCopy
+        }
+
+        // Capture rebuild logic for type T
+        self._rebuild = { mutatedAny in
+            guard let mutated = mutatedAny as? T else {
+                fatalError("Type mismatch in rebuild")
+            }
+            return AnyCanvasObject(mutated)
+        }
 
         // TextContentObject closures — set only when the underlying type conforms
         if let textObj = object as? any TextContentObject {
@@ -150,6 +169,112 @@ public struct AnyCanvasObject: Identifiable {
     /// Get as LineObject if applicable
     public var asLineObject: LineObject? {
         _object as? LineObject
+    }
+
+    // MARK: - Type-Erased Mutation
+
+    /// Apply attributes and return a new wrapper with updated values
+    /// This enables batch updates without requiring type-specific dispatch at call site
+    @MainActor
+    public func applying(_ attributes: ObjectAttributes) -> AnyCanvasObject {
+        let mutated = _mutate(attributes)
+        return _rebuild(mutated)
+    }
+
+    // MARK: - Generic Attribute Application
+
+    /// Helper method to apply attributes to any CanvasObject type
+    /// Handles geometry, stroke, fill, and text properties
+    private static func applyAttributesGeneric<T: CanvasObject>(
+        _ attributes: ObjectAttributes,
+        to object: inout T
+    ) {
+        // Geometry (all CanvasObject)
+        if let pos = attributes["position"] as? CGPoint {
+            object.position = pos
+        }
+        if let size = attributes["size"] as? CGSize {
+            object.size = size
+        }
+        if let rot = attributes["rotation"] as? CGFloat {
+            object.rotation = rot
+        }
+        if let z = attributes["zIndex"] as? Int {
+            object.zIndex = z
+        }
+        if let locked = attributes["isLocked"] as? Bool {
+            object.isLocked = locked
+        }
+
+        // Stroke properties (protocol-based)
+        if var strokeable = object as? any StrokableObject {
+            var modified = false
+            if let color = attributes["strokeColor"] as? Color {
+                strokeable.strokeColor = color
+                modified = true
+            }
+            if let width = attributes["strokeWidth"] as? CGFloat {
+                strokeable.strokeWidth = width
+                modified = true
+            }
+            if let style = attributes["strokeStyle"] as? StrokeStyleType {
+                strokeable.strokeStyle = style
+                modified = true
+            }
+            if modified, let updated = strokeable as? T {
+                object = updated
+            }
+        }
+
+        // Fill properties (protocol-based)
+        if var fillable = object as? any FillableObject {
+            var modified = false
+            if let color = attributes["fillColor"] as? Color {
+                fillable.fillColor = color
+                modified = true
+            }
+            if let opacity = attributes["fillOpacity"] as? CGFloat {
+                fillable.fillOpacity = opacity
+                modified = true
+            }
+            if modified, let updated = fillable as? T {
+                object = updated
+            }
+        }
+
+        // Text properties (protocol-based)
+        if var textContent = object as? any TextContentObject {
+            var modified = false
+            if let text = attributes["text"] as? String {
+                textContent.text = text
+                modified = true
+            }
+            if let color = attributes["textColor"] as? Color {
+                textContent.textAttributes.textColor = CodableColor(color)
+                modified = true
+            }
+            if let size = attributes["fontSize"] as? CGFloat {
+                textContent.textAttributes.fontSize = size
+                modified = true
+            }
+            if let family = attributes["fontFamily"] as? String {
+                textContent.textAttributes.fontFamily = family
+                modified = true
+            }
+            if modified, let updated = textContent as? T {
+                object = updated
+            }
+        }
+
+        // Custom attributes (tool-specific, protocol-based)
+        if let customAttrs = attributes[ObjectAttributes.customAttributes] as? [String: Any] {
+            if var customizable = object as? any CustomizableObject {
+                customizable.applyCustomAttributes(customAttrs)
+                if let updated = customizable as? T {
+                    object = updated
+                }
+            }
+        }
     }
 
     // MARK: - Protocol Checks

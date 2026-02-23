@@ -18,7 +18,7 @@ struct ToolbarView: View {
             // Tool Selection — order is an application-level concern, hardcoded here.
             // Shape-category tools are rendered as a single popover button (shapePickerButton).
             HStack(spacing: 4) {
-                toolButton(.select, icon: "arrow.up.left", tooltip: "Select")
+                toolButton(.select, icon: "pointer.arrow", tooltip: "Select")
                 toolButton(.hand, icon: "hand.raised", tooltip: "Hand")
                 shapePickerButton
                 toolButton(.line, icon: "line.diagonal", tooltip: "Line")
@@ -27,37 +27,12 @@ struct ToolbarView: View {
             }
             Divider()
                 .frame(height: 20)
-
-            // Text Size Picker
-            Text("Size:")
-                .foregroundColor(.secondary)
-            Picker("Size", selection: $viewModel.activeTextSize) {
-                ForEach([12, 14, 16, 18, 24, 36, 48, 72], id: \.self) { size in
-                    Text("\(Int(size))").tag(CGFloat(size))
-                }
-            }
-            .labelsHidden()
-            .frame(width: 80)
-            .disabled(toolRegistry.tool(for: viewModel.selectedTool)?.category != .annotation)
-
-            // Color Picker
-            ColorPicker("Color", selection: $viewModel.activeColor)
-                .labelsHidden()
-                .frame(width: 60)
-
-            Divider()
-                .frame(height: 20)
-
-            // Auto-resize toggle
-            Toggle("Auto-resize", isOn: $viewModel.autoResizeShapes)
-                .toggleStyle(.checkbox)
-                .help("Automatically resize shapes to fit text")
-
-            Spacer()
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
         .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(8)
+        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
     }
 
     private var activeShapeIcon: String {

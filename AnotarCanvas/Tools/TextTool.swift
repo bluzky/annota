@@ -51,11 +51,20 @@ public struct TextTool: CanvasTool {
             // Offset so the blinking text cursor aligns with where the user clicked.
             // Horizontal: 4pt textContainerInset.
             // Vertical: 4pt inset + ~6pt font leading above the blinking caret.
+
+            // Get stored tool attributes
+            let attrs = viewModel.currentToolAttributes
+
+            let textColor = attrs["textColor"] as? Color ?? .black
+            let fontSize = attrs["fontSize"] as? CGFloat ?? 16.0
+            let fontFamily = attrs["fontFamily"] as? String ?? "System"
+
             let newObj = TextObject(
                 position: CGPoint(x: point.x - 4, y: point.y - 10),
                 text: "",
-                fontSize: viewModel.activeTextSize,
-                color: viewModel.activeColor,
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                color: textColor,
                 isEditing: true
             )
             let newId = viewModel.addObject(newObj)

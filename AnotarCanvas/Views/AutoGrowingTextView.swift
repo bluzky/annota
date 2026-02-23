@@ -8,9 +8,23 @@
 import SwiftUI
 import AppKit
 
+/// Resolve a font family name and size to an NSFont (regular weight).
+/// "System" maps to the system font; other names use NSFontManager to get the regular variant.
+private func resolveNSFont(family: String, size: CGFloat) -> NSFont {
+    if family == "System" {
+        return NSFont.systemFont(ofSize: size, weight: .regular)
+    }
+    let fm = NSFontManager.shared
+    if let font = fm.font(withFamily: family, traits: [], weight: 5, size: size) {
+        return font
+    }
+    return NSFont(name: family, size: size) ?? NSFont.systemFont(ofSize: size, weight: .regular)
+}
+
 struct AutoGrowingTextView: NSViewRepresentable {
     @Binding var text: String
     var fontSize: CGFloat
+    var fontFamily: String = "System"
     var textColor: Color
     var onFocus: () -> Void
     var onSizeChange: ((CGSize) -> Void)?
@@ -25,7 +39,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.drawsBackground = false
         textView.isEditable = true
         textView.isSelectable = true
-        textView.font = NSFont.systemFont(ofSize: fontSize)
+        textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainerInset = NSSize(width: 4, height: 4)
@@ -71,7 +85,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
             }
         }
 
-        textView.font = NSFont.systemFont(ofSize: fontSize)
+        textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
 
         // Update min size based on font size
@@ -151,6 +165,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
 struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
     @Binding var text: String
     var fontSize: CGFloat
+    var fontFamily: String = "System"
     var textColor: Color
     var maxWidth: CGFloat
     var alignment: NSTextAlignment
@@ -166,7 +181,7 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
         textView.drawsBackground = false
         textView.isEditable = true
         textView.isSelectable = true
-        textView.font = NSFont.systemFont(ofSize: fontSize)
+        textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.textContainerInset = NSSize(width: 4, height: 4)
         textView.alignment = alignment
@@ -205,7 +220,7 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
                 textView.string = text
             }
         }
-        textView.font = NSFont.systemFont(ofSize: fontSize)
+        textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.alignment = alignment
 

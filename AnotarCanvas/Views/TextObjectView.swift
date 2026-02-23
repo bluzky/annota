@@ -19,6 +19,7 @@ struct TextObjectView: View {
                 AutoGrowingTextView(
                     text: binding,
                     fontSize: object.fontSize,
+                    fontFamily: object.textAttributes.fontFamily,
                     textColor: object.color,
                     onFocus: { isFocused = true },
                     onSizeChange: { size in
@@ -34,7 +35,7 @@ struct TextObjectView: View {
                 )
             } else {
                 Text(object.text.isEmpty ? "Text" : object.text)
-                    .font(.system(size: object.fontSize))
+                    .font(object.textAttributes.font)
                     .foregroundColor(object.text.isEmpty ? object.color.opacity(0.5) : object.color)
                     .fixedSize()
                     .padding(4)

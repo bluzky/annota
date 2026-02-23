@@ -11,18 +11,48 @@ import AnotarCanvas
 
 struct ContentView: View {
     @StateObject private var viewModel = CanvasViewModel()
+    @StateObject private var toolRegistry = ToolRegistry.shared
+    @StateObject private var attributeStore = ToolAttributeStore()
     @State private var keyMonitor: Any?
 
     var body: some View {
-        VStack(spacing: 0) {
-            ToolbarView(viewModel: viewModel, toolRegistry: ToolRegistry.shared)
+        ZStack(alignment: .top) {
+            // Canvas fills the entire space
             CanvasView(viewModel: viewModel)
+                .frame(minWidth: 800, minHeight: 600)
+
+            // Floating toolbars overlaid on top
+            HStack {
+                Spacer()
+                VStack(spacing: 0) {
+                    // Main toolbar - floating with top spacing
+                    ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry)
+                        .padding(.top, 12)
+
+                    // Sub toolbar - floating directly below main toolbar (no spacing)
+                    // Only show when there's content to display
+                    if showSubToolbar {
+                        SubToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, attributeStore: attributeStore)
+                    }
+
+                    Spacer()
+                }
+                Spacer()
+            }
         }
         .frame(minWidth: 800, minHeight: 600)
         .focusedSceneObject(viewModel)
         .onAppear {
             AppState.shared.canvasViewModel = viewModel
+            attributeStore.sync(to: viewModel)
             installKeyMonitor()
+        }
+        .onChange(of: viewModel.selectedTool) { _, _ in
+            attributeStore.sync(to: viewModel)
+        }
+        .onReceive(viewModel.$currentToolAttributes) { _ in
+            // Persist changes made by framework-side controls (e.g. ArrowToolControls)
+            attributeStore.persist(from: viewModel)
         }
         .onDisappear {
             if let monitor = keyMonitor {
@@ -30,6 +60,16 @@ struct ContentView: View {
                 keyMonitor = nil
             }
         }
+    }
+
+    // Check if sub-toolbar should be displayed
+    private var showSubToolbar: Bool {
+        if viewModel.selectionState.hasSelection {
+            return true
+        }
+        // Check if current tool has relevant attributes to display
+        let tool = toolRegistry.tool(for: viewModel.selectedTool)
+        return tool?.category == .shape || tool?.category == .drawing || tool?.category == .annotation
     }
 
     // MARK: - Keyboard Shortcuts

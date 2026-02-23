@@ -27,7 +27,8 @@ struct ShapeObjectView: View {
                 ConstrainedAutoGrowingTextView(
                     text: binding,
                     fontSize: object.textAttributes.fontSize,
-                    textColor: .black,
+                    fontFamily: object.textAttributes.fontFamily,
+                    textColor: object.textAttributes.color,
                     maxWidth: object.size.width - 16,
                     alignment: .center,
                     onHeightChange: { newHeight in
@@ -40,8 +41,8 @@ struct ShapeObjectView: View {
                 .padding(8)
             } else if !object.text.isEmpty {
                 Text(object.text)
-                    .font(.system(size: 16))
-                    .foregroundColor(.black)
+                    .font(object.textAttributes.font)
+                    .foregroundColor(object.textAttributes.color)
                     .multilineTextAlignment(.center)
                     .lineLimit(nil)
                     .frame(width: object.size.width - 16)
@@ -71,7 +72,7 @@ struct ShapeObjectView: View {
 
     private var calculatedTextHeight: CGFloat {
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 16)
+            .font: object.textAttributes.nsFont
         ]
         let attributedString = NSAttributedString(string: object.text, attributes: attributes)
         let boundingRect = attributedString.boundingRect(
