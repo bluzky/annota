@@ -55,7 +55,6 @@ public protocol CanvasTool {
     /// Optional: Tool provides custom controls for the sub-toolbar
     /// Return nil if the tool has no custom attributes
     /// Tools can use this to display their own SwiftUI controls
-    @ViewBuilder
     func customToolControls(viewModel: CanvasViewModel) -> AnyView?
 }
 

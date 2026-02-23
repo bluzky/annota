@@ -301,26 +301,24 @@ public class CanvasViewModel: ObservableObject {
         // Extract custom attributes if all selected objects support customization
         if !objects.isEmpty {
             // Try to get custom attributes from first object
-            if let firstCustomizable = objects.first?.asType(LineObject.self) as? CustomizableObject ??
-               objects.first?.asType(ShapeObject.self) as? CustomizableObject {
+            if let firstCustomizable = objects.first?.asCustomizable {
                 var customAttrs = firstCustomizable.getCustomAttributes()
 
                 // Compare with remaining objects
                 for obj in objects.dropFirst() {
-                    if let customizable = obj.asType(LineObject.self) as? CustomizableObject ??
-                       obj.asType(ShapeObject.self) as? CustomizableObject {
-                        let objCustomAttrs = customizable.getCustomAttributes()
-
-                        // Remove keys that don't match
-                        for key in customAttrs.keys {
-                            if !areEqual(customAttrs[key], objCustomAttrs[key]) {
-                                customAttrs.removeValue(forKey: key)
-                            }
-                        }
-                    } else {
+                    guard let customizable = obj.asCustomizable else {
                         // If any object doesn't support customization, clear all custom attrs
                         customAttrs.removeAll()
                         break
+                    }
+
+                    let objCustomAttrs = customizable.getCustomAttributes()
+
+                    // Remove keys that don't match
+                    for key in customAttrs.keys {
+                        if !areEqual(customAttrs[key], objCustomAttrs[key]) {
+                            customAttrs.removeValue(forKey: key)
+                        }
                     }
                 }
 
@@ -343,7 +341,14 @@ public class CanvasViewModel: ObservableObject {
         if let l = lhs as? Int, let r = rhs as? Int { return l == r }
         if let l = lhs as? Bool, let r = rhs as? Bool { return l == r }
 
-        // Add more type comparisons as needed
+        // Handle ArrowHead enum
+        if let l = lhs as? ArrowHead, let r = rhs as? ArrowHead { return l == r }
+
+        // Fallback for any Hashable types (handles Color, CodableColor, etc.)
+        if let l = lhs as? any Hashable, let r = rhs as? any Hashable {
+            return AnyHashable(l) == AnyHashable(r)
+        }
+
         return false
     }
 
