@@ -48,6 +48,7 @@ struct SubToolbarView: View {
     @ObservedObject var viewModel: CanvasViewModel
     @ObservedObject var toolRegistry: ToolRegistry
     @ObservedObject var attributeStore: ToolAttributeStore
+    @Binding var lastShapeTool: DrawingTool
 
     var body: some View {
         HStack(spacing: 16) {
@@ -100,12 +101,11 @@ struct SubToolbarView: View {
     private func strokeControls(attributes: ObjectAttributes) -> some View {
         // Color picker - always shown with first stroke color
         let strokeColor = attributes["strokeColor"] as? Color ?? .black
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { strokeColor },
             set: { viewModel.updateSelected([ObjectAttributes.strokeColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
+        .tooltip("Stroke Color")
 
         // Width input - always shown with first stroke width
         let strokeWidth = attributes["strokeWidth"] as? CGFloat ?? 2.0
@@ -115,6 +115,7 @@ struct SubToolbarView: View {
             presets: strokeWidthPresets,
             onChange: { viewModel.updateSelected([ObjectAttributes.strokeWidth: $0]) }
         )
+        .tooltip("Stroke Width")
 
         // Stroke style picker - always shown with first stroke style
         let strokeStyle = attributes[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid
@@ -137,18 +138,18 @@ struct SubToolbarView: View {
                 .frame(minWidth: 50)
         }
         .menuStyle(.borderlessButton)
+        .tooltip("Stroke Style")
     }
 
     @ViewBuilder
     private func fillControls(attributes: ObjectAttributes) -> some View {
         // Fill color picker - always shown with first fill color
         let fillColor = attributes["fillColor"] as? Color ?? .white
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { fillColor },
             set: { viewModel.updateSelected([ObjectAttributes.fillColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
+        .tooltip("Fill Color")
 
         // Fill opacity slider - always shown with first fill opacity
         let fillOpacity = attributes["fillOpacity"] as? CGFloat ?? 1.0
@@ -157,6 +158,7 @@ struct SubToolbarView: View {
             set: { viewModel.updateSelected([ObjectAttributes.fillOpacity: $0]) }
         ), in: 0...1)
         .frame(width: 80)
+        .tooltip("Fill Opacity")
 
         Text("\(Int(fillOpacity * 100))%")
             .font(.caption)
@@ -187,6 +189,7 @@ struct SubToolbarView: View {
                 .frame(minWidth: 40)
         }
         .menuStyle(.borderlessButton)
+        .tooltip("Font Family")
 
         // Font size input - always shown with first font size
         let fontSize = attributes[ObjectAttributes.fontSize] as? CGFloat ?? 16.0
@@ -196,15 +199,15 @@ struct SubToolbarView: View {
             presets: fontSizePresets,
             onChange: { viewModel.updateSelected([ObjectAttributes.fontSize: $0]) }
         )
+        .tooltip("Font Size")
 
         // Text color picker - always shown with first text color
         let textColor = attributes[ObjectAttributes.textColor] as? Color ?? .black
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { textColor },
             set: { viewModel.updateSelected([ObjectAttributes.textColor: $0]) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
+        .tooltip("Text Color")
     }
 
     private var toolFontFamily: String {
@@ -235,6 +238,7 @@ struct SubToolbarView: View {
         }
         .menuStyle(.borderlessButton)
         .id(toolFontFamily)
+        .tooltip("Font Family")
 
         // Font size input with presets and direct entry
         ValueInputView(
@@ -243,14 +247,14 @@ struct SubToolbarView: View {
             presets: fontSizePresets,
             onChange: { updateToolAttr(key: ObjectAttributes.fontSize, value: $0) }
         )
+        .tooltip("Font Size")
 
         // Text color picker
-        ColorPicker("", selection: Binding(
+        ColorPresetPicker(selection: Binding(
             get: { attrs[ObjectAttributes.textColor] as? Color ?? .black },
             set: { updateToolAttr(key: ObjectAttributes.textColor, value: $0) }
         ))
-        .labelsHidden()
-        .frame(width: 40)
+        .tooltip("Text Color")
     }
 
     @ViewBuilder
@@ -261,28 +265,28 @@ struct SubToolbarView: View {
                     .font(.caption)
             }
             .buttonStyle(.plain)
-            .help("Bring to Front")
+            .tooltip("Bring to Front")
 
             Button(action: { viewModel.sendToBack() }) {
                 Image(systemName: "square.3.layers.3d.bottom.filled")
                     .font(.caption)
             }
             .buttonStyle(.plain)
-            .help("Send to Back")
+            .tooltip("Send to Back")
 
             Button(action: { viewModel.bringForward() }) {
                 Image(systemName: "square.3.layers.3d.top.stroked")
                     .font(.caption)
             }
             .buttonStyle(.plain)
-            .help("Bring Forward")
+            .tooltip("Bring Forward")
 
             Button(action: { viewModel.sendBackward() }) {
                 Image(systemName: "square.3.layers.3d.bottom.stroked")
                     .font(.caption)
             }
             .buttonStyle(.plain)
-            .help("Send Backward")
+            .tooltip("Send Backward")
         }
     }
 
@@ -293,14 +297,16 @@ struct SubToolbarView: View {
         let tool = toolRegistry.tool(for: viewModel.selectedTool)
         let attrs = attributeStore.attributes(for: viewModel.selectedTool)
 
-        // Shape tools - show stroke + fill + text controls
+        // Shape tools - show shape selector + stroke + fill + text controls
         if tool?.category == .shape {
-            ColorPicker("", selection: Binding(
+            ShapePickerStrip(viewModel: viewModel, lastShapeTool: $lastShapeTool)
+            Divider().frame(height: 20)
+
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
+            .tooltip("Stroke Color")
 
             ValueInputView(
                 value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
@@ -308,25 +314,27 @@ struct SubToolbarView: View {
                 presets: strokeWidthPresets,
                 onChange: { updateToolAttr(key: ObjectAttributes.strokeWidth, value: $0) }
             )
+            .tooltip("Stroke Width")
 
             strokeStyleMenu(currentStyle: attrs[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid) { option in
                 updateToolAttr(key: ObjectAttributes.strokeStyle, value: option.strokeStyleType)
             }
+            .tooltip("Stroke Style")
 
             Divider().frame(height: 20)
 
-            ColorPicker("", selection: Binding(
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
                 set: { updateToolAttr(key: ObjectAttributes.fillColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
+            .tooltip("Fill Color")
 
             Slider(value: Binding(
                 get: { attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0 },
                 set: { updateToolAttr(key: ObjectAttributes.fillOpacity, value: $0) }
             ), in: 0...1)
             .frame(width: 80)
+            .tooltip("Fill Opacity")
 
             Text("\(Int((attrs[ObjectAttributes.fillOpacity] as? CGFloat ?? 1.0) * 100))%")
                 .font(.caption)
@@ -341,12 +349,11 @@ struct SubToolbarView: View {
         }
         // Line tools - show only stroke controls
         else if tool?.category == .drawing {
-            ColorPicker("", selection: Binding(
+            ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
             ))
-            .labelsHidden()
-            .frame(width: 40)
+            .tooltip("Stroke Color")
 
             ValueInputView(
                 value: attrs[ObjectAttributes.strokeWidth] as? CGFloat ?? 2.0,
@@ -354,10 +361,12 @@ struct SubToolbarView: View {
                 presets: strokeWidthPresets,
                 onChange: { updateToolAttr(key: ObjectAttributes.strokeWidth, value: $0) }
             )
+            .tooltip("Stroke Width")
 
             strokeStyleMenu(currentStyle: attrs[ObjectAttributes.strokeStyle] as? StrokeStyleType ?? .solid) { option in
                 updateToolAttr(key: ObjectAttributes.strokeStyle, value: option.strokeStyleType)
             }
+            .tooltip("Stroke Style")
         }
 
         // Tool-provided custom controls

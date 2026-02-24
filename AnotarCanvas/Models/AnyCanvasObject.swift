@@ -288,6 +288,16 @@ public struct AnyCanvasObject: Identifiable {
     public var isFillable: Bool {
         _object is any FillableObject
     }
+
+    /// Check if underlying object conforms to CustomizableObject
+    public var isCustomizable: Bool {
+        _object is any CustomizableObject
+    }
+
+    /// Get as CustomizableObject if applicable
+    public var asCustomizable: (any CustomizableObject)? {
+        _object as? any CustomizableObject
+    }
 }
 
 // MARK: - Equatable

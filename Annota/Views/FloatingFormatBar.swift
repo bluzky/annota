@@ -30,6 +30,7 @@ struct FloatingFormatBar: View {
             }
             .labelsHidden()
             .frame(width: 70)
+            .tooltip("Font Size")
 
             Divider()
                 .frame(height: 20)
@@ -44,6 +45,7 @@ struct FloatingFormatBar: View {
                     .cornerRadius(4)
             }
             .buttonStyle(.plain)
+            .tooltip("Bold")
 
             // Italic Button
             Button(action: onItalicToggle) {
@@ -55,6 +57,7 @@ struct FloatingFormatBar: View {
                     .cornerRadius(4)
             }
             .buttonStyle(.plain)
+            .tooltip("Italic")
 
             Divider()
                 .frame(height: 20)
@@ -66,6 +69,7 @@ struct FloatingFormatBar: View {
             ))
             .labelsHidden()
             .frame(width: 40)
+            .tooltip("Text Color")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
