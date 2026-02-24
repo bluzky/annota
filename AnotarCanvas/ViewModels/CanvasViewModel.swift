@@ -82,7 +82,31 @@ public class CanvasViewModel: ObservableObject {
     }
 
     /// Multi-selection state
-    @Published public var selectionState = SelectionState()
+    @Published public var selectionState = SelectionState() {
+        didSet {
+            if selectionState != oldValue {
+                refreshSelectionCache()
+            }
+        }
+    }
+
+    // MARK: - Cached Selection State (Performance)
+
+    /// Cached attributes for the current selection — updated only on selection changes
+    /// or attribute mutations, NOT on geometry-only changes (move/resize/rotate).
+    @Published public private(set) var cachedSelectionAttributes: ObjectAttributes = [:]
+
+    /// Cached capabilities for the current selection
+    @Published public private(set) var cachedSelectionCapabilities: SelectionCapabilities = .empty
+
+    /// Recompute cached selection attributes and capabilities.
+    /// Called when selection changes or when selected-object attributes are mutated
+    /// (e.g. color, stroke width). NOT called on geometry-only mutations to avoid
+    /// expensive recomputation during drag/resize.
+    private func refreshSelectionCache() {
+        cachedSelectionAttributes = getSelectionAttributes()
+        cachedSelectionCapabilities = SelectionCapabilities.from(objects: selectedObjects)
+    }
 
     /// Backward compatibility: returns the single selected ID if exactly one object is selected
     public var selectedObjectId: UUID? {
@@ -183,6 +207,7 @@ public class CanvasViewModel: ObservableObject {
         nextZIndex += 1
         objects.append(AnyCanvasObject(obj))
         sortObjectsByZIndex()
+        refreshSelectionCache()
         return obj.id
     }
 
@@ -214,6 +239,7 @@ public class CanvasViewModel: ObservableObject {
 
         objects.append(AnyCanvasObject(imageObj))
         sortObjectsByZIndex()
+        refreshSelectionCache()
         return imageObj.id
     }
 
@@ -222,6 +248,7 @@ public class CanvasViewModel: ObservableObject {
     /// Remove object by ID
     public func removeObject(withId id: UUID) {
         objects.removeAll { $0.id == id }
+        refreshSelectionCache()
     }
 
     // MARK: - Batch Attribute Updates
@@ -237,6 +264,7 @@ public class CanvasViewModel: ObservableObject {
         for id in selectedIds {
             updateObject(id, attributes: attributes)
         }
+        refreshSelectionCache()
     }
 
     // MARK: - Selection Attribute Extraction
@@ -687,6 +715,7 @@ public class CanvasViewModel: ObservableObject {
         guard !idsToRemove.isEmpty else { return }
         objects.removeAll { idsToRemove.contains($0.id) }
         selectionState.clear()
+        // selectionState.clear() triggers didSet → refreshSelectionCache()
     }
 
     // MARK: - Z-Order Management
