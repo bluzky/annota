@@ -10,14 +10,24 @@ import SwiftUI
 @main
 struct AnnotaApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var settings = SettingsManager(
+        defaults: AnnotaSettings(),
+        storage: TOMLSettingsStorage(appName: "Annota")
+    )
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.light)
+                .environmentObject(settings)
         }
         .commands {
             CanvasFileCommands()
+        }
+
+        Settings {
+            SettingsWindowView()
+                .environmentObject(settings)
         }
     }
 }

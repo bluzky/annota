@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var viewModel = CanvasViewModel()
     @StateObject private var toolRegistry = ToolRegistry.shared
     @StateObject private var attributeStore = ToolAttributeStore()
+    @EnvironmentObject private var settings: SettingsManager<AnnotaSettings>
     @State private var keyMonitor: Any?
     @State private var lastShapeTool: DrawingTool = .rectangle
 
@@ -25,7 +26,7 @@ struct ContentView: View {
             // Floating toolbars overlaid on top
             HStack {
                 Spacer()
-                VStack(spacing: 0) {
+                VStack(spacing: 4) {
                     // Main toolbar - floating with top spacing
                     ToolbarView(viewModel: viewModel, toolRegistry: toolRegistry, lastShapeTool: $lastShapeTool)
                         .padding(.top, 12)
@@ -124,4 +125,10 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(
+            SettingsManager(
+                defaults: AnnotaSettings(),
+                storage: TOMLSettingsStorage(appName: "Annota")
+            )
+        )
 }
