@@ -9,9 +9,9 @@ import SwiftUI
 
 struct SettingsWindowView: View {
     @EnvironmentObject var settings: SettingsManager<AnnotaSettings>
-    @State private var selectedTab: SettingsTab = .ui
+    @State private var selectedSection: SettingsSection = .ui
 
-    enum SettingsTab: String, CaseIterable, Identifiable {
+    enum SettingsSection: String, CaseIterable, Identifiable {
         case ui = "UI"
         case canvas = "Canvas"
         case tools = "Tools"
@@ -32,39 +32,36 @@ struct SettingsWindowView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            UISettingsTab()
-                .tabItem {
-                    Label(SettingsTab.ui.rawValue, systemImage: SettingsTab.ui.icon)
-                }
-                .tag(SettingsTab.ui)
+        HStack(spacing: 0) {
+            // Sidebar
+            List(SettingsSection.allCases, selection: $selectedSection) { section in
+                Label(section.rawValue, systemImage: section.icon)
+                    .tag(section)
+            }
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
+            .frame(width: 180)
 
-            CanvasSettingsTab()
-                .tabItem {
-                    Label(SettingsTab.canvas.rawValue, systemImage: SettingsTab.canvas.icon)
-                }
-                .tag(SettingsTab.canvas)
+            Divider()
 
-            ToolsSettingsTab()
-                .tabItem {
-                    Label(SettingsTab.tools.rawValue, systemImage: SettingsTab.tools.icon)
+            // Detail
+            ScrollView {
+                switch selectedSection {
+                case .ui:
+                    UISettingsTab()
+                case .canvas:
+                    CanvasSettingsTab()
+                case .tools:
+                    ToolsSettingsTab()
+                case .keyBindings:
+                    KeyBindingsTab()
+                case .advanced:
+                    AdvancedSettingsTab()
                 }
-                .tag(SettingsTab.tools)
-
-            KeyBindingsTab()
-                .tabItem {
-                    Label(SettingsTab.keyBindings.rawValue, systemImage: SettingsTab.keyBindings.icon)
-                }
-                .tag(SettingsTab.keyBindings)
-
-            AdvancedSettingsTab()
-                .tabItem {
-                    Label(SettingsTab.advanced.rawValue, systemImage: SettingsTab.advanced.icon)
-                }
-                .tag(SettingsTab.advanced)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding()
-        .frame(minWidth: 500, minHeight: 350)
+        .frame(width: 600, height: 420)
     }
 }
 
