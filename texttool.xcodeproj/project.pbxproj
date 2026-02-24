@@ -183,6 +183,7 @@
 			);
 			name = Annota;
 			packageProductDependencies = (
+				AC00002100000021000000AC /* TOML */,
 			);
 			productName = Annota;
 			productReference = FF0B34392EEABCA300310EBB /* Annota.app */;
@@ -271,6 +272,7 @@
 			mainGroup = FF0B34302EEABCA300310EBB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */,
 				FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -754,6 +756,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mattt/swift-toml.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/nicklockwood/SVGPath.git";
@@ -769,6 +779,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
 			productName = SVGPath;
+		};
+		AC00002100000021000000AC /* TOML */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */;
+			productName = TOML;
 		};
 		FF0B65031EABCDEF00310EBB /* SVGPath */ = {
 			isa = XCSwiftPackageProductDependency;

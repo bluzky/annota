@@ -8,6 +8,58 @@
 import SwiftUI
 import Combine
 
+// MARK: - Alignment & Distribution Actions
+
+public enum AlignmentAction: CaseIterable {
+    case left
+    case right
+    case top
+    case bottom
+    case centerHorizontal
+    case centerVertical
+
+    public var title: String {
+        switch self {
+        case .left: return "Align Left"
+        case .right: return "Align Right"
+        case .top: return "Align Top"
+        case .bottom: return "Align Bottom"
+        case .centerHorizontal: return "Center Horizontal"
+        case .centerVertical: return "Center Vertical"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .left: return "align.horizontal.left"
+        case .right: return "align.horizontal.right"
+        case .top: return "align.vertical.top"
+        case .bottom: return "align.vertical.bottom"
+        case .centerHorizontal: return "align.horizontal.center"
+        case .centerVertical: return "align.vertical.center"
+        }
+    }
+}
+
+public enum DistributionAction: CaseIterable {
+    case horizontal
+    case vertical
+
+    public var title: String {
+        switch self {
+        case .horizontal: return "Distribute Horizontally"
+        case .vertical: return "Distribute Vertically"
+        }
+    }
+
+    public var systemImage: String {
+        switch self {
+        case .horizontal: return "distribute.horizontal.center"
+        case .vertical: return "distribute.vertical.center"
+        }
+    }
+}
+
 @MainActor
 public class CanvasViewModel: ObservableObject {
     public init() {}
@@ -705,6 +757,126 @@ public class CanvasViewModel: ObservableObject {
             objects[index] = objects[index].applying([ObjectAttributes.zIndex: max(0, currentZ - 1)])
         }
         sortObjectsByZIndex()
+    }
+
+    // MARK: - Alignment & Distribution
+
+    /// Align selected objects according to the given action.
+    /// Locked objects are included in the reference-edge calculation but are not moved.
+    /// Requires at least 2 selected objects; returns early otherwise.
+    public func alignSelected(_ action: AlignmentAction) {
+        let selected = selectedObjects
+        guard selected.count >= 2 else { return }
+
+        // Compute reference edges / centers across ALL selected objects (including locked)
+        let boxes = selected.map { $0.boundingBox() }
+        let minX = boxes.map { $0.minX }.min()!
+        let maxX = boxes.map { $0.maxX }.max()!
+        let minY = boxes.map { $0.minY }.min()!
+        let maxY = boxes.map { $0.maxY }.max()!
+        let centerX = (minX + maxX) / 2
+        let centerY = (minY + maxY) / 2
+
+        for obj in selected {
+            guard !obj.isLocked else { continue }
+            guard let index = objectIndex(withId: obj.id) else { continue }
+            let box = obj.boundingBox()
+
+            let dx: CGFloat
+            let dy: CGFloat
+
+            switch action {
+            case .left:
+                dx = minX - box.minX
+                dy = 0
+            case .right:
+                dx = maxX - box.maxX
+                dy = 0
+            case .top:
+                dx = 0
+                dy = minY - box.minY
+            case .bottom:
+                dx = 0
+                dy = maxY - box.maxY
+            case .centerHorizontal:
+                dx = centerX - box.midX
+                dy = 0
+            case .centerVertical:
+                dx = 0
+                dy = centerY - box.midY
+            }
+
+            applyGeometry(at: index) {
+                $0.position.x += dx
+                $0.position.y += dy
+            }
+        }
+    }
+
+    /// Distribute selected objects with equal gaps between edges along the chosen axis.
+    /// The first and last objects (by position) stay in place and define the span.
+    /// Objects in between are repositioned with equal spacing between their edges.
+    /// Locked objects are not moved but are included in the total object width/height calculation.
+    /// Requires at least 3 selected objects; returns early otherwise.
+    public func distributeSelected(_ action: DistributionAction) {
+        let selected = selectedObjects
+        guard selected.count >= 3 else { return }
+
+        switch action {
+        case .horizontal:
+            // Sort by left edge position
+            let sorted = selected.sorted { $0.boundingBox().minX < $1.boundingBox().minX }
+            let firstBox = sorted.first!.boundingBox()
+            let lastBox = sorted.last!.boundingBox()
+
+            // Calculate total span and total width of all objects
+            let totalSpan = lastBox.minX - firstBox.maxX  // Space available between first and last
+            let totalObjectWidth = sorted.dropFirst().dropLast().reduce(CGFloat(0)) { $0 + $1.boundingBox().width }
+
+            // Equal gap between objects
+            let gap = (totalSpan - totalObjectWidth) / CGFloat(sorted.count - 1)
+
+            // Position objects from left to right
+            var currentX = firstBox.maxX + gap
+            for obj in sorted.dropFirst().dropLast() {
+                guard !obj.isLocked else {
+                    currentX += obj.boundingBox().width + gap
+                    continue
+                }
+                guard let index = objectIndex(withId: obj.id) else { continue }
+                let box = obj.boundingBox()
+                let dx = currentX - box.minX
+                applyGeometry(at: index) { $0.position.x += dx }
+                currentX += box.width + gap
+            }
+
+        case .vertical:
+            // Sort by top edge position
+            let sorted = selected.sorted { $0.boundingBox().minY < $1.boundingBox().minY }
+            let firstBox = sorted.first!.boundingBox()
+            let lastBox = sorted.last!.boundingBox()
+
+            // Calculate total span and total height of all objects
+            let totalSpan = lastBox.minY - firstBox.maxY  // Space available between first and last
+            let totalObjectHeight = sorted.dropFirst().dropLast().reduce(CGFloat(0)) { $0 + $1.boundingBox().height }
+
+            // Equal gap between objects
+            let gap = (totalSpan - totalObjectHeight) / CGFloat(sorted.count - 1)
+
+            // Position objects from top to bottom
+            var currentY = firstBox.maxY + gap
+            for obj in sorted.dropFirst().dropLast() {
+                guard !obj.isLocked else {
+                    currentY += obj.boundingBox().height + gap
+                    continue
+                }
+                guard let index = objectIndex(withId: obj.id) else { continue }
+                let box = obj.boundingBox()
+                let dy = currentY - box.minY
+                applyGeometry(at: index) { $0.position.y += dy }
+                currentY += box.height + gap
+            }
+        }
     }
 
     // MARK: - Viewport Control

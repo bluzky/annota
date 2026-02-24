@@ -58,9 +58,8 @@ struct SubToolbarView: View {
                 toolControls
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .frame(minWidth: 260)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
@@ -78,6 +77,7 @@ struct SubToolbarView: View {
     private var selectionControls: some View {
         let capabilities = viewModel.selectionCapabilities
         let attrs = viewModel.getSelectionAttributes()
+        let objectCount = viewModel.selectionState.selectedIds.count
 
         if capabilities.canStroke {
             strokeControls(attributes: attrs)
@@ -94,7 +94,8 @@ struct SubToolbarView: View {
             Divider().frame(height: 20)
         }
 
-        zOrderControls
+        // Arrangement controls: z-order + alignment/distribution
+        arrangeControls(objectCount: objectCount)
     }
 
     @ViewBuilder
@@ -133,11 +134,16 @@ struct SubToolbarView: View {
                 }
             }
         } label: {
-            Text(currentOption.rawValue)
-                .font(.body)
-                .frame(minWidth: 50)
+            HStack(spacing: 3) {
+                Text(currentOption.rawValue)
+                    .font(.body)
+                    .frame(minWidth: 50)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
         .tooltip("Stroke Style")
     }
 
@@ -184,11 +190,16 @@ struct SubToolbarView: View {
                 }
             }
         } label: {
-            Text("Font")
-                .font(fontFamily == "System" ? .body : .custom(fontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
-                .frame(minWidth: 40)
+            HStack(spacing: 3) {
+                Text("Font")
+                    .font(fontFamily == "System" ? .body : .custom(fontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    .frame(minWidth: 40)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
         .tooltip("Font Family")
 
         // Font size input - always shown with first font size
@@ -232,11 +243,16 @@ struct SubToolbarView: View {
                 }
             }
         } label: {
-            Text("Font")
-                .font(toolFontFamily == "System" ? .body : .custom(toolFontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
-                .frame(minWidth: 40)
+            HStack(spacing: 3) {
+                Text("Font")
+                    .font(toolFontFamily == "System" ? .body : .custom(toolFontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    .frame(minWidth: 40)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
         .id(toolFontFamily)
         .tooltip("Font Family")
 
@@ -258,36 +274,75 @@ struct SubToolbarView: View {
     }
 
     @ViewBuilder
-    private var zOrderControls: some View {
-        HStack(spacing: 4) {
-            Button(action: { viewModel.bringToFront() }) {
-                Image(systemName: "square.3.layers.3d.top.filled")
-                    .font(.caption)
-            }
-            .buttonStyle(.plain)
-            .tooltip("Bring to Front")
-
-            Button(action: { viewModel.sendToBack() }) {
-                Image(systemName: "square.3.layers.3d.bottom.filled")
-                    .font(.caption)
-            }
-            .buttonStyle(.plain)
-            .tooltip("Send to Back")
-
-            Button(action: { viewModel.bringForward() }) {
-                Image(systemName: "square.3.layers.3d.top.stroked")
-                    .font(.caption)
-            }
-            .buttonStyle(.plain)
-            .tooltip("Bring Forward")
-
-            Button(action: { viewModel.sendBackward() }) {
-                Image(systemName: "square.3.layers.3d.bottom.stroked")
-                    .font(.caption)
-            }
-            .buttonStyle(.plain)
-            .tooltip("Send Backward")
+    private func arrangeControls(objectCount: Int) -> some View {
+        // All arrangement controls in one flat HStack with equal spacing
+        Button(action: { viewModel.bringToFront() }) {
+            Image(systemName: "square.3.layers.3d.top.filled")
+                .font(.caption)
         }
+        .buttonStyle(.plain)
+        .tooltip("Bring to Front")
+
+        Button(action: { viewModel.sendToBack() }) {
+            Image(systemName: "square.3.layers.3d.bottom.filled")
+                .font(.caption)
+        }
+        .buttonStyle(.plain)
+        .tooltip("Send to Back")
+
+        Button(action: { viewModel.bringForward() }) {
+            Image(systemName: "square.2.layers.3d.top.filled")
+                .font(.caption)
+        }
+        .buttonStyle(.plain)
+        .tooltip("Bring Forward")
+
+        Button(action: { viewModel.sendBackward() }) {
+            Image(systemName: "square.2.layers.3d.bottom.filled")
+                .font(.caption)
+        }
+        .buttonStyle(.plain)
+        .tooltip("Send Backward")
+
+        // Align menu — disabled when < 2 objects selected
+        Menu {
+            ForEach(AlignmentAction.allCases, id: \.self) { action in
+                Button(action: { viewModel.alignSelected(action) }) {
+                    Label(action.title, systemImage: action.systemImage)
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "align.horizontal.center")
+                    .font(.caption)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(objectCount < 2)
+        .tooltip("Align")
+
+        // Distribute menu — disabled when < 3 objects selected
+        Menu {
+            ForEach(DistributionAction.allCases, id: \.self) { action in
+                Button(action: { viewModel.distributeSelected(action) }) {
+                    Label(action.title, systemImage: action.systemImage)
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "distribute.horizontal.center")
+                    .font(.caption)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(objectCount < 3)
+        .tooltip("Distribute")
     }
 
     // MARK: - Tool Controls
@@ -398,10 +453,15 @@ struct SubToolbarView: View {
                 }
             }
         } label: {
-            Text(current.rawValue)
-                .font(.body)
-                .frame(minWidth: 50)
+            HStack(spacing: 3) {
+                Text(current.rawValue)
+                    .font(.body)
+                    .frame(minWidth: 50)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
     }
 }
