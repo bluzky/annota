@@ -111,13 +111,9 @@ struct ToolKeySettings: Codable, Equatable {
     var select: String = "v"
     var hand: String = "h"
     var text: String = "t"
-    var rectangle: String = "r"
-    var line: String = "l"
+    var shape: String = "r"
+    var line: String = "f"
     var arrow: String = "a"
-    var oval: String = "o"
-    var triangle: String = "g"
-    var diamond: String = "d"
-    var star: String = "s"
 }
 
 // MARK: - Command Key Bindings (modifier + key — triggers an action)

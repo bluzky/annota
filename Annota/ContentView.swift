@@ -80,11 +80,23 @@ struct ContentView: View {
 
     // MARK: - Keyboard Shortcuts
 
+    /// Build a mapping from key character → DrawingTool using current settings.
+    /// The shape key maps to whatever the last-used shape tool is.
+    private func toolKeyMap() -> [String: DrawingTool] {
+        let keys = settings.current.toolKeys
+        return [
+            keys.select: .select,
+            keys.hand: .hand,
+            keys.text: .text,
+            keys.shape: lastShapeTool,
+            keys.line: .line,
+            keys.arrow: .arrow,
+        ]
+    }
+
     private func installKeyMonitor() {
         guard keyMonitor == nil else { return }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak viewModel] event in
-            guard let viewModel else { return event }
-
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Let text fields handle their own keyboard input
             if viewModel.isAnyObjectEditing {
                 return event
@@ -114,6 +126,19 @@ struct ContentView: View {
             if modifiers.isEmpty && (event.keyCode == 51 || event.keyCode == 117) {
                 if viewModel.selectionState.hasSelection {
                     viewModel.deleteSelected()
+                    return nil
+                }
+            }
+
+            // Tool quick keys — single key without modifiers switches the active tool
+            if modifiers.isEmpty, let key = event.charactersIgnoringModifiers?.lowercased() {
+                let map = toolKeyMap()
+                if let tool = map[key] {
+                    viewModel.selectedTool = tool
+                    // Track shape tool for the toolbar shape picker
+                    if ToolRegistry.shared.tool(for: tool)?.category == .shape {
+                        lastShapeTool = tool
+                    }
                     return nil
                 }
             }

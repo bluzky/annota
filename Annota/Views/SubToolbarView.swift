@@ -58,8 +58,8 @@ struct SubToolbarView: View {
                 toolControls
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
         .frame(minWidth: 260)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)

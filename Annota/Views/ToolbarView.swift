@@ -18,22 +18,16 @@ struct ToolbarView: View {
     private var keys: ToolKeySettings { settings.current.toolKeys }
 
     var body: some View {
-        HStack(spacing: 20) {
-            // Tool Selection — order is an application-level concern, hardcoded here.
-            // Shape-category tools are rendered as a single popover button (shapePickerButton).
-            HStack(spacing: 4) {
-                toolButton(.select, icon: "pointer.arrow", label: "Select", key: keys.select)
-                toolButton(.hand, icon: "hand.raised", label: "Hand", key: keys.hand)
-                shapePickerButton
-                toolButton(.line, icon: "line.diagonal", label: "Line", key: keys.line)
-                toolButton(.arrow, icon: "arrow.right", label: "Arrow", key: keys.arrow)
-                toolButton(.text, icon: "textformat", label: "Text", key: keys.text)
-            }
-            Divider()
-                .frame(height: 20)
+        HStack(spacing: 4) {
+            toolButton(.select, icon: "pointer.arrow", label: "Select", key: keys.select)
+            toolButton(.hand, icon: "hand.raised", label: "Hand", key: keys.hand)
+            shapePickerButton
+            toolButton(.line, icon: "line.diagonal", label: "Line", key: keys.line)
+            toolButton(.arrow, icon: "arrow.right", label: "Arrow", key: keys.arrow)
+            toolButton(.text, icon: "textformat", label: "Text", key: keys.text)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
@@ -51,17 +45,8 @@ struct ToolbarView: View {
         return shapeIcons[lastShapeTool.id] ?? "square.on.square"
     }
 
-    /// Quick key for the currently active shape tool.
-    private var shapeKey: String {
-        switch lastShapeTool.id {
-        case "rectangle": return keys.rectangle
-        case "oval": return keys.oval
-        case "triangle": return keys.triangle
-        case "diamond": return keys.diamond
-        case "star": return keys.star
-        default: return ""
-        }
-    }
+    /// Quick key for the shape tool group (activates last-used shape).
+    private var shapeKey: String { keys.shape }
 
     /// A single toolbar button that activates the last-used shape tool on click.
     @ViewBuilder

@@ -272,14 +272,10 @@ struct KeyBindingsTab: View {
                 Section("Tool Quick Keys") {
                     KeyRow(label: "Select", key: settings.binding(for: \.toolKeys.select))
                     KeyRow(label: "Hand", key: settings.binding(for: \.toolKeys.hand))
-                    KeyRow(label: "Text", key: settings.binding(for: \.toolKeys.text))
-                    KeyRow(label: "Rectangle", key: settings.binding(for: \.toolKeys.rectangle))
-                    KeyRow(label: "Oval", key: settings.binding(for: \.toolKeys.oval))
-                    KeyRow(label: "Triangle", key: settings.binding(for: \.toolKeys.triangle))
-                    KeyRow(label: "Diamond", key: settings.binding(for: \.toolKeys.diamond))
-                    KeyRow(label: "Star", key: settings.binding(for: \.toolKeys.star))
+                    KeyRow(label: "Shape", key: settings.binding(for: \.toolKeys.shape))
                     KeyRow(label: "Line", key: settings.binding(for: \.toolKeys.line))
                     KeyRow(label: "Arrow", key: settings.binding(for: \.toolKeys.arrow))
+                    KeyRow(label: "Text", key: settings.binding(for: \.toolKeys.text))
                 }
 
                 Section("Command Shortcuts") {
