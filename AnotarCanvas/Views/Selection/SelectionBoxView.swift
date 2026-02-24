@@ -21,7 +21,7 @@ struct SelectionBoxView: View {
         ZStack {
             // Selection border rectangle
             Rectangle()
-                .stroke(selectionColor, lineWidth: 1)
+                .stroke(selectionColor, lineWidth: 2)
                 .frame(
                     width: selectionBox.bounds.width,
                     height: selectionBox.bounds.height

@@ -166,7 +166,7 @@ public struct CanvasView: View {
             } else if viewModel.selectedTool == .select,
                       let selectionBox = viewModel.selectionBox {
                 let canvasPoint = viewModel.viewport.screenToCanvas(screenLocation)
-                if let hitZone = selectionBox.hitTest(canvasPoint) {
+                if let hitZone = selectionBox.hitTest(canvasPoint, scale: viewModel.viewport.scale) {
                     cursorForHitZone(hitZone).set()
                 } else {
                     NSCursor.arrow.set()
@@ -289,7 +289,7 @@ public struct CanvasView: View {
                 // Then check if we started drag on a selection box handle (skip for line-only selections)
                 else if !viewModel.isControlPointOnlySelection,
                    let selectionBox = viewModel.selectionBox,
-                   let hitZone = selectionBox.hitTest(canvasStart) {
+                   let hitZone = selectionBox.hitTest(canvasStart, scale: viewModel.viewport.scale) {
                     switch hitZone {
                     case .corner, .edge:
                         // Start resize

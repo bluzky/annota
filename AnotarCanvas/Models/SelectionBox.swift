@@ -75,10 +75,13 @@ public struct SelectionBox {
     /// - Parameters:
     ///   - point: The point to test (in canvas coordinates)
     ///   - handleSize: The size of handles (default uses standard size)
+    ///   - scale: The viewport scale factor (for zoom-invariant hit boxes)
     /// - Returns: The hit zone if the point hits something, nil otherwise
-    public func hitTest(_ point: CGPoint, handleSize: CGFloat = SelectionBox.handleSize) -> HitZone? {
-        let resizeRadius = handleSize / 2 + 4
-        let rotationRadius = Self.rotationHandleSize / 2
+    public func hitTest(_ point: CGPoint, handleSize: CGFloat = SelectionBox.handleSize, scale: CGFloat = 1.0) -> HitZone? {
+        // Scale handle sizes inversely with zoom so they remain constant size on screen
+        let scaledHandleSize = handleSize / scale
+        let scaledRotationHandleSize = Self.rotationHandleSize / scale
+        let resizeRadius = scaledHandleSize / 2 + 4 / scale
 
         // Transform point into the selection box's local (unrotated) space
         let localPoint: CGPoint
@@ -107,22 +110,22 @@ public struct SelectionBox {
         }
 
         // Check edge handles (span between corners)
-        let halfH = handleSize / 2
+        let halfH = scaledHandleSize / 2
         for edge in Edge.allCases {
             let hitRect: CGRect
             switch edge {
             case .top:
-                hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.minY - halfH,
-                                 width: bounds.width - handleSize * 2, height: handleSize)
+                hitRect = CGRect(x: bounds.minX + scaledHandleSize, y: bounds.minY - halfH,
+                                 width: bounds.width - scaledHandleSize * 2, height: scaledHandleSize)
             case .bottom:
-                hitRect = CGRect(x: bounds.minX + handleSize, y: bounds.maxY - halfH,
-                                 width: bounds.width - handleSize * 2, height: handleSize)
+                hitRect = CGRect(x: bounds.minX + scaledHandleSize, y: bounds.maxY - halfH,
+                                 width: bounds.width - scaledHandleSize * 2, height: scaledHandleSize)
             case .left:
-                hitRect = CGRect(x: bounds.minX - halfH, y: bounds.minY + handleSize,
-                                 width: handleSize, height: bounds.height - handleSize * 2)
+                hitRect = CGRect(x: bounds.minX - halfH, y: bounds.minY + scaledHandleSize,
+                                 width: scaledHandleSize, height: bounds.height - scaledHandleSize * 2)
             case .right:
-                hitRect = CGRect(x: bounds.maxX - halfH, y: bounds.minY + handleSize,
-                                 width: handleSize, height: bounds.height - handleSize * 2)
+                hitRect = CGRect(x: bounds.maxX - halfH, y: bounds.minY + scaledHandleSize,
+                                 width: scaledHandleSize, height: bounds.height - scaledHandleSize * 2)
             }
             if hitRect.contains(localPoint) {
                 return .edge(edge)
@@ -130,7 +133,7 @@ public struct SelectionBox {
         }
 
         // Check rotation handles (larger square at corners, shifted outward)
-        let shift = (Self.rotationHandleSize - handleSize) / 2
+        let shift = (scaledRotationHandleSize - scaledHandleSize) / 2
         for corner in Corner.allCases {
             let cornerPos = cornerPosition(for: corner)
             // Center of the rotation square is shifted outward from corner
@@ -146,8 +149,8 @@ public struct SelectionBox {
             case .bottomRight:
                 cx = cornerPos.x + shift; cy = cornerPos.y + shift
             }
-            let halfSize = Self.rotationHandleSize / 2
-            let hitRect = CGRect(x: cx - halfSize, y: cy - halfSize, width: Self.rotationHandleSize, height: Self.rotationHandleSize)
+            let halfSize = scaledRotationHandleSize / 2
+            let hitRect = CGRect(x: cx - halfSize, y: cy - halfSize, width: scaledRotationHandleSize, height: scaledRotationHandleSize)
             if hitRect.contains(localPoint) {
                 return .rotation(corner)
             }
