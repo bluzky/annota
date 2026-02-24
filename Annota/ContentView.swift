@@ -94,6 +94,43 @@ struct ContentView: View {
         ]
     }
 
+    /// Check if event matches a keyboard shortcut pattern (e.g., "cmd+shift+]")
+    private func matchesShortcut(_ event: NSEvent, _ pattern: String) -> Bool {
+        let parts = pattern.lowercased().split(separator: "+").map(String.init)
+        guard let keyChar = parts.last else { return false }
+
+        var expectedModifiers: NSEvent.ModifierFlags = []
+        for part in parts.dropLast() {
+            switch part {
+            case "cmd", "command": expectedModifiers.insert(.command)
+            case "shift": expectedModifiers.insert(.shift)
+            case "ctrl", "control": expectedModifiers.insert(.control)
+            case "opt", "option", "alt": expectedModifiers.insert(.option)
+            default: break
+            }
+        }
+
+        let actualModifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Special key mapping
+        let eventKey: String
+        if keyChar == "left" && event.keyCode == 123 {
+            eventKey = "left"
+        } else if keyChar == "right" && event.keyCode == 124 {
+            eventKey = "right"
+        } else if keyChar == "up" && event.keyCode == 126 {
+            eventKey = "up"
+        } else if keyChar == "down" && event.keyCode == 125 {
+            eventKey = "down"
+        } else if keyChar == "[" || keyChar == "]" {
+            eventKey = event.characters?.lowercased() ?? ""
+        } else {
+            eventKey = event.charactersIgnoringModifiers?.lowercased() ?? ""
+        }
+
+        return actualModifiers == expectedModifiers && eventKey == keyChar
+    }
+
     private func installKeyMonitor() {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
@@ -103,23 +140,82 @@ struct ContentView: View {
             }
 
             let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            let keys = settings.current.commandKeys
 
             // Cmd+C: Copy
-            if modifiers == .command && event.charactersIgnoringModifiers == "c" {
+            if matchesShortcut(event, keys.copy) {
                 viewModel.copySelection()
                 return nil
             }
 
             // Cmd+X: Cut
-            if modifiers == .command && event.charactersIgnoringModifiers == "x" {
+            if matchesShortcut(event, keys.cut) {
                 viewModel.cutSelection()
                 return nil
             }
 
             // Cmd+V: Paste
-            if modifiers == .command && event.charactersIgnoringModifiers == "v" {
+            if matchesShortcut(event, keys.paste) {
                 viewModel.pasteFromClipboard(viewportSize: viewModel.canvasSize)
                 return nil
+            }
+
+            // Z-order arrangement
+            if matchesShortcut(event, keys.bringToFront) {
+                viewModel.bringToFront()
+                return nil
+            }
+            if matchesShortcut(event, keys.bringForward) {
+                viewModel.bringForward()
+                return nil
+            }
+            if matchesShortcut(event, keys.sendBackward) {
+                viewModel.sendBackward()
+                return nil
+            }
+            if matchesShortcut(event, keys.sendToBack) {
+                viewModel.sendToBack()
+                return nil
+            }
+
+            // Alignment (requires 2+ selected)
+            if viewModel.selectionState.selectedIds.count >= 2 {
+                if matchesShortcut(event, keys.alignLeft) {
+                    viewModel.alignSelected(.left)
+                    return nil
+                }
+                if matchesShortcut(event, keys.alignRight) {
+                    viewModel.alignSelected(.right)
+                    return nil
+                }
+                if matchesShortcut(event, keys.alignTop) {
+                    viewModel.alignSelected(.top)
+                    return nil
+                }
+                if matchesShortcut(event, keys.alignBottom) {
+                    viewModel.alignSelected(.bottom)
+                    return nil
+                }
+                if matchesShortcut(event, keys.alignCenterH) {
+                    viewModel.alignSelected(.centerHorizontal)
+                    return nil
+                }
+                if matchesShortcut(event, keys.alignCenterV) {
+                    viewModel.alignSelected(.centerVertical)
+                    return nil
+                }
+            }
+
+            // Distribution (requires 3+ selected)
+            if viewModel.selectionState.selectedIds.count >= 3 {
+                if matchesShortcut(event, keys.distributeH) {
+                    viewModel.distributeSelected(.horizontal)
+                    return nil
+                }
+                if matchesShortcut(event, keys.distributeV) {
+                    viewModel.distributeSelected(.vertical)
+                    return nil
+                }
             }
 
             // Delete (keyCode 51) or Forward Delete (keyCode 117)

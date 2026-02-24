@@ -72,13 +72,12 @@ struct ValueInputView: View {
                 }
             } label: {
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.secondary)
-                    .frame(width: 22, height: 24)
+                    .frame(width: 18, height: 24)
                     .contentShape(Rectangle())
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
+            .buttonStyle(.plain)
             .fixedSize()
         }
         .overlay(

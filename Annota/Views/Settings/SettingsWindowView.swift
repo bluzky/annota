@@ -287,6 +287,27 @@ struct KeyBindingsTab: View {
                     KeyRow(label: "Undo", key: settings.binding(for: \.commandKeys.undo))
                     KeyRow(label: "Redo", key: settings.binding(for: \.commandKeys.redo))
                 }
+
+                Section("Arrangement") {
+                    KeyRow(label: "Bring to Front", key: settings.binding(for: \.commandKeys.bringToFront))
+                    KeyRow(label: "Bring Forward", key: settings.binding(for: \.commandKeys.bringForward))
+                    KeyRow(label: "Send Backward", key: settings.binding(for: \.commandKeys.sendBackward))
+                    KeyRow(label: "Send to Back", key: settings.binding(for: \.commandKeys.sendToBack))
+                }
+
+                Section("Alignment") {
+                    KeyRow(label: "Align Left", key: settings.binding(for: \.commandKeys.alignLeft))
+                    KeyRow(label: "Align Right", key: settings.binding(for: \.commandKeys.alignRight))
+                    KeyRow(label: "Align Top", key: settings.binding(for: \.commandKeys.alignTop))
+                    KeyRow(label: "Align Bottom", key: settings.binding(for: \.commandKeys.alignBottom))
+                    KeyRow(label: "Align Center Horizontally", key: settings.binding(for: \.commandKeys.alignCenterH))
+                    KeyRow(label: "Align Center Vertically", key: settings.binding(for: \.commandKeys.alignCenterV))
+                }
+
+                Section("Distribution") {
+                    KeyRow(label: "Distribute Horizontally", key: settings.binding(for: \.commandKeys.distributeH))
+                    KeyRow(label: "Distribute Vertically", key: settings.binding(for: \.commandKeys.distributeV))
+                }
             }
             .formStyle(.grouped)
         }

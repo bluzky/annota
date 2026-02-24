@@ -23,6 +23,7 @@ struct AnnotaApp: App {
         }
         .commands {
             CanvasFileCommands()
+            ArrangeCommands()
         }
 
         Settings {

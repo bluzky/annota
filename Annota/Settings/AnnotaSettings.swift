@@ -127,11 +127,41 @@ struct CommandKeySettings: Codable, Equatable {
     var undo: String = "cmd+z"
     var redo: String = "cmd+shift+z"
 
+    // Arrangement
+    var bringToFront: String = "cmd+shift+]"
+    var bringForward: String = "cmd+]"
+    var sendBackward: String = "cmd+["
+    var sendToBack: String = "cmd+shift+["
+
+    // Alignment
+    var alignLeft: String = "cmd+shift+left"
+    var alignRight: String = "cmd+shift+right"
+    var alignTop: String = "cmd+shift+up"
+    var alignBottom: String = "cmd+shift+down"
+    var alignCenterH: String = "cmd+shift+h"
+    var alignCenterV: String = "cmd+shift+v"
+
+    // Distribution
+    var distributeH: String = "cmd+ctrl+h"
+    var distributeV: String = "cmd+ctrl+v"
+
     enum CodingKeys: String, CodingKey {
         case deleteSelected = "delete_selected"
         case copy, cut, paste
         case selectAll = "select_all"
         case undo, redo
+        case bringToFront = "bring_to_front"
+        case bringForward = "bring_forward"
+        case sendBackward = "send_backward"
+        case sendToBack = "send_to_back"
+        case alignLeft = "align_left"
+        case alignRight = "align_right"
+        case alignTop = "align_top"
+        case alignBottom = "align_bottom"
+        case alignCenterH = "align_center_h"
+        case alignCenterV = "align_center_v"
+        case distributeH = "distribute_h"
+        case distributeV = "distribute_v"
     }
 }
 
