@@ -321,6 +321,11 @@ public class CanvasViewModel: ObservableObject {
                     result[ObjectAttributes.horizontalTextAlignment] = shape.textAttributes.horizontalAlignment
                     result[ObjectAttributes.verticalTextAlignment] = shape.textAttributes.verticalAlignment
                 }
+            } else if let line = first.asLineObject {
+                // Line label attributes
+                result[ObjectAttributes.textColor] = line.labelAttributes.textColor.color
+                result[ObjectAttributes.fontSize] = line.labelAttributes.fontSize
+                result[ObjectAttributes.fontFamily] = line.labelAttributes.fontFamily
             }
         }
 
@@ -395,6 +400,17 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != shape.textAttributes.verticalAlignment {
                         result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
                     }
+                }
+            } else if let line = obj.asLineObject {
+                // Check line label attributes
+                if result[ObjectAttributes.textColor] as? Color != line.labelAttributes.textColor.color {
+                    result.removeValue(forKey: ObjectAttributes.textColor)
+                }
+                if result[ObjectAttributes.fontSize] as? CGFloat != line.labelAttributes.fontSize {
+                    result.removeValue(forKey: ObjectAttributes.fontSize)
+                }
+                if result[ObjectAttributes.fontFamily] as? String != line.labelAttributes.fontFamily {
+                    result.removeValue(forKey: ObjectAttributes.fontFamily)
                 }
             }
         }

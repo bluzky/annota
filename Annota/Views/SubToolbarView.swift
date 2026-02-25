@@ -90,7 +90,7 @@ struct SubToolbarView: View {
         }
 
         if capabilities.canEditText {
-            selectionTextControls(attributes: attrs)
+            selectionTextControls(attributes: attrs, canAlignText: capabilities.canAlignText)
             Divider().frame(height: 20)
         }
 
@@ -175,7 +175,7 @@ struct SubToolbarView: View {
     }
 
     @ViewBuilder
-    private func selectionTextControls(attributes: ObjectAttributes) -> some View {
+    private func selectionTextControls(attributes: ObjectAttributes, canAlignText: Bool = true) -> some View {
         // Font family picker - always shown with first font family
         let fontFamily = attributes[ObjectAttributes.fontFamily] as? String ?? "System"
         Menu {
@@ -226,13 +226,15 @@ struct SubToolbarView: View {
         ))
         .tooltip("Text Color")
 
-        // Text alignment dropdown
-        let hAlign = attributes[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment ?? .center
-        let vAlign = attributes[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment ?? .center
-        TextAlignmentMenu(horizontalAlignment: hAlign, verticalAlignment: vAlign) { newHAlign in
-            viewModel.updateSelected([ObjectAttributes.horizontalTextAlignment: newHAlign])
-        } onVerticalChange: { newVAlign in
-            viewModel.updateSelected([ObjectAttributes.verticalTextAlignment: newVAlign])
+        // Text alignment dropdown (only for objects that support alignment, not lines)
+        if canAlignText {
+            let hAlign = attributes[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment ?? .center
+            let vAlign = attributes[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment ?? .center
+            TextAlignmentMenu(horizontalAlignment: hAlign, verticalAlignment: vAlign) { newHAlign in
+                viewModel.updateSelected([ObjectAttributes.horizontalTextAlignment: newHAlign])
+            } onVerticalChange: { newVAlign in
+                viewModel.updateSelected([ObjectAttributes.verticalTextAlignment: newVAlign])
+            }
         }
     }
 
@@ -298,6 +300,57 @@ struct SubToolbarView: View {
         } onVerticalChange: { newVAlign in
             updateToolAttr(key: ObjectAttributes.verticalTextAlignment, value: newVAlign)
         }
+    }
+
+    @ViewBuilder
+    private func toolLabelTextControls(attrs: ObjectAttributes) -> some View {
+        // Font family picker
+        Menu {
+            ForEach(availableFontFamilies, id: \.self) { family in
+                Button(action: {
+                    DispatchQueue.main.async {
+                        updateToolAttr(key: ObjectAttributes.fontFamily, value: family)
+                    }
+                }) {
+                    if family == toolFontFamily {
+                        Label(family, systemImage: "checkmark")
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    } else {
+                        Text(family)
+                            .font(family == "System" ? .body : .custom(family, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text("Font")
+                    .font(toolFontFamily == "System" ? .body : .custom(toolFontFamily, size: NSFont.systemFontSize)).fontWeight(.regular)
+                    .frame(minWidth: 40)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .id(toolFontFamily)
+        .tooltip("Font Family")
+
+        // Font size input
+        ValueInputView(
+            value: attrs[ObjectAttributes.fontSize] as? CGFloat ?? 16.0,
+            min: 8, max: 200,
+            presets: fontSizePresets,
+            onChange: { updateToolAttr(key: ObjectAttributes.fontSize, value: $0) }
+        )
+        .tooltip("Font Size")
+
+        // Text color picker
+        ColorPresetPicker(selection: Binding(
+            get: { attrs[ObjectAttributes.textColor] as? Color ?? .black },
+            set: { updateToolAttr(key: ObjectAttributes.textColor, value: $0) }
+        ))
+        .tooltip("Text Color")
     }
 
     @ViewBuilder
@@ -449,6 +502,9 @@ struct SubToolbarView: View {
                 updateToolAttr(key: ObjectAttributes.strokeStyle, value: option.strokeStyleType)
             }
             .tooltip("Stroke Style")
+
+            Divider().frame(height: 20)
+            toolLabelTextControls(attrs: attrs)
         }
 
         // Tool-provided custom controls

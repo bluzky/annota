@@ -25,6 +25,9 @@ public struct SelectionCapabilities {
     /// Selected objects can be rotated
     public let canRotate: Bool
 
+    /// All selected objects support text alignment (true for TextContentObject, false for lines)
+    public let canAlignText: Bool
+
     /// Number of objects currently selected
     public let objectCount: Int
 
@@ -37,6 +40,7 @@ public struct SelectionCapabilities {
                 canEditText: false,
                 canResize: false,
                 canRotate: false,
+                canAlignText: false,
                 objectCount: 0
             )
         }
@@ -44,9 +48,10 @@ public struct SelectionCapabilities {
         return SelectionCapabilities(
             canStroke: objects.allSatisfy { $0.isStrokable },
             canFill: objects.allSatisfy { $0.isFillable },
-            canEditText: objects.allSatisfy { $0.hasTextContent },
+            canEditText: objects.allSatisfy { $0.hasTextContent || $0.asLineObject != nil },
             canResize: true,
             canRotate: true,
+            canAlignText: objects.allSatisfy { $0.hasTextContent },
             objectCount: objects.count
         )
     }
@@ -59,6 +64,7 @@ public struct SelectionCapabilities {
             canEditText: false,
             canResize: false,
             canRotate: false,
+            canAlignText: false,
             objectCount: 0
         )
     }

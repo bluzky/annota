@@ -274,6 +274,26 @@ public struct AnyCanvasObject: Identifiable {
             }
         }
 
+        // Line label text properties
+        if var line = object as? LineObject {
+            var modified = false
+            if let color = attributes["textColor"] as? Color {
+                line.labelAttributes.textColor = CodableColor(color)
+                modified = true
+            }
+            if let size = attributes["fontSize"] as? CGFloat {
+                line.labelAttributes.fontSize = size
+                modified = true
+            }
+            if let family = attributes["fontFamily"] as? String {
+                line.labelAttributes.fontFamily = family
+                modified = true
+            }
+            if modified, let updated = line as? T {
+                object = updated
+            }
+        }
+
         // Custom attributes (tool-specific, protocol-based)
         if let customAttrs = attributes[ObjectAttributes.customAttributes] as? [String: Any] {
             if var customizable = object as? any CustomizableObject {
