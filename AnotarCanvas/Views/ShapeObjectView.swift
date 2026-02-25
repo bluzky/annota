@@ -39,8 +39,8 @@ struct ShapeObjectView: View {
                         }
                     }
                 )
-                // Counter-scale: NSTextView renders at scaledFontSize/scaledMaxWidth,
-                // shrink back to canvas coordinates to avoid double-scaling.
+                // Counter-scale: NSTextView renders using unscaled fontSize/maxWidth;
+                // shrink back to canvas coordinates to avoid double-scaling with viewport zoom.
                 .scaleEffect(1.0 / scale, anchor: .center)
                 .frame(width: object.size.width - 16)
                 .padding(8)
