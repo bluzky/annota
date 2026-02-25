@@ -51,7 +51,7 @@ struct SubToolbarView: View {
     @Binding var lastShapeTool: DrawingTool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 8) {
             if viewModel.selectionState.hasSelection {
                 selectionControls
             } else {
@@ -100,6 +100,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private func strokeControls(attributes: ObjectAttributes) -> some View {
+        AttributeGroupLabel(icon: "pencil.tip")
+
         // Color picker - always shown with first stroke color
         let strokeColor = attributes["strokeColor"] as? Color ?? .black
         ColorPresetPicker(selection: Binding(
@@ -152,6 +154,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private func fillControls(attributes: ObjectAttributes) -> some View {
+        AttributeGroupLabel(icon: "paintbrush")
+
         // Fill color picker - always shown with first fill color
         let fillColor = attributes["fillColor"] as? Color ?? .white
         ColorPresetPicker(selection: Binding(
@@ -176,6 +180,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private func selectionTextControls(attributes: ObjectAttributes, canAlignText: Bool = true) -> some View {
+        AttributeGroupLabel(icon: "textformat")
+
         // Font family picker - always shown with first font family
         let fontFamily = attributes[ObjectAttributes.fontFamily] as? String ?? "System"
         Menu {
@@ -244,6 +250,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private func toolTextControls(attrs: ObjectAttributes) -> some View {
+        AttributeGroupLabel(icon: "textformat")
+
         // Font family picker
         Menu {
             ForEach(availableFontFamilies, id: \.self) { family in
@@ -304,6 +312,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private func toolLabelTextControls(attrs: ObjectAttributes) -> some View {
+        AttributeGroupLabel(icon: "textformat")
+
         // Font family picker
         Menu {
             ForEach(availableFontFamilies, id: \.self) { family in
@@ -437,6 +447,7 @@ struct SubToolbarView: View {
             ShapePickerStrip(viewModel: viewModel, lastShapeTool: $lastShapeTool)
             Divider().frame(height: 20)
 
+            AttributeGroupLabel(icon: "pencil.tip")
             ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }
@@ -458,6 +469,7 @@ struct SubToolbarView: View {
 
             Divider().frame(height: 20)
 
+            AttributeGroupLabel(icon: "paintbrush")
             ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.fillColor] as? Color ?? .white },
                 set: { updateToolAttr(key: ObjectAttributes.fillColor, value: $0) }
@@ -484,6 +496,7 @@ struct SubToolbarView: View {
         }
         // Line tools - show only stroke controls
         else if tool?.category == .drawing {
+            AttributeGroupLabel(icon: "pencil.tip")
             ColorPresetPicker(selection: Binding(
                 get: { attrs[ObjectAttributes.strokeColor] as? Color ?? .black },
                 set: { updateToolAttr(key: ObjectAttributes.strokeColor, value: $0) }

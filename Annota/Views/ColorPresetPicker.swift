@@ -69,6 +69,23 @@ struct ColorPresetPicker: View {
     }
 }
 
+// MARK: - Attribute Group Label
+
+/// An icon badge that identifies an attribute group in the toolbar.
+struct AttributeGroupLabel: View {
+    let icon: String
+
+    var body: some View {
+        Image(systemName: icon)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 24, height: 28)
+            .background(Color.primary.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.leading, -4)
+    }
+}
+
 // MARK: - Popover Grid
 
 private struct ColorPresetGrid: View {
