@@ -168,9 +168,14 @@ public class CanvasViewModel: ObservableObject {
 
     // MARK: - Computed Properties
 
-    /// Check if any object is currently being edited
+    /// Check if any object is currently being edited (text or label)
     public var isAnyObjectEditing: Bool {
-        objects.contains { $0.isEditing }
+        objects.contains { obj in
+            if obj.isEditing { return true }
+            // Check if any line is editing its label
+            if let line = obj.asLineObject, line.isEditingLabel { return true }
+            return false
+        }
     }
 
     /// Get the currently editing object's ID and contains closure, if any

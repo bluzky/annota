@@ -714,12 +714,32 @@ public struct CanvasView: View {
                 return
             }
 
+            // Check if any line is editing its label and close it on outside click
+            for obj in viewModel.selectedObjects {
+                if var line = obj.asLineObject, line.isEditingLabel {
+                    // Click outside label - stop editing
+                    if !line.contains(canvasLocation) {
+                        viewModel.updateObject(withId: line.id, as: LineObject.self) { $0.isEditingLabel = false }
+                        return
+                    }
+                }
+            }
+
             // Check for double-click (using screen location for timing)
             let isDoubleClick = isDoubleClickDetected(at: screenLocation)
 
             if isDoubleClick {
-                // Double-click: start editing text objects or rectangles
-                if let objectId = viewModel.selectObject(at: canvasLocation) {
+                // Double-click: start editing text objects, rectangles, or line labels
+                // First check if double-clicking on a line's midpoint
+                let (lineId, isOnLabel) = hitTestLineLabel(at: canvasLocation)
+                if let lineId = lineId, isOnLabel {
+                    // Double-clicked on line label midpoint area
+                    viewModel.updateObject(withId: lineId, as: LineObject.self) { line in
+                        line.isEditingLabel = true
+                    }
+                    viewModel.selectObjectOnly(id: lineId)
+                } else if let objectId = viewModel.selectObject(at: canvasLocation) {
+                    // Regular double-click on object (text or shape)
                     viewModel.startEditing(objectId: objectId)
                 }
             } else {
@@ -764,6 +784,20 @@ public struct CanvasView: View {
         let distance = hypot(location.x - lastLocation.x, location.y - lastLocation.y)
 
         return timeDiff < doubleClickThreshold && distance < distanceThreshold
+    }
+
+    // MARK: - Line Label Hit Testing
+
+    /// Check if a canvas point hits a line's label area (near midpoint)
+    /// Returns (objectId, isOnLabel) where isOnLabel is true if on the label area
+    private func hitTestLineLabel(at point: CGPoint) -> (UUID?, Bool) {
+        for obj in viewModel.objects {
+            guard let line = obj.asLineObject else { continue }
+            if line.hitTest(point, threshold: 20) == .label {
+                return (line.id, true)
+            }
+        }
+        return (nil, false)
     }
 
     // MARK: - Line Control Point Hit Testing

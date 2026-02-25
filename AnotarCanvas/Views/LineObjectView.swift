@@ -9,6 +9,8 @@ struct LineObjectView: View {
     let object: LineObject
     let isSelected: Bool
     @ObservedObject var viewModel: CanvasViewModel
+    @State private var labelText: String = ""
+    @FocusState private var labelIsFocused: Bool
 
     private let arrowHeadLength: CGFloat = 14
 
@@ -46,7 +48,35 @@ struct LineObjectView: View {
             }
 
             // Label at midpoint
-            if !object.label.isEmpty {
+            if object.isEditingLabel {
+                // Editable label TextField
+                TextField("Label", text: Binding(
+                    get: { labelText },
+                    set: { newValue in
+                        labelText = newValue
+                        viewModel.updateObject(withId: object.id, as: LineObject.self) { line in
+                            line.label = newValue
+                        }
+                    }
+                ))
+                .font(object.labelAttributes.font)
+                .foregroundColor(object.labelAttributes.color)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 120)
+                .focused($labelIsFocused)
+                .onAppear {
+                    labelText = object.label
+                    labelIsFocused = true
+                }
+                .onSubmit {
+                    // Commit and stop editing on Enter
+                    viewModel.updateObject(withId: object.id, as: LineObject.self) { line in
+                        line.isEditingLabel = false
+                    }
+                }
+                .position(object.midPoint)
+            } else if !object.label.isEmpty {
+                // Display label
                 Text(object.label)
                     .font(object.labelAttributes.font)
                     .foregroundColor(object.labelAttributes.color)
