@@ -84,9 +84,7 @@ private struct ColorPresetGrid: View {
                         color: preset.color,
                         name: preset.name
                     ) {
-                        selection = preset.color
-                        onChange?(preset.color)
-                        isPresented = false
+                        selectColor(preset.color)
                     }
                 }
             }
@@ -96,9 +94,7 @@ private struct ColorPresetGrid: View {
                         color: preset.color,
                         name: preset.name
                     ) {
-                        selection = preset.color
-                        onChange?(preset.color)
-                        isPresented = false
+                        selectColor(preset.color)
                     }
                 }
                 // Custom color button
@@ -106,6 +102,16 @@ private struct ColorPresetGrid: View {
             }
         }
         .padding(6)
+    }
+
+    private func selectColor(_ color: Color) {
+        selection = color
+        onChange?(color)
+        // Dismiss on next run loop tick so it's a separate transaction —
+        // the popover teardown won't block the color update.
+        DispatchQueue.main.async {
+            isPresented = false
+        }
     }
 }
 
@@ -129,7 +135,6 @@ private struct ColorCircleCell: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(name))
-        .tooltip(name)
     }
 
     private var borderColor: Color {
@@ -177,7 +182,6 @@ private struct CustomColorButton: View {
                 .allowsHitTesting(false)
         }
         .frame(width: 22, height: 22)
-        .tooltip("Custom color")
     }
 }
 

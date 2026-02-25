@@ -139,7 +139,10 @@ struct ValueInputView: View {
     }
 
     private func selectPreset(_ preset: CGFloat) {
-        onChange(preset)
         editText = Self.formatValueForDisplay(value: preset, formatAsInteger: formatAsInteger, suffix: suffix)
+        // Defer onChange so the menu dismiss transaction doesn't block the update
+        DispatchQueue.main.async {
+            onChange(preset)
+        }
     }
 }

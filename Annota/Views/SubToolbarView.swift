@@ -75,8 +75,8 @@ struct SubToolbarView: View {
 
     @ViewBuilder
     private var selectionControls: some View {
-        let capabilities = viewModel.selectionCapabilities
-        let attrs = viewModel.getSelectionAttributes()
+        let capabilities = viewModel.cachedSelectionCapabilities
+        let attrs = viewModel.cachedSelectionAttributes
         let objectCount = viewModel.selectionState.selectedIds.count
 
         if capabilities.canStroke {
@@ -124,7 +124,9 @@ struct SubToolbarView: View {
         Menu {
             ForEach(StrokeStyleOption.allCases) { option in
                 Button(action: {
-                    viewModel.updateSelected([ObjectAttributes.strokeStyle: option.strokeStyleType])
+                    DispatchQueue.main.async {
+                        viewModel.updateSelected([ObjectAttributes.strokeStyle: option.strokeStyleType])
+                    }
                 }) {
                     if option == currentOption {
                         Label(option.rawValue, systemImage: "checkmark")
@@ -178,7 +180,9 @@ struct SubToolbarView: View {
         Menu {
             ForEach(availableFontFamilies, id: \.self) { family in
                 Button(action: {
-                    viewModel.updateSelected([ObjectAttributes.fontFamily: family])
+                    DispatchQueue.main.async {
+                        viewModel.updateSelected([ObjectAttributes.fontFamily: family])
+                    }
                 }) {
                     if family == fontFamily {
                         Label(family, systemImage: "checkmark")
@@ -231,7 +235,9 @@ struct SubToolbarView: View {
         Menu {
             ForEach(availableFontFamilies, id: \.self) { family in
                 Button(action: {
-                    updateToolAttr(key: ObjectAttributes.fontFamily, value: family)
+                    DispatchQueue.main.async {
+                        updateToolAttr(key: ObjectAttributes.fontFamily, value: family)
+                    }
                 }) {
                     if family == toolFontFamily {
                         Label(family, systemImage: "checkmark")
@@ -444,7 +450,9 @@ struct SubToolbarView: View {
         let current = StrokeStyleOption(from: currentStyle)
         Menu {
             ForEach(StrokeStyleOption.allCases) { option in
-                Button(action: { onSelect(option) }) {
+                Button(action: {
+                    DispatchQueue.main.async { onSelect(option) }
+                }) {
                     if option == current {
                         Label(option.rawValue, systemImage: "checkmark")
                     } else {
