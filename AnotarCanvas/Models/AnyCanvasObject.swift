@@ -261,6 +261,14 @@ public struct AnyCanvasObject: Identifiable {
                 textContent.textAttributes.fontFamily = family
                 modified = true
             }
+            if let hAlign = attributes[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment {
+                textContent.textAttributes.horizontalAlignment = hAlign
+                modified = true
+            }
+            if let vAlign = attributes[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment {
+                textContent.textAttributes.verticalAlignment = vAlign
+                modified = true
+            }
             if modified, let updated = textContent as? T {
                 object = updated
             }

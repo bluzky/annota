@@ -26,6 +26,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
     var fontSize: CGFloat
     var fontFamily: String = "System"
     var textColor: Color
+    var alignment: NSTextAlignment = .left
     var onFocus: () -> Void
     var onSizeChange: ((CGSize) -> Void)?
     var scale: CGFloat = 1.0
@@ -44,7 +45,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.textColor = NSColor(textColor)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
-        textView.alignment = .left
+        textView.alignment = alignment
 
         // Key settings for horizontal growth
         textView.isHorizontallyResizable = true
@@ -89,6 +90,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
+        textView.alignment = alignment
 
         // Update min size based on font size
         textView.minSize = NSSize(width: 0, height: fontSize * 1.5)

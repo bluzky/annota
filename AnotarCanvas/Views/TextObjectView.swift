@@ -41,6 +41,7 @@ struct TextObjectView: View {
                     fontSize: object.fontSize * scale,
                     fontFamily: object.textAttributes.fontFamily,
                     textColor: object.color,
+                    alignment: object.textAttributes.horizontalAlignment.nsAlignment,
                     onFocus: { isFocused = true },
                     onSizeChange: { size in
                         let unscaledSize = CGSize(width: size.width / scale, height: size.height / scale)
@@ -60,6 +61,7 @@ struct TextObjectView: View {
                 Text(object.text.isEmpty ? "Text" : object.text)
                     .font(scaledFont)
                     .foregroundColor(object.text.isEmpty ? object.color.opacity(0.5) : object.color)
+                    .multilineTextAlignment(object.textAttributes.horizontalAlignment.swiftUIAlignment)
                     .fixedSize()
                     .padding(4 * scale)
                     .background(

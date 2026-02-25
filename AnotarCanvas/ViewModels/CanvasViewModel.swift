@@ -307,10 +307,14 @@ public class CanvasViewModel: ObservableObject {
                     result[ObjectAttributes.textColor] = textObj.color
                     result[ObjectAttributes.fontSize] = textObj.fontSize
                     result[ObjectAttributes.fontFamily] = textObj.textAttributes.fontFamily
+                    result[ObjectAttributes.horizontalTextAlignment] = textObj.textAttributes.horizontalAlignment
+                    result[ObjectAttributes.verticalTextAlignment] = textObj.textAttributes.verticalAlignment
                 } else if let shape = first.asShapeObject {
                     result[ObjectAttributes.textColor] = shape.textAttributes.textColor.color
                     result[ObjectAttributes.fontSize] = shape.textAttributes.fontSize
                     result[ObjectAttributes.fontFamily] = shape.textAttributes.fontFamily
+                    result[ObjectAttributes.horizontalTextAlignment] = shape.textAttributes.horizontalAlignment
+                    result[ObjectAttributes.verticalTextAlignment] = shape.textAttributes.verticalAlignment
                 }
             }
         }
@@ -364,6 +368,12 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.fontFamily] as? String != textObj.textAttributes.fontFamily {
                         result.removeValue(forKey: ObjectAttributes.fontFamily)
                     }
+                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != textObj.textAttributes.horizontalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
+                    }
+                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != textObj.textAttributes.verticalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
+                    }
                 } else if let shape = obj.asShapeObject {
                     if result[ObjectAttributes.textColor] as? Color != shape.textAttributes.textColor.color {
                         result.removeValue(forKey: ObjectAttributes.textColor)
@@ -373,6 +383,12 @@ public class CanvasViewModel: ObservableObject {
                     }
                     if result[ObjectAttributes.fontFamily] as? String != shape.textAttributes.fontFamily {
                         result.removeValue(forKey: ObjectAttributes.fontFamily)
+                    }
+                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != shape.textAttributes.horizontalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
+                    }
+                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != shape.textAttributes.verticalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
                     }
                 }
             }

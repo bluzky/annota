@@ -144,6 +144,7 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .tooltip("Stroke Style")
@@ -202,6 +203,7 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .tooltip("Font Family")
@@ -223,6 +225,15 @@ struct SubToolbarView: View {
             set: { viewModel.updateSelected([ObjectAttributes.textColor: $0]) }
         ))
         .tooltip("Text Color")
+
+        // Text alignment dropdown
+        let hAlign = attributes[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment ?? .center
+        let vAlign = attributes[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment ?? .center
+        TextAlignmentMenu(horizontalAlignment: hAlign, verticalAlignment: vAlign) { newHAlign in
+            viewModel.updateSelected([ObjectAttributes.horizontalTextAlignment: newHAlign])
+        } onVerticalChange: { newVAlign in
+            viewModel.updateSelected([ObjectAttributes.verticalTextAlignment: newVAlign])
+        }
     }
 
     private var toolFontFamily: String {
@@ -257,6 +268,7 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .id(toolFontFamily)
@@ -277,38 +289,45 @@ struct SubToolbarView: View {
             set: { updateToolAttr(key: ObjectAttributes.textColor, value: $0) }
         ))
         .tooltip("Text Color")
+
+        // Text alignment dropdown
+        let hAlign = attrs[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment ?? .center
+        let vAlign = attrs[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment ?? .center
+        TextAlignmentMenu(horizontalAlignment: hAlign, verticalAlignment: vAlign) { newHAlign in
+            updateToolAttr(key: ObjectAttributes.horizontalTextAlignment, value: newHAlign)
+        } onVerticalChange: { newVAlign in
+            updateToolAttr(key: ObjectAttributes.verticalTextAlignment, value: newVAlign)
+        }
     }
 
     @ViewBuilder
     private func arrangeControls(objectCount: Int) -> some View {
-        // All arrangement controls in one flat HStack with equal spacing
-        Button(action: { viewModel.bringToFront() }) {
-            Image(systemName: "square.3.layers.3d.top.filled")
-                .font(.caption)
+        // Z-order dropdown
+        Menu {
+            Button(action: { viewModel.bringToFront() }) {
+                Label("Bring to Front", systemImage: "square.3.layers.3d.top.filled")
+            }
+            Button(action: { viewModel.bringForward() }) {
+                Label("Bring Forward", systemImage: "square.2.layers.3d.top.filled")
+            }
+            Button(action: { viewModel.sendBackward() }) {
+                Label("Send Backward", systemImage: "square.2.layers.3d.bottom.filled")
+            }
+            Button(action: { viewModel.sendToBack() }) {
+                Label("Send to Back", systemImage: "square.3.layers.3d.bottom.filled")
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "square.3.layers.3d")
+                    .font(.caption)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .tooltip("Bring to Front")
-
-        Button(action: { viewModel.sendToBack() }) {
-            Image(systemName: "square.3.layers.3d.bottom.filled")
-                .font(.caption)
-        }
-        .buttonStyle(.plain)
-        .tooltip("Send to Back")
-
-        Button(action: { viewModel.bringForward() }) {
-            Image(systemName: "square.2.layers.3d.top.filled")
-                .font(.caption)
-        }
-        .buttonStyle(.plain)
-        .tooltip("Bring Forward")
-
-        Button(action: { viewModel.sendBackward() }) {
-            Image(systemName: "square.2.layers.3d.bottom.filled")
-                .font(.caption)
-        }
-        .buttonStyle(.plain)
-        .tooltip("Send Backward")
+        .tooltip("Layer Order")
 
         // Align menu — disabled when < 2 objects selected
         Menu {
@@ -325,6 +344,7 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(objectCount < 2)
@@ -345,6 +365,7 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(objectCount < 3)
@@ -469,7 +490,95 @@ struct SubToolbarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Text Alignment Menu
+
+struct TextAlignmentMenu: View {
+    let horizontalAlignment: HorizontalTextAlignment
+    let verticalAlignment: VerticalTextAlignment
+    let onHorizontalChange: (HorizontalTextAlignment) -> Void
+    let onVerticalChange: (VerticalTextAlignment) -> Void
+
+    var body: some View {
+        Menu {
+            Section("Horizontal") {
+                Picker(selection: Binding(
+                    get: { horizontalAlignment },
+                    set: { onHorizontalChange($0) }
+                )) {
+                    ForEach(HorizontalTextAlignment.allCases, id: \.self) { option in
+                        Label(option.label, systemImage: option.systemImage)
+                            .tag(option)
+                    }
+                } label: { EmptyView() }
+                .pickerStyle(.inline)
+            }
+            Section("Vertical") {
+                Picker(selection: Binding(
+                    get: { verticalAlignment },
+                    set: { onVerticalChange($0) }
+                )) {
+                    ForEach(VerticalTextAlignment.allCases, id: \.self) { option in
+                        Label(option.label, systemImage: option.systemImage)
+                            .tag(option)
+                    }
+                } label: { EmptyView() }
+                .pickerStyle(.inline)
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: horizontalAlignment.systemImage)
+                    .font(.caption)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tooltip("Text Alignment")
+    }
+}
+
+// MARK: - Alignment System Images
+
+extension HorizontalTextAlignment {
+    var systemImage: String {
+        switch self {
+        case .leading: return "text.alignleft"
+        case .center: return "text.aligncenter"
+        case .trailing: return "text.alignright"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .leading: return "Align Left"
+        case .center: return "Align Center"
+        case .trailing: return "Align Right"
+        }
+    }
+}
+
+extension VerticalTextAlignment {
+    var systemImage: String {
+        switch self {
+        case .top: return "arrow.up.to.line"
+        case .center: return "arrow.up.and.down"
+        case .bottom: return "arrow.down.to.line"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .top: return "Align Top"
+        case .center: return "Align Middle"
+        case .bottom: return "Align Bottom"
+        }
     }
 }

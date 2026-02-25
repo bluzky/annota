@@ -24,7 +24,7 @@ struct ShapeObjectView: View {
                 .stroke(object.strokeColor, lineWidth: object.strokeWidth)
                 .frame(width: object.size.width, height: effectiveHeight)
 
-            // Text content (centered inside shape)
+            // Text content (aligned inside shape)
             if object.isEditing {
                 ConstrainedAutoGrowingTextView(
                     text: binding,
@@ -32,7 +32,7 @@ struct ShapeObjectView: View {
                     fontFamily: object.textAttributes.fontFamily,
                     textColor: object.textAttributes.color,
                     maxWidth: object.size.width - 16,
-                    alignment: .center,
+                    alignment: object.textAttributes.horizontalAlignment.nsAlignment,
                     onHeightChange: { newHeight in
                         if object.autoResizeHeight {
                             updateHeightIfNeeded(newHeight + 24)
@@ -43,14 +43,16 @@ struct ShapeObjectView: View {
                 // shrink back to canvas coordinates to avoid double-scaling.
                 .scaleEffect(1.0 / scale, anchor: .center)
                 .frame(width: object.size.width - 16)
+                .frame(maxHeight: effectiveHeight - 16, alignment: verticalFrameAlignment)
                 .padding(8)
             } else if !object.text.isEmpty {
                 Text(object.text)
                     .font(object.textAttributes.font)
                     .foregroundColor(object.textAttributes.color)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(object.textAttributes.horizontalAlignment.swiftUIAlignment)
                     .lineLimit(nil)
-                    .frame(width: object.size.width - 16)
+                    .frame(width: object.size.width - 16, alignment: Alignment(horizontal: object.textAttributes.horizontalAlignment.horizontalAlignment, vertical: .center))
+                    .frame(maxHeight: effectiveHeight - 16, alignment: verticalFrameAlignment)
                     .padding(8)
             }
         }
@@ -63,6 +65,16 @@ struct ShapeObjectView: View {
             if object.autoResizeHeight {
                 updateHeight()
             }
+        }
+    }
+
+    // MARK: - Alignment Helpers
+
+    private var verticalFrameAlignment: Alignment {
+        switch object.textAttributes.verticalAlignment {
+        case .top: return .top
+        case .center: return .center
+        case .bottom: return .bottom
         }
     }
 

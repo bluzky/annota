@@ -114,6 +114,7 @@ private struct TooltipModifier: ViewModifier {
 
     @State private var isHovering = false
     @State private var hoverTimer: Timer?
+    @State private var viewFrame: CGRect = .zero
 
     func body(content: Content) -> some View {
         content
@@ -123,39 +124,34 @@ private struct TooltipModifier: ViewModifier {
                         .preference(key: FramePreferenceKey.self, value: geo.frame(in: .global))
                 }
             )
-            .onPreferenceChange(FramePreferenceKey.self) { _ in }
-            .overlay(
-                GeometryReader { geo in
-                    Color.clear
-                        .onHover { hovering in
-                            isHovering = hovering
-                            if hovering {
-                                hoverTimer?.invalidate()
-                                hoverTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                                    DispatchQueue.main.async {
-                                        guard isHovering else { return }
-                                        guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return }
-                                        let viewFrame = geo.frame(in: .global)
-                                        // Convert SwiftUI coordinates to screen coordinates
-                                        let windowFrame = window.frame
-                                        let contentHeight = window.contentView?.frame.height ?? windowFrame.height
-                                        let screenRect = NSRect(
-                                            x: windowFrame.origin.x + viewFrame.origin.x,
-                                            y: windowFrame.origin.y + (contentHeight - viewFrame.maxY),
-                                            width: viewFrame.width,
-                                            height: viewFrame.height
-                                        )
-                                        TooltipWindow.shared.show(text: text, below: screenRect, in: window)
-                                    }
-                                }
-                            } else {
-                                hoverTimer?.invalidate()
-                                hoverTimer = nil
-                                TooltipWindow.shared.dismiss()
-                            }
+            .onPreferenceChange(FramePreferenceKey.self) { frame in
+                viewFrame = frame
+            }
+            .onHover { hovering in
+                isHovering = hovering
+                if hovering {
+                    hoverTimer?.invalidate()
+                    hoverTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                        DispatchQueue.main.async {
+                            guard isHovering else { return }
+                            guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return }
+                            let windowFrame = window.frame
+                            let contentHeight = window.contentView?.frame.height ?? windowFrame.height
+                            let screenRect = NSRect(
+                                x: windowFrame.origin.x + viewFrame.origin.x,
+                                y: windowFrame.origin.y + (contentHeight - viewFrame.maxY),
+                                width: viewFrame.width,
+                                height: viewFrame.height
+                            )
+                            TooltipWindow.shared.show(text: text, below: screenRect, in: window)
                         }
+                    }
+                } else {
+                    hoverTimer?.invalidate()
+                    hoverTimer = nil
+                    TooltipWindow.shared.dismiss()
                 }
-            )
+            }
     }
 }
 
