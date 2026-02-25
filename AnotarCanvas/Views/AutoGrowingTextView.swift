@@ -28,6 +28,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
     var textColor: Color
     var onFocus: () -> Void
     var onSizeChange: ((CGSize) -> Void)?
+    var scale: CGFloat = 1.0
 
     func makeNSView(context: Context) -> NSTextView {
         let textView = NSTextView()
@@ -42,7 +43,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.textContainer?.lineFragmentPadding = 0
-        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
         textView.alignment = .left
 
         // Key settings for horizontal growth
@@ -87,6 +88,7 @@ struct AutoGrowingTextView: NSViewRepresentable {
 
         textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
+        textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
 
         // Update min size based on font size
         textView.minSize = NSSize(width: 0, height: fontSize * 1.5)
@@ -99,13 +101,14 @@ struct AutoGrowingTextView: NSViewRepresentable {
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSTextView, context: Context) -> CGSize? {
         let textView = nsView
         textView.layoutManager?.ensureLayout(for: textView.textContainer!)
+        let insetPadding = 8 * scale
 
         if let container = textView.textContainer,
            let layoutManager = textView.layoutManager {
             let usedRect = layoutManager.usedRect(for: container)
             return CGSize(
-                width: usedRect.width + 8,
-                height: max(fontSize * 1.5, usedRect.height + 8)
+                width: usedRect.width + insetPadding,
+                height: max(fontSize * 1.5, usedRect.height + insetPadding)
             )
         }
 
@@ -141,9 +144,10 @@ struct AutoGrowingTextView: NSViewRepresentable {
                let layoutManager = textView.layoutManager {
                 layoutManager.ensureLayout(for: container)
                 let usedRect = layoutManager.usedRect(for: container)
+                let insetPadding = 8 * parent.scale
                 let size = CGSize(
-                    width: usedRect.width + 16,
-                    height: max(parent.fontSize * 1.5, usedRect.height + 16)
+                    width: usedRect.width + insetPadding,
+                    height: max(parent.fontSize * 1.5, usedRect.height + insetPadding)
                 )
                 // Only report if size changed by more than 1 point
                 if abs(size.width - lastReportedSize.width) > 1 ||

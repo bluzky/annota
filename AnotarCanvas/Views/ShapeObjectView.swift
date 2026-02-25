@@ -11,6 +11,8 @@ struct ShapeObjectView: View {
     var isSelected: Bool = false
     @ObservedObject var viewModel: CanvasViewModel
 
+    private var scale: CGFloat { viewModel.viewport.scale }
+
     var body: some View {
         ZStack {
             let shapeRect = CGRect(origin: .zero, size: CGSize(width: object.size.width, height: effectiveHeight))
@@ -37,6 +39,9 @@ struct ShapeObjectView: View {
                         }
                     }
                 )
+                // Counter-scale: NSTextView renders using unscaled fontSize/maxWidth;
+                // shrink back to canvas coordinates to avoid double-scaling with viewport zoom.
+                .scaleEffect(1.0 / scale, anchor: .center)
                 .frame(width: object.size.width - 16)
                 .padding(8)
             } else if !object.text.isEmpty {
