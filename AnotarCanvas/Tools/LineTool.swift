@@ -19,6 +19,11 @@ public struct LineTool: CanvasTool {
     public let category: ToolCategory = .drawing
     public let cursor: NSCursor = .crosshair
 
+    /// Line supports stroke and label text
+    public var capabilities: Set<ToolCapability> {
+        [.stroke, .labelText]
+    }
+
     // MARK: - Manifest
 
     public static let manifest = ToolManifest(

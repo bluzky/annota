@@ -20,6 +20,11 @@ public struct TextTool: CanvasTool {
     public let category: ToolCategory = .annotation
     public let cursor: NSCursor = .iBeam
 
+    /// Text tool supports text formatting (no stroke/fill)
+    public var capabilities: Set<ToolCapability> {
+        [.textFormatting]
+    }
+
     // MARK: - Manifest
 
     public static let manifest = ToolManifest(

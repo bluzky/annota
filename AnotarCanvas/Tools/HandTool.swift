@@ -19,4 +19,9 @@ public struct HandTool: CanvasTool {
     public let name: String = "Hand"
     public let category: ToolCategory = .selection
     public let cursor: NSCursor = .openHand
+
+    /// Hand tool has no creation capabilities (empty set)
+    public var capabilities: Set<ToolCapability> {
+        []
+    }
 }

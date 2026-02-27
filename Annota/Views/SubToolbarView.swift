@@ -79,18 +79,18 @@ struct SubToolbarView: View {
         let attrs = viewModel.cachedSelectionAttributes
         let objectCount = viewModel.selectionState.selectedIds.count
 
-        if capabilities.canStroke {
+        if capabilities.supports(.stroke) {
             strokeControls(attributes: attrs)
             Divider().frame(height: 20)
         }
 
-        if capabilities.canFill {
+        if capabilities.supports(.fill) {
             fillControls(attributes: attrs)
             Divider().frame(height: 20)
         }
 
-        if capabilities.canEditText {
-            selectionTextControls(attributes: attrs, canAlignText: capabilities.canAlignText)
+        if capabilities.supports(.textContent) {
+            selectionTextControls(attributes: attrs, canAlignText: capabilities.supports(.textAlignment))
             Divider().frame(height: 20)
         }
 
@@ -517,7 +517,9 @@ struct SubToolbarView: View {
             .tooltip("Stroke Style")
 
             Divider().frame(height: 20)
-            toolLabelTextControls(attrs: attrs)
+            if tool?.supports(.labelText) == true {
+                toolLabelTextControls(attrs: attrs)
+            }
         }
 
         // Tool-provided custom controls

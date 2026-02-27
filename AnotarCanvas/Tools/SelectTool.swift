@@ -19,4 +19,9 @@ public struct SelectTool: CanvasTool {
     public let name: String = "Select"
     public let category: ToolCategory = .selection
     public let cursor: NSCursor = .arrow
+
+    /// Select tool has no creation capabilities (empty set)
+    public var capabilities: Set<ToolCapability> {
+        []
+    }
 }

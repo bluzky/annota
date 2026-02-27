@@ -61,13 +61,10 @@ struct AnnotaSettingsDefaultsTests {
         #expect(keys.select == "v")
         #expect(keys.hand == "h")
         #expect(keys.text == "t")
-        #expect(keys.rectangle == "r")
-        #expect(keys.line == "l")
+        #expect(keys.shape == "r")
+        #expect(keys.line == "f")
         #expect(keys.arrow == "a")
-        #expect(keys.oval == "o")
-        #expect(keys.triangle == "g")
-        #expect(keys.diamond == "d")
-        #expect(keys.star == "s")
+        #expect(keys.pencil == "p")
     }
 
     @Test func defaultCommandKeys() {
