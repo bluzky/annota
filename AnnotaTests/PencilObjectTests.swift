@@ -272,7 +272,7 @@ struct PencilObjectTests {
     @Test func asPencilObjectViaAnyCanvasObject() async throws {
         let pencil = PencilObject(points: [.zero, CGPoint(x: 10, y: 0)])
         let wrapped = AnyCanvasObject(pencil)
-        #expect(wrapped.asPencilObject != nil)
-        #expect(wrapped.asLineObject == nil)
+        #expect(wrapped.asType(PencilObject.self) != nil)
+        #expect(wrapped.asType(LineObject.self) == nil)
     }
 }

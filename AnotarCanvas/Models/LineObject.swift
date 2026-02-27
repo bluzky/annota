@@ -29,7 +29,9 @@ public enum ArrowHead: String, Codable, Hashable, CaseIterable {
 
 /// A single struct for both lines and arrows.
 /// A plain line has `.none` arrowheads; an arrow typically has `endArrowHead = .filled`.
-public struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
+///
+/// Conforms to TextContentObject to expose label as text content for unified text formatting.
+public struct LineObject: CanvasObject, StrokableObject, TextContentObject, CopyableCanvasObject {
     // MARK: - CanvasObject Properties
     public let id: UUID
     public var rotation: CGFloat = 0
@@ -58,7 +60,7 @@ public struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
     public var labelAttributes: TextAttributes = .default
 
     /// Whether the user is currently editing this line's label (transient state, not persisted)
-    public var isEditingLabel: Bool = false
+    public var isEditing: Bool = false
 
     // MARK: - Computed Properties
 
@@ -204,7 +206,7 @@ public struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
         endArrowHead = try container.decodeIfPresent(ArrowHead.self, forKey: .endArrowHead) ?? .none
         label = try container.decodeIfPresent(String.self, forKey: .label) ?? ""
         labelAttributes = try container.decodeIfPresent(TextAttributes.self, forKey: .labelAttributes) ?? .default
-        isEditingLabel = false
+        isEditing = false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -329,6 +331,22 @@ public struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
         }
 
         return nil
+    }
+}
+
+// MARK: - TextContentObject Conformance
+
+extension LineObject {
+    /// TextContentObject: Map label to text for unified text formatting support
+    public var text: String {
+        get { label }
+        set { label = newValue }
+    }
+
+    /// TextContentObject: Map labelAttributes to textAttributes
+    public var textAttributes: TextAttributes {
+        get { labelAttributes }
+        set { labelAttributes = newValue }
     }
 }
 

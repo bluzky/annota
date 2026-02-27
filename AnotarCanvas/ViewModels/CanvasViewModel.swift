@@ -169,13 +169,9 @@ public class CanvasViewModel: ObservableObject {
     // MARK: - Computed Properties
 
     /// Check if any object is currently being edited (text or label)
+    /// Note: LineObject.isEditing maps to isEditingLabel, so no special case needed
     public var isAnyObjectEditing: Bool {
-        objects.contains { obj in
-            if obj.isEditing { return true }
-            // Check if any line is editing its label
-            if let line = obj.asLineObject, line.isEditingLabel { return true }
-            return false
-        }
+        objects.contains { $0.isEditing }
     }
 
     /// Get the currently editing object's ID and contains closure, if any
@@ -287,130 +283,72 @@ public class CanvasViewModel: ObservableObject {
 
         // Extract from first object as baseline
         if let first = objects.first {
-            // Stroke properties
-            if first.isStrokable {
-                if let shape = first.asShapeObject {
-                    result[ObjectAttributes.strokeColor] = shape.strokeColor
-                    result[ObjectAttributes.strokeWidth] = shape.strokeWidth
-                    result[ObjectAttributes.strokeStyle] = shape.strokeStyle
-                } else if let line = first.asLineObject {
-                    result[ObjectAttributes.strokeColor] = line.strokeColor
-                    result[ObjectAttributes.strokeWidth] = line.strokeWidth
-                    result[ObjectAttributes.strokeStyle] = line.strokeStyle
-                }
+            // Stroke properties - use protocol for ANY strokable object
+            if let strokable = first.asStrokable {
+                result[ObjectAttributes.strokeColor] = strokable.strokeColor
+                result[ObjectAttributes.strokeWidth] = strokable.strokeWidth
+                result[ObjectAttributes.strokeStyle] = strokable.strokeStyle
             }
 
-            // Fill properties
-            if first.isFillable, let shape = first.asShapeObject {
-                result[ObjectAttributes.fillColor] = shape.fillColor
-                result[ObjectAttributes.fillOpacity] = shape.fillOpacity
+            // Fill properties - use protocol for ANY fillable object
+            if let fillable = first.asFillable {
+                result[ObjectAttributes.fillColor] = fillable.fillColor
+                result[ObjectAttributes.fillOpacity] = fillable.fillOpacity
             }
 
-            // Text properties
-            if first.hasTextContent {
-                if let textObj = first.asTextObject {
-                    result[ObjectAttributes.textColor] = textObj.color
-                    result[ObjectAttributes.fontSize] = textObj.fontSize
-                    result[ObjectAttributes.fontFamily] = textObj.textAttributes.fontFamily
-                    result[ObjectAttributes.horizontalTextAlignment] = textObj.textAttributes.horizontalAlignment
-                    result[ObjectAttributes.verticalTextAlignment] = textObj.textAttributes.verticalAlignment
-                } else if let shape = first.asShapeObject {
-                    result[ObjectAttributes.textColor] = shape.textAttributes.textColor.color
-                    result[ObjectAttributes.fontSize] = shape.textAttributes.fontSize
-                    result[ObjectAttributes.fontFamily] = shape.textAttributes.fontFamily
-                    result[ObjectAttributes.horizontalTextAlignment] = shape.textAttributes.horizontalAlignment
-                    result[ObjectAttributes.verticalTextAlignment] = shape.textAttributes.verticalAlignment
-                }
-            } else if let line = first.asLineObject {
-                // Line label attributes
-                result[ObjectAttributes.textColor] = line.labelAttributes.textColor.color
-                result[ObjectAttributes.fontSize] = line.labelAttributes.fontSize
-                result[ObjectAttributes.fontFamily] = line.labelAttributes.fontFamily
+            // Text properties - use protocol for ANY text content object
+            // Note: LineObject now implements TextContentObject via computed properties
+            if let textContent = first.asTextContent {
+                result[ObjectAttributes.textColor] = textContent.textAttributes.textColor.color
+                result[ObjectAttributes.fontSize] = textContent.textAttributes.fontSize
+                result[ObjectAttributes.fontFamily] = textContent.textAttributes.fontFamily
+                result[ObjectAttributes.horizontalTextAlignment] = textContent.textAttributes.horizontalAlignment
+                result[ObjectAttributes.verticalTextAlignment] = textContent.textAttributes.verticalAlignment
             }
         }
 
         // Compare with remaining objects, remove mismatched attributes
         for obj in objects.dropFirst() {
-            // Check stroke
-            if obj.isStrokable {
-                if let shape = obj.asShapeObject {
-                    if result[ObjectAttributes.strokeColor] as? Color != shape.strokeColor {
-                        result.removeValue(forKey: ObjectAttributes.strokeColor)
-                    }
-                    if result[ObjectAttributes.strokeWidth] as? CGFloat != shape.strokeWidth {
-                        result.removeValue(forKey: ObjectAttributes.strokeWidth)
-                    }
-                    if result[ObjectAttributes.strokeStyle] as? StrokeStyleType != shape.strokeStyle {
-                        result.removeValue(forKey: ObjectAttributes.strokeStyle)
-                    }
-                } else if let line = obj.asLineObject {
-                    if result[ObjectAttributes.strokeColor] as? Color != line.strokeColor {
-                        result.removeValue(forKey: ObjectAttributes.strokeColor)
-                    }
-                    if result[ObjectAttributes.strokeWidth] as? CGFloat != line.strokeWidth {
-                        result.removeValue(forKey: ObjectAttributes.strokeWidth)
-                    }
-                    if result[ObjectAttributes.strokeStyle] as? StrokeStyleType != line.strokeStyle {
-                        result.removeValue(forKey: ObjectAttributes.strokeStyle)
-                    }
+            // Check stroke - use protocol for ANY strokable object
+            if let strokable = obj.asStrokable {
+                if result[ObjectAttributes.strokeColor] as? Color != strokable.strokeColor {
+                    result.removeValue(forKey: ObjectAttributes.strokeColor)
+                }
+                if result[ObjectAttributes.strokeWidth] as? CGFloat != strokable.strokeWidth {
+                    result.removeValue(forKey: ObjectAttributes.strokeWidth)
+                }
+                if result[ObjectAttributes.strokeStyle] as? StrokeStyleType != strokable.strokeStyle {
+                    result.removeValue(forKey: ObjectAttributes.strokeStyle)
                 }
             }
 
-            // Check fill
-            if obj.isFillable, let shape = obj.asShapeObject {
-                if result[ObjectAttributes.fillColor] as? Color != shape.fillColor {
+            // Check fill - use protocol for ANY fillable object
+            if let fillable = obj.asFillable {
+                if result[ObjectAttributes.fillColor] as? Color != fillable.fillColor {
                     result.removeValue(forKey: ObjectAttributes.fillColor)
                 }
-                if result[ObjectAttributes.fillOpacity] as? CGFloat != shape.fillOpacity {
+                if result[ObjectAttributes.fillOpacity] as? CGFloat != fillable.fillOpacity {
                     result.removeValue(forKey: ObjectAttributes.fillOpacity)
                 }
             }
 
-            // Check text
-            if obj.hasTextContent {
-                if let textObj = obj.asTextObject {
-                    if result[ObjectAttributes.textColor] as? Color != textObj.color {
-                        result.removeValue(forKey: ObjectAttributes.textColor)
-                    }
-                    if result[ObjectAttributes.fontSize] as? CGFloat != textObj.fontSize {
-                        result.removeValue(forKey: ObjectAttributes.fontSize)
-                    }
-                    if result[ObjectAttributes.fontFamily] as? String != textObj.textAttributes.fontFamily {
-                        result.removeValue(forKey: ObjectAttributes.fontFamily)
-                    }
-                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != textObj.textAttributes.horizontalAlignment {
-                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
-                    }
-                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != textObj.textAttributes.verticalAlignment {
-                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
-                    }
-                } else if let shape = obj.asShapeObject {
-                    if result[ObjectAttributes.textColor] as? Color != shape.textAttributes.textColor.color {
-                        result.removeValue(forKey: ObjectAttributes.textColor)
-                    }
-                    if result[ObjectAttributes.fontSize] as? CGFloat != shape.textAttributes.fontSize {
-                        result.removeValue(forKey: ObjectAttributes.fontSize)
-                    }
-                    if result[ObjectAttributes.fontFamily] as? String != shape.textAttributes.fontFamily {
-                        result.removeValue(forKey: ObjectAttributes.fontFamily)
-                    }
-                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != shape.textAttributes.horizontalAlignment {
-                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
-                    }
-                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != shape.textAttributes.verticalAlignment {
-                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
-                    }
-                }
-            } else if let line = obj.asLineObject {
-                // Check line label attributes
-                if result[ObjectAttributes.textColor] as? Color != line.labelAttributes.textColor.color {
+            // Check text - use protocol for ANY text content object
+            // Note: LineObject now implements TextContentObject, so no special case needed
+            if let textContent = obj.asTextContent {
+                if result[ObjectAttributes.textColor] as? Color != textContent.textAttributes.textColor.color {
                     result.removeValue(forKey: ObjectAttributes.textColor)
                 }
-                if result[ObjectAttributes.fontSize] as? CGFloat != line.labelAttributes.fontSize {
+                if result[ObjectAttributes.fontSize] as? CGFloat != textContent.textAttributes.fontSize {
                     result.removeValue(forKey: ObjectAttributes.fontSize)
                 }
-                if result[ObjectAttributes.fontFamily] as? String != line.labelAttributes.fontFamily {
+                if result[ObjectAttributes.fontFamily] as? String != textContent.textAttributes.fontFamily {
                     result.removeValue(forKey: ObjectAttributes.fontFamily)
+                }
+                if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != textContent.textAttributes.horizontalAlignment {
+                    result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
+                }
+                if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != textContent.textAttributes.verticalAlignment {
+                    result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
                 }
             }
         }
@@ -541,24 +479,21 @@ public class CanvasViewModel: ObservableObject {
         applyGeometry(at: index) { $0.position = position; $0.size = size }
     }
 
-    /// Apply a geometry mutation to whichever concrete type lives at `index`.
-    /// This is the single place that handles the four-way type dispatch so callers
-    /// don't have to repeat it.  The closure receives a mutable reference to a thin
-    /// `ObjectGeometry` value; changes are written back into `objects[index]`.
+    /// Apply a geometry mutation to the object at `index`.
+    /// Uses AnyCanvasObject.applying() to avoid hard-coding object types.
+    /// The closure receives a mutable reference to a thin `ObjectGeometry` value;
+    /// changes are written back into `objects[index]`.
     private func applyGeometry(at index: Int, mutation: (inout ObjectGeometry) -> Void) {
-        func apply<T: CanvasObject>(_ obj: T?) {
-            guard var obj = obj else { return }
-            var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
-            mutation(&geo)
-            obj.position = geo.position; obj.size = geo.size; obj.rotation = geo.rotation
-            objects[index] = AnyCanvasObject(obj)
-        }
-        // Try each concrete type; first match wins
-        if objects[index].asTextObject != nil { apply(objects[index].asTextObject) }
-        else if objects[index].asShapeObject != nil { apply(objects[index].asShapeObject) }
-        else if objects[index].asLineObject != nil { apply(objects[index].asLineObject) }
-        else if objects[index].asImageObject != nil { apply(objects[index].asImageObject) }
-        else if objects[index].asPencilObject != nil { apply(objects[index].asPencilObject) }
+        let obj = objects[index]
+        var geo = ObjectGeometry(position: obj.position, size: obj.size, rotation: obj.rotation)
+        mutation(&geo)
+
+        // Use AnyCanvasObject.applying() to update geometry without type-specific dispatch
+        objects[index] = obj.applying([
+            "position": geo.position,
+            "size": geo.size,
+            "rotation": geo.rotation
+        ])
     }
 
     public func selectObjectOnly(id: UUID) {
@@ -615,12 +550,12 @@ public class CanvasViewModel: ObservableObject {
     }
 
     /// End all text editing without clearing selection
-    private func endAllEditing() {
+    public func endAllEditing() {
         // Collect IDs of text objects that are empty and should be removed
         var idsToRemove: [UUID] = []
         for index in objects.indices where objects[index].isEditing {
             // Check if this is a TextObject with empty text
-            if let textObj = objects[index].asTextObject,
+            if let textObj = objects[index].asType(TextObject.self),
                textObj.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 idsToRemove.append(objects[index].id)
             } else {
@@ -633,20 +568,17 @@ public class CanvasViewModel: ObservableObject {
         }
     }
 
-    /// Apply a mutation to the TextContentObject (TextObject or ShapeObject) at the given index.
-    /// Centralises the two-way dispatch so callers don't repeat it.
+    /// Apply a mutation to any TextContentObject at the given index.
+    /// Works with ANY object implementing TextContentObject protocol.
     private func mutateTextContent(at index: Int, mutation: (inout TextContentProxy) -> Void) {
-        if var obj = objects[index].asTextObject {
-            var proxy = TextContentProxy(text: obj.text, isEditing: obj.isEditing)
-            mutation(&proxy)
-            obj.text = proxy.text; obj.isEditing = proxy.isEditing
-            objects[index] = AnyCanvasObject(obj)
-        } else if var obj = objects[index].asShapeObject {
-            var proxy = TextContentProxy(text: obj.text, isEditing: obj.isEditing)
-            mutation(&proxy)
-            obj.text = proxy.text; obj.isEditing = proxy.isEditing
-            objects[index] = AnyCanvasObject(obj)
-        }
+        guard let textContent = objects[index].asTextContent else { return }
+        var proxy = TextContentProxy(text: textContent.text, isEditing: textContent.isEditing)
+        mutation(&proxy)
+
+        objects[index] = objects[index].applying([
+            "text": proxy.text,
+            "isEditing": proxy.isEditing
+        ])
     }
 
     /// Find all objects within a marquee rectangle

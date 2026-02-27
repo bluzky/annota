@@ -31,7 +31,8 @@ public struct SelectionCapabilities {
         if objects.allSatisfy({ $0.isFillable }) {
             commonCapabilities.insert(.fill)
         }
-        if objects.allSatisfy({ $0.hasTextContent || $0.asLineObject != nil }) {
+        // LineObject now implements TextContentObject, so this check works for all text
+        if objects.allSatisfy({ $0.hasTextContent }) {
             commonCapabilities.insert(.textContent)
         }
         if objects.allSatisfy({ $0.hasTextContent }) {

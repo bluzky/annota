@@ -14,7 +14,13 @@ struct PencilObjectView: View {
         let bbox = object.boundingBox()
         let localOrigin = object.localOrigin
         // Bounding box in canvas coords, without the stroke-width padding
-        let contentSize = object.size
+        let rawSize = object.size
+        // Ensure minimum frame size so perfectly straight lines remain visible
+        let minDim = object.strokeWidth
+        let contentSize = CGSize(
+            width: max(rawSize.width, minDim),
+            height: max(rawSize.height, minDim)
+        )
 
         ZStack {
             // Render path in local coordinates (origin at bounding box top-left)
@@ -48,7 +54,12 @@ struct ExportPencilObjectView: View {
     let object: PencilObject
 
     var body: some View {
-        let contentSize = object.size
+        let rawSize = object.size
+        let minDim = object.strokeWidth
+        let contentSize = CGSize(
+            width: max(rawSize.width, minDim),
+            height: max(rawSize.height, minDim)
+        )
         object.localSmoothPath()
             .stroke(
                 object.strokeColor,

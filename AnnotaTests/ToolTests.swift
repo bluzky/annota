@@ -92,10 +92,10 @@ struct ShapeToolTests {
             shiftHeld: false
         )
         #expect(vm.objects.count == 1)
-        #expect(vm.objects.first?.asShapeObject != nil)
+        #expect(vm.objects.first?.asType(ShapeObject.self) != nil)
 
         // Verify the shape was created with correct properties
-        let shape = vm.objects.first?.asShapeObject
+        let shape = vm.objects.first?.asType(ShapeObject.self)
         #expect(shape?.toolId == "rectangle")
         #expect(shape?.size.width == 100)
         #expect(shape?.size.height == 100)
@@ -150,7 +150,7 @@ struct LineToolTests {
             shiftHeld: false
         )
         #expect(vm.objects.count == 1)
-        let line = vm.objects.first?.asLineObject
+        let line = vm.objects.first?.asType(LineObject.self)
         #expect(line != nil)
         #expect(line?.isArrow == false)
     }
@@ -172,7 +172,7 @@ struct ArrowToolTests {
             shiftHeld: false
         )
         #expect(vm.objects.count == 1)
-        let line = vm.objects.first?.asLineObject
+        let line = vm.objects.first?.asType(LineObject.self)
         #expect(line != nil)
         #expect(line?.isArrow == true)
     }
@@ -193,7 +193,7 @@ struct TextToolTests {
             shiftHeld: false
         )
         #expect(vm.objects.count == 1)
-        #expect(vm.objects.first?.asTextObject != nil)
+        #expect(vm.objects.first?.asType(TextObject.self) != nil)
         #expect(vm.objects.first?.isEditing == true)
     }
 

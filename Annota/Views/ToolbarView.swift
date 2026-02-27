@@ -24,7 +24,7 @@ struct ToolbarView: View {
             shapePickerButton
             toolButton(.line, icon: "line.diagonal", label: "Line", key: keys.line)
             toolButton(.arrow, icon: "arrow.right", label: "Arrow", key: keys.arrow)
-            toolButton(.pencil, icon: "pencil", label: "Pencil", key: keys.pencil)
+            toolButton(.pencil, icon: "pencil", label: "Freehand", key: keys.pencil)
             toolButton(.text, icon: "textformat", label: "Text", key: keys.text)
         }
         .padding(.horizontal, 6)

@@ -724,15 +724,10 @@ public struct CanvasView: View {
                 return
             }
 
-            // Check if any line is editing its label and close it on outside click
-            for obj in viewModel.selectedObjects {
-                if var line = obj.asLineObject, line.isEditingLabel {
-                    // Click outside label - stop editing
-                    if !line.contains(canvasLocation) {
-                        viewModel.updateObject(withId: line.id, as: LineObject.self) { $0.isEditingLabel = false }
-                        return
-                    }
-                }
+            // Check if any text content object is editing and close it on outside click
+            if let editing = viewModel.editingObject(), !editing.contains(canvasLocation) {
+                viewModel.endAllEditing()
+                return
             }
 
             // Check for double-click (using screen location for timing)
@@ -744,10 +739,8 @@ public struct CanvasView: View {
                 let (lineId, _) = hitTestLineLabel(at: canvasLocation)
                 if let lineId = lineId {
                     // Double-clicked on a line — enter label editing mode
-                    viewModel.updateObject(withId: lineId, as: LineObject.self) { line in
-                        line.isEditingLabel = true
-                    }
                     viewModel.selectObjectOnly(id: lineId)
+                    viewModel.startEditing(objectId: lineId)
                 } else if let objectId = viewModel.selectObject(at: canvasLocation) {
                     // Regular double-click on object (text or shape)
                     viewModel.startEditing(objectId: objectId)
@@ -804,7 +797,7 @@ public struct CanvasView: View {
     /// - Returns: Tuple of (line object ID, whether point is specifically on the label area)
     private func hitTestLineLabel(at point: CGPoint) -> (UUID?, Bool) {
         for obj in viewModel.objects {
-            guard let line = obj.asLineObject else { continue }
+            guard let line = obj.asType(LineObject.self) else { continue }
             let result = line.hitTest(point, threshold: InteractionConstants.labelHitTestThreshold)
             if result == .label {
                 return (line.id, true)
@@ -823,7 +816,7 @@ public struct CanvasView: View {
     /// Returns (objectId, controlPointIndex) or nil
     private func hitTestLineControlPoint(at point: CGPoint, threshold: CGFloat = InteractionConstants.hitTestThreshold) -> (UUID, Int)? {
         for obj in viewModel.selectedObjects {
-            guard let line = obj.asLineObject else { continue }
+            guard let line = obj.asType(LineObject.self) else { continue }
             if hypot(point.x - line.startPoint.x, point.y - line.startPoint.y) <= threshold {
                 return (line.id, 0)
             }
@@ -837,7 +830,7 @@ public struct CanvasView: View {
     /// Check if a canvas point is near the body of any selected line object
     private func hitTestLineBody(at point: CGPoint, threshold: CGFloat = InteractionConstants.hitTestThreshold) -> Bool {
         for obj in viewModel.selectedObjects {
-            guard let line = obj.asLineObject else { continue }
+            guard let line = obj.asType(LineObject.self) else { continue }
             if line.contains(point) {
                 return true
             }
