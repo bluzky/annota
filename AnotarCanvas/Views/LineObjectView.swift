@@ -46,14 +46,49 @@ struct LineObjectView: View {
             }
 
             // Label at midpoint
-            if !object.label.isEmpty {
+            if object.isEditingLabel {
+                // Editable label with auto-growing, multi-line support
+                AutoGrowingTextView(
+                    text: labelBinding,
+                    fontSize: object.labelAttributes.fontSize,
+                    fontFamily: object.labelAttributes.fontFamily,
+                    textColor: object.labelAttributes.color,
+                    alignment: .center,
+                    onFocus: { },
+                    onSizeChange: { _ in },
+                    scale: 1.0,
+                    onEscape: {
+                        viewModel.updateObject(withId: object.id, as: LineObject.self) { line in
+                            line.isEditingLabel = false
+                        }
+                    },
+                    maxWidth: labelMaxWidth
+                )
+                .fixedSize()
+                .background(Color.white.opacity(0.95))
+                .cornerRadius(LabelConstants.cornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: LabelConstants.cornerRadius)
+                        .stroke(Color.blue.opacity(0.3), lineWidth: 2.0)
+                )
+                .rotationEffect(labelAngle)
+                .position(object.midPoint)
+            } else if !object.label.isEmpty {
+                // Display label with background for readability on busy canvases
                 Text(object.label)
                     .font(object.labelAttributes.font)
                     .foregroundColor(object.labelAttributes.color)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(Color.white.opacity(0.8))
-                    .cornerRadius(3)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(nil)
+                    .frame(maxWidth: labelMaxWidth, alignment: .center)
+                    .padding(.horizontal, LabelConstants.horizontalPadding / 2)
+                    .padding(.vertical, LabelConstants.verticalPadding / 2)
+                    .fixedSize()
+                    .background(
+                        RoundedRectangle(cornerRadius: LabelConstants.cornerRadius)
+                            .fill(.white.opacity(LabelConstants.backgroundOpacity))
+                    )
+                    .rotationEffect(labelAngle)
                     .position(object.midPoint)
             }
 
@@ -72,6 +107,29 @@ struct LineObjectView: View {
                     .position(object.endPoint)
             }
         }
+    }
+
+    /// Max width for the label, based on line length with some padding reserved
+    private var labelMaxWidth: CGFloat {
+        max(40, object.length - 20)
+    }
+
+    /// Line angle adjusted so label text is always readable (never upside-down)
+    private var labelAngle: Angle {
+        var a = object.angle
+        // Flip if text would be upside-down (pointing left)
+        if a > .pi / 2 { a -= .pi }
+        else if a < -.pi / 2 { a += .pi }
+        return .radians(a)
+    }
+
+    private var labelBinding: Binding<String> {
+        Binding(
+            get: { object.label },
+            set: { newValue in
+                viewModel.updateObject(withId: object.id, as: LineObject.self) { $0.label = newValue }
+            }
+        )
     }
 
     /// Calculate adjusted line endpoints to prevent line from extending through filled arrowheads

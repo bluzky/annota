@@ -26,12 +26,16 @@ struct AutoGrowingTextView: NSViewRepresentable {
     var fontSize: CGFloat
     var fontFamily: String = "System"
     var textColor: Color
+    var alignment: NSTextAlignment = .left
     var onFocus: () -> Void
     var onSizeChange: ((CGSize) -> Void)?
     var scale: CGFloat = 1.0
+    var onEscape: (() -> Void)?
+    var maxWidth: CGFloat? = nil  // Optional max width - if set, text wraps at this width
 
     func makeNSView(context: Context) -> NSTextView {
-        let textView = NSTextView()
+        let textView = EscapableTextView()
+        textView.onEscape = onEscape
 
         // Configure text view
         textView.delegate = context.coordinator
@@ -44,21 +48,22 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.textColor = NSColor(textColor)
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
-        textView.alignment = .left
+        textView.alignment = alignment
 
         // Key settings for horizontal growth
         textView.isHorizontallyResizable = true
         textView.isVerticallyResizable = true
         textView.autoresizingMask = [.width, .height]
 
-        // Set text container to not wrap
+        // Set text container wrapping behavior based on maxWidth
+        let containerWidth = maxWidth ?? CGFloat.greatestFiniteMagnitude
         if let container = textView.textContainer {
             container.widthTracksTextView = false
             container.heightTracksTextView = false
-            container.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            container.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
         }
 
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.maxSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
         textView.minSize = NSSize(width: 0, height: fontSize * 1.5)
 
         textView.string = text
@@ -72,6 +77,11 @@ struct AutoGrowingTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ textView: NSTextView, context: Context) {
+        // Update escape handler
+        if let escapableTextView = textView as? EscapableTextView {
+            escapableTextView.onEscape = onEscape
+        }
+
         // NEVER update text while editing - this causes race conditions and lost keystrokes
         // The NSTextView is already updating itself via textDidChange
         if !context.coordinator.isEditing {
@@ -89,8 +99,14 @@ struct AutoGrowingTextView: NSViewRepresentable {
         textView.font = resolveNSFont(family: fontFamily, size: fontSize)
         textView.textColor = NSColor(textColor)
         textView.textContainerInset = NSSize(width: 4 * scale, height: 4 * scale)
+        textView.alignment = alignment
 
-        // Update min size based on font size
+        // Update container width and max size based on maxWidth
+        let containerWidth = maxWidth ?? CGFloat.greatestFiniteMagnitude
+        if let container = textView.textContainer {
+            container.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
+        }
+        textView.maxSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
         textView.minSize = NSSize(width: 0, height: fontSize * 1.5)
     }
 
@@ -166,6 +182,20 @@ struct AutoGrowingTextView: NSViewRepresentable {
 
 // MARK: - Constrained Width Text View (for shapes)
 
+/// Custom NSTextView that intercepts Escape key
+private class EscapableTextView: NSTextView {
+    var onEscape: (() -> Void)?
+
+    override func keyDown(with event: NSEvent) {
+        // Intercept Escape key
+        if event.keyCode == 53 { // Escape key code
+            onEscape?()
+            return
+        }
+        super.keyDown(with: event)
+    }
+}
+
 struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
     @Binding var text: String
     var fontSize: CGFloat
@@ -174,9 +204,11 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
     var maxWidth: CGFloat
     var alignment: NSTextAlignment
     var onHeightChange: ((CGFloat) -> Void)?
+    var onEscape: (() -> Void)?
 
     func makeNSView(context: Context) -> NSTextView {
-        let textView = NSTextView()
+        let textView = EscapableTextView()
+        textView.onEscape = onEscape
 
         // Configure text view
         textView.delegate = context.coordinator
@@ -217,6 +249,11 @@ struct ConstrainedAutoGrowingTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ textView: NSTextView, context: Context) {
+        // Update escape handler
+        if let escapableTextView = textView as? EscapableTextView {
+            escapableTextView.onEscape = onEscape
+        }
+
         // NEVER update text while editing - mirrors AutoGrowingTextView guard to prevent
         // lost keystrokes when SwiftUI re-renders during active typing.
         if !context.coordinator.isEditing {

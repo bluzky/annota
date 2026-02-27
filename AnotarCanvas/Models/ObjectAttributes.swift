@@ -64,6 +64,12 @@ public extension ObjectAttributes {
     /// Font family name (use "System" for system font)
     static let fontFamily = "fontFamily"
 
+    /// Horizontal text alignment (HorizontalTextAlignment)
+    static let horizontalTextAlignment = "horizontalTextAlignment"
+
+    /// Vertical text alignment (VerticalTextAlignment)
+    static let verticalTextAlignment = "verticalTextAlignment"
+
     // MARK: - Custom Attributes (Tool-specific)
 
     /// Namespace for tool-specific custom attributes

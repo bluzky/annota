@@ -168,9 +168,14 @@ public class CanvasViewModel: ObservableObject {
 
     // MARK: - Computed Properties
 
-    /// Check if any object is currently being edited
+    /// Check if any object is currently being edited (text or label)
     public var isAnyObjectEditing: Bool {
-        objects.contains { $0.isEditing }
+        objects.contains { obj in
+            if obj.isEditing { return true }
+            // Check if any line is editing its label
+            if let line = obj.asLineObject, line.isEditingLabel { return true }
+            return false
+        }
     }
 
     /// Get the currently editing object's ID and contains closure, if any
@@ -307,11 +312,20 @@ public class CanvasViewModel: ObservableObject {
                     result[ObjectAttributes.textColor] = textObj.color
                     result[ObjectAttributes.fontSize] = textObj.fontSize
                     result[ObjectAttributes.fontFamily] = textObj.textAttributes.fontFamily
+                    result[ObjectAttributes.horizontalTextAlignment] = textObj.textAttributes.horizontalAlignment
+                    result[ObjectAttributes.verticalTextAlignment] = textObj.textAttributes.verticalAlignment
                 } else if let shape = first.asShapeObject {
                     result[ObjectAttributes.textColor] = shape.textAttributes.textColor.color
                     result[ObjectAttributes.fontSize] = shape.textAttributes.fontSize
                     result[ObjectAttributes.fontFamily] = shape.textAttributes.fontFamily
+                    result[ObjectAttributes.horizontalTextAlignment] = shape.textAttributes.horizontalAlignment
+                    result[ObjectAttributes.verticalTextAlignment] = shape.textAttributes.verticalAlignment
                 }
+            } else if let line = first.asLineObject {
+                // Line label attributes
+                result[ObjectAttributes.textColor] = line.labelAttributes.textColor.color
+                result[ObjectAttributes.fontSize] = line.labelAttributes.fontSize
+                result[ObjectAttributes.fontFamily] = line.labelAttributes.fontFamily
             }
         }
 
@@ -364,6 +378,12 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.fontFamily] as? String != textObj.textAttributes.fontFamily {
                         result.removeValue(forKey: ObjectAttributes.fontFamily)
                     }
+                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != textObj.textAttributes.horizontalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
+                    }
+                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != textObj.textAttributes.verticalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
+                    }
                 } else if let shape = obj.asShapeObject {
                     if result[ObjectAttributes.textColor] as? Color != shape.textAttributes.textColor.color {
                         result.removeValue(forKey: ObjectAttributes.textColor)
@@ -374,6 +394,23 @@ public class CanvasViewModel: ObservableObject {
                     if result[ObjectAttributes.fontFamily] as? String != shape.textAttributes.fontFamily {
                         result.removeValue(forKey: ObjectAttributes.fontFamily)
                     }
+                    if result[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment != shape.textAttributes.horizontalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.horizontalTextAlignment)
+                    }
+                    if result[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment != shape.textAttributes.verticalAlignment {
+                        result.removeValue(forKey: ObjectAttributes.verticalTextAlignment)
+                    }
+                }
+            } else if let line = obj.asLineObject {
+                // Check line label attributes
+                if result[ObjectAttributes.textColor] as? Color != line.labelAttributes.textColor.color {
+                    result.removeValue(forKey: ObjectAttributes.textColor)
+                }
+                if result[ObjectAttributes.fontSize] as? CGFloat != line.labelAttributes.fontSize {
+                    result.removeValue(forKey: ObjectAttributes.fontSize)
+                }
+                if result[ObjectAttributes.fontFamily] as? String != line.labelAttributes.fontFamily {
+                    result.removeValue(forKey: ObjectAttributes.fontFamily)
                 }
             }
         }

@@ -261,7 +261,35 @@ public struct AnyCanvasObject: Identifiable {
                 textContent.textAttributes.fontFamily = family
                 modified = true
             }
+            if let hAlign = attributes[ObjectAttributes.horizontalTextAlignment] as? HorizontalTextAlignment {
+                textContent.textAttributes.horizontalAlignment = hAlign
+                modified = true
+            }
+            if let vAlign = attributes[ObjectAttributes.verticalTextAlignment] as? VerticalTextAlignment {
+                textContent.textAttributes.verticalAlignment = vAlign
+                modified = true
+            }
             if modified, let updated = textContent as? T {
+                object = updated
+            }
+        }
+
+        // Line label text properties
+        if var line = object as? LineObject {
+            var modified = false
+            if let color = attributes["textColor"] as? Color {
+                line.labelAttributes.textColor = CodableColor(color)
+                modified = true
+            }
+            if let size = attributes["fontSize"] as? CGFloat {
+                line.labelAttributes.fontSize = size
+                modified = true
+            }
+            if let family = attributes["fontFamily"] as? String {
+                line.labelAttributes.fontFamily = family
+                modified = true
+            }
+            if modified, let updated = line as? T {
                 object = updated
             }
         }

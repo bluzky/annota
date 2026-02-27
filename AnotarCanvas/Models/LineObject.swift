@@ -5,6 +5,19 @@
 
 import SwiftUI
 
+// MARK: - Label Layout Constants
+
+enum LabelConstants {
+    static let defaultEditingWidth: CGFloat = 150
+    static let minEditingWidth: CGFloat = 80
+    static let maxEditingWidth: CGFloat = 250
+    static let estimationMaxWidth: CGFloat = 250
+    static let horizontalPadding: CGFloat = 12
+    static let verticalPadding: CGFloat = 8
+    static let backgroundOpacity: Double = 0.9
+    static let cornerRadius: CGFloat = 4
+}
+
 /// Arrowhead styles for line endpoints
 public enum ArrowHead: String, Codable, Hashable, CaseIterable {
     case none
@@ -37,8 +50,14 @@ public struct LineObject: CanvasObject, StrokableObject, CopyableCanvasObject {
     public var endArrowHead: ArrowHead = .none
 
     // MARK: - Optional Label
+
+    /// Text label displayed at the line's midpoint
     public var label: String = ""
+
+    /// Visual styling for the label text
     public var labelAttributes: TextAttributes = .default
+
+    /// Whether the user is currently editing this line's label (transient state, not persisted)
     public var isEditingLabel: Bool = false
 
     // MARK: - Computed Properties
@@ -348,17 +367,21 @@ private extension LineObject {
         )
     }
 
-    /// Estimate label size based on text and attributes
+    /// Estimate label size based on text and attributes, constrained to line length
     func estimateLabelSize() -> CGSize {
         guard !label.isEmpty else { return .zero }
+        let maxW = max(40, length - 20)
         let font = labelAttributes.nsFont
         let attrs: [NSAttributedString.Key: Any] = [.font: font]
         let textSize = (label as NSString).boundingRect(
-            with: CGSize(width: 200, height: CGFloat.greatestFiniteMagnitude),
+            with: CGSize(width: maxW, height: CGFloat.greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin],
             attributes: attrs
         ).size
-        return CGSize(width: textSize.width + 12, height: textSize.height + 8)
+        return CGSize(
+            width: textSize.width + LabelConstants.horizontalPadding,
+            height: textSize.height + LabelConstants.verticalPadding
+        )
     }
 }
 

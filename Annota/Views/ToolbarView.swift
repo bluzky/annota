@@ -63,10 +63,11 @@ struct ToolbarView: View {
                 Image(systemName: icon)
                     .font(.system(size: 14))
                     .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+                    .background(isShapeActive ? Color.accentColor.opacity(0.2) : Color.clear)
+                    .cornerRadius(6)
             }
             .buttonStyle(.plain)
-            .background(isShapeActive ? Color.accentColor.opacity(0.2) : Color.clear)
-            .cornerRadius(6)
             .tooltip("Shapes (\(key.uppercased()))")
 
             Text(key.uppercased())
@@ -84,10 +85,11 @@ struct ToolbarView: View {
                 Image(systemName: icon)
                     .font(.system(size: 14))
                     .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
+                    .background(viewModel.selectedTool == tool ? Color.accentColor.opacity(0.2) : Color.clear)
+                    .cornerRadius(6)
             }
             .buttonStyle(.plain)
-            .background(viewModel.selectedTool == tool ? Color.accentColor.opacity(0.2) : Color.clear)
-            .cornerRadius(6)
             .tooltip("\(label) (\(key.uppercased()))")
 
             Text(key.uppercased())
