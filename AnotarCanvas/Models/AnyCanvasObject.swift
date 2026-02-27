@@ -171,6 +171,11 @@ public struct AnyCanvasObject: Identifiable {
         _object as? LineObject
     }
 
+    /// Get as PencilObject if applicable
+    public var asPencilObject: PencilObject? {
+        _object as? PencilObject
+    }
+
     // MARK: - Type-Erased Mutation
 
     /// Apply attributes and return a new wrapper with updated values

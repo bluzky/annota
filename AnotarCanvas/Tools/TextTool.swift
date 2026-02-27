@@ -25,6 +25,8 @@ public struct TextTool: CanvasTool {
         [.textFormatting]
     }
 
+    public init() {}
+
     // MARK: - Manifest
 
     public static let manifest = ToolManifest(

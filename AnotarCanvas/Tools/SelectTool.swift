@@ -24,4 +24,6 @@ public struct SelectTool: CanvasTool {
     public var capabilities: Set<ToolCapability> {
         []
     }
+
+    public init() {}
 }

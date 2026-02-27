@@ -24,6 +24,8 @@ public struct ArrowTool: CanvasTool {
         [.stroke, .labelText, .arrowheads]
     }
 
+    public init() {}
+
     // MARK: - Custom Attribute Keys
     // Tool-specific attribute keys (pure strings for extensibility)
     public enum CustomAttr {

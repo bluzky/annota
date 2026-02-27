@@ -15,7 +15,7 @@ public class ToolRegistry: ObservableObject {
     @Published public private(set) var registeredTools: [String: any CanvasTool] = [:]
 
     private init() {
-        registerBuiltInTools()
+        // Tools registered by application layer
     }
 
     /// Register a tool, keyed by its toolType.id.
@@ -67,28 +67,5 @@ public class ToolRegistry: ObservableObject {
     /// All registered DrawingTool identifiers.
     public var toolIds: [String] {
         Array(registeredTools.keys)
-    }
-
-    private func registerBuiltInTools() {
-        // Tool-only (no produced object) — registered directly
-        register(SelectTool())
-        register(HandTool())
-        register(ArrowTool())
-
-        // Shape tools — each shape shares ShapeObject registrations
-        // Only the first shape registration reaches the ObjectViewRegistry/CodableObjectRegistry
-        // calls; subsequent ones are no-ops for those registries (same discriminator).
-        register(RectangleTool().manifest())
-        register(OvalTool().manifest())
-        register(TriangleTool().manifest())
-        register(DiamondTool().manifest())
-        register(StarTool().manifest())
-
-        // Line and text tools carry their own object registrations
-        register(LineTool.manifest)
-        register(TextTool.manifest)
-
-        // ImageObject has no toolbar tool — register views and codable support directly.
-        register(ImageObject.objectManifest)
     }
 }

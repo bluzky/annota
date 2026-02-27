@@ -24,6 +24,8 @@ public struct LineTool: CanvasTool {
         [.stroke, .labelText]
     }
 
+    public init() {}
+
     // MARK: - Manifest
 
     public static let manifest = ToolManifest(

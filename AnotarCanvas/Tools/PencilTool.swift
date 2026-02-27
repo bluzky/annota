@@ -34,6 +34,8 @@ public struct PencilTool: CanvasTool {
     /// Minimum total travel distance to create a stroke (prevents accidental dots)
     private let minStrokeDistance: CGFloat = 3
 
+    public init() {}
+
     // MARK: - Manifest
 
     public static let manifest = ToolManifest(

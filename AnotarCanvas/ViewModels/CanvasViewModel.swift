@@ -558,6 +558,7 @@ public class CanvasViewModel: ObservableObject {
         else if objects[index].asShapeObject != nil { apply(objects[index].asShapeObject) }
         else if objects[index].asLineObject != nil { apply(objects[index].asLineObject) }
         else if objects[index].asImageObject != nil { apply(objects[index].asImageObject) }
+        else if objects[index].asPencilObject != nil { apply(objects[index].asPencilObject) }
     }
 
     public func selectObjectOnly(id: UUID) {
