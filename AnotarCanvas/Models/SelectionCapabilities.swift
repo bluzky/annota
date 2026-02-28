@@ -31,11 +31,11 @@ public struct SelectionCapabilities {
         if objects.allSatisfy({ $0.isFillable }) {
             commonCapabilities.insert(.fill)
         }
-        // LineObject now implements TextContentObject, so this check works for all text
         if objects.allSatisfy({ $0.hasTextContent }) {
             commonCapabilities.insert(.textContent)
         }
-        if objects.allSatisfy({ $0.hasTextContent }) {
+        // Text alignment is separate from text content: LineObject has text but doesn't support alignment
+        if objects.allSatisfy({ $0.supportsTextAlignment }) {
             commonCapabilities.insert(.textAlignment)
         }
 

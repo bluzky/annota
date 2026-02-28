@@ -66,6 +66,9 @@ public struct LineObject: CanvasObject, StrokableObject, TextContentObject, Copy
 
     public var usesControlPoints: Bool { true }
 
+    /// LineObject's label is always centered at the midpoint — alignment controls don't apply
+    public var supportsTextAlignment: Bool { false }
+
     /// Whether this line object acts as an arrow (has at least one arrowhead)
     public var isArrow: Bool {
         startArrowHead != .none || endArrowHead != .none
@@ -428,3 +431,4 @@ extension LineObject: CustomizableObject {
         return attrs
     }
 }
+

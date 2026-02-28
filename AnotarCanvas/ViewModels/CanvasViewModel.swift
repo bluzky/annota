@@ -981,6 +981,22 @@ public class CanvasViewModel: ObservableObject {
     /// Returns nil if there are no objects to render.
     @MainActor
     public func renderToImage(scale: CGFloat = 2.0, padding: CGFloat = 40) -> NSImage? {
+        renderObjectsToImage(objects: objects, scale: scale, padding: padding)
+    }
+
+    /// Render only selected objects to an NSImage.
+    /// The image covers the bounding box of selected objects, with optional padding.
+    /// Returns nil if there are no selected objects.
+    @MainActor
+    public func renderSelectionToImage(scale: CGFloat = 2.0, padding: CGFloat = 40) -> NSImage? {
+        let selectedObjects = objects.filter { selectedIds.contains($0.id) }
+        return renderObjectsToImage(objects: selectedObjects, scale: scale, padding: padding)
+    }
+
+    /// Internal helper: renders a specific set of objects to an NSImage.
+    /// Returns nil if the objects array is empty.
+    @MainActor
+    private func renderObjectsToImage(objects: [AnyCanvasObject], scale: CGFloat, padding: CGFloat) -> NSImage? {
         guard !objects.isEmpty else { return nil }
 
         // Compute tight bounding box over all objects

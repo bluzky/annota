@@ -75,6 +75,7 @@ final class AppState {
     }
 
     /// Copies the current canvas as an image to the system clipboard.
+    /// If there are selected objects, copies only the selection. Otherwise, copies all objects.
     func copyToClipboard() {
         exportLogger.debug("copyToClipboard called")
 
@@ -82,7 +83,18 @@ final class AppState {
             exportLogger.error("canvasViewModel is nil")
             return
         }
-        guard let image = viewModel.renderToImage() else {
+
+        // If objects are selected, export only the selection; otherwise export all
+        let image: NSImage?
+        if viewModel.selectionState.hasSelection {
+            image = viewModel.renderSelectionToImage()
+            exportLogger.debug("Rendering selection to clipboard")
+        } else {
+            image = viewModel.renderToImage()
+            exportLogger.debug("Rendering all objects to clipboard")
+        }
+
+        guard let image = image else {
             exportLogger.error("renderToImage returned nil (no objects to render)")
             return
         }

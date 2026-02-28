@@ -425,7 +425,92 @@ struct ClipboardTests {
 
         // Verify image was copied to clipboard
         let pasteboard = NSPasteboard.general
-        #expect(pasteboard.data(forType: .tiff) != nil || pasteboard.data(forType: .png) != nil)
+        #expect(pasteboard.data(forType: .png) != nil)
+    }
+
+    @Test func renderSelectionToImageOnlyRendersSelectedObjects() async throws {
+        let vm = CanvasViewModel()
+
+        // Add three objects
+        let id1 = vm.addTextObject(at: CGPoint(x: 0, y: 0))
+        let id2 = vm.addTextObject(at: CGPoint(x: 100, y: 100))
+        let id3 = vm.addTextObject(at: CGPoint(x: 200, y: 200))
+
+        // Select only the middle object
+        vm.selectObjectOnly(id: id2)
+
+        // Render selection should work
+        let selectionImage = vm.renderSelectionToImage()
+        #expect(selectionImage != nil)
+
+        // Deselect all
+        vm.deselectAll()
+
+        // Render selection should return nil when nothing selected
+        let emptyImage = vm.renderSelectionToImage()
+        #expect(emptyImage == nil)
+    }
+
+    // MARK: - Text Alignment Capability Tests
+
+    @Test func textObjectSupportsAlignment() {
+        let textObj = TextObject(position: CGPoint(x: 0, y: 0), text: "Test")
+        let wrapped = AnyCanvasObject(textObj)
+        #expect(wrapped.supportsTextAlignment == true)
+    }
+
+    @Test func shapeObjectSupportsAlignment() {
+        let shapeObj = ShapeObject(
+            position: CGPoint(x: 0, y: 0),
+            size: CGSize(width: 100, height: 100),
+            svgPath: "M 0,0 L 100,0 L 100,100 L 0,100 Z",
+            toolId: "rectangle"
+        )
+        let wrapped = AnyCanvasObject(shapeObj)
+        #expect(wrapped.supportsTextAlignment == true)
+    }
+
+    @Test func lineObjectDoesNotSupportAlignment() {
+        let lineObj = LineObject(
+            startPoint: CGPoint(x: 0, y: 0),
+            endPoint: CGPoint(x: 100, y: 100),
+            label: "Test Label"
+        )
+        let wrapped = AnyCanvasObject(lineObj)
+        #expect(wrapped.supportsTextAlignment == false)
+    }
+
+    @Test func selectionCapabilitiesDistinguishTextAlignment() {
+        let vm = CanvasViewModel()
+
+        // Add text object (supports alignment)
+        let textId = vm.addTextObject(at: CGPoint(x: 0, y: 0))
+
+        // Add line with label (has text content but no alignment)
+        let lineObj = LineObject(
+            startPoint: CGPoint(x: 100, y: 100),
+            endPoint: CGPoint(x: 200, y: 200),
+            label: "Line Label"
+        )
+        let lineId = vm.addObject(lineObj)
+
+        // Select only text: should support both textContent and textAlignment
+        vm.selectObjectOnly(id: textId)
+        var caps = vm.selectionCapabilities
+        #expect(caps.supports(.textContent) == true)
+        #expect(caps.supports(.textAlignment) == true)
+
+        // Select only line: should support textContent but NOT textAlignment
+        vm.selectObjectOnly(id: lineId)
+        caps = vm.selectionCapabilities
+        #expect(caps.supports(.textContent) == true)
+        #expect(caps.supports(.textAlignment) == false)
+
+        // Select both: textContent is common, but textAlignment is NOT
+        vm.selectMultiple(ids: [textId, lineId])
+        caps = vm.selectionCapabilities
+        #expect(caps.supports(.textContent) == true)
+        #expect(caps.supports(.textAlignment) == false)
     }
 
 }
