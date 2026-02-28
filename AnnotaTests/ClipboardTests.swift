@@ -220,7 +220,7 @@ struct ClipboardTests {
         let vm = CanvasViewModel()
         let id1 = vm.addTextObject(at: CGPoint(x: 10, y: 10))
         vm.addRectangleShape(from: CGPoint(x: 50, y: 50), to: CGPoint(x: 150, y: 150))
-        let shapeId = vm.objects.first(where: { $0.asShapeObject != nil })!.id
+        let shapeId = vm.objects.first(where: { $0.asType(ShapeObject.self) != nil })!.id
 
         vm.selectMultiple(ids: [id1, shapeId])
         vm.copySelection()
@@ -387,7 +387,7 @@ struct ClipboardTests {
         #expect(decoded.label == original.label)
         #expect(decoded.rotation == original.rotation)
         #expect(decoded.zIndex == original.zIndex)
-        #expect(decoded.isEditingLabel == false)
+        #expect(decoded.isEditing == false)
     }
 
     @Test func lineObjectCodableCanvasObjectRoundTrip() async throws {

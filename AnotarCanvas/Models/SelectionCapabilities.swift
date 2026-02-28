@@ -10,23 +10,8 @@ import Foundation
 /// Describes what capabilities are available for the current selection
 /// Used by UI to conditionally show/hide controls based on selected objects
 public struct SelectionCapabilities {
-    /// All selected objects support stroke operations
-    public let canStroke: Bool
-
-    /// All selected objects support fill operations
-    public let canFill: Bool
-
-    /// All selected objects support text editing
-    public let canEditText: Bool
-
-    /// Selected objects can be resized
-    public let canResize: Bool
-
-    /// Selected objects can be rotated
-    public let canRotate: Bool
-
-    /// All selected objects support text alignment (true for TextContentObject, false for lines)
-    public let canAlignText: Bool
+    /// Set of capabilities supported by ALL selected objects
+    public let capabilities: Set<ObjectCapability>
 
     /// Number of objects currently selected
     public let objectCount: Int
@@ -34,38 +19,41 @@ public struct SelectionCapabilities {
     /// Factory method to determine capabilities from selected objects
     public static func from(objects: [AnyCanvasObject]) -> SelectionCapabilities {
         guard !objects.isEmpty else {
-            return SelectionCapabilities(
-                canStroke: false,
-                canFill: false,
-                canEditText: false,
-                canResize: false,
-                canRotate: false,
-                canAlignText: false,
-                objectCount: 0
-            )
+            return SelectionCapabilities(capabilities: [], objectCount: 0)
+        }
+
+        var commonCapabilities: Set<ObjectCapability> = [.resize, .rotate]
+
+        // Add capability only if ALL objects support it
+        if objects.allSatisfy({ $0.isStrokable }) {
+            commonCapabilities.insert(.stroke)
+        }
+        if objects.allSatisfy({ $0.isFillable }) {
+            commonCapabilities.insert(.fill)
+        }
+        // LineObject now implements TextContentObject, so this check works for all text
+        if objects.allSatisfy({ $0.hasTextContent }) {
+            commonCapabilities.insert(.textContent)
+        }
+        if objects.allSatisfy({ $0.hasTextContent }) {
+            commonCapabilities.insert(.textAlignment)
         }
 
         return SelectionCapabilities(
-            canStroke: objects.allSatisfy { $0.isStrokable },
-            canFill: objects.allSatisfy { $0.isFillable },
-            canEditText: objects.allSatisfy { $0.hasTextContent || $0.asLineObject != nil },
-            canResize: true,
-            canRotate: true,
-            canAlignText: objects.allSatisfy { $0.hasTextContent },
+            capabilities: commonCapabilities,
             objectCount: objects.count
         )
     }
 
     /// Empty capabilities (no selection)
     public static var empty: SelectionCapabilities {
-        SelectionCapabilities(
-            canStroke: false,
-            canFill: false,
-            canEditText: false,
-            canResize: false,
-            canRotate: false,
-            canAlignText: false,
-            objectCount: 0
-        )
+        SelectionCapabilities(capabilities: [], objectCount: 0)
+    }
+
+    // MARK: - Convenience Checks
+
+    /// Check if selection supports a capability
+    public func supports(_ capability: ObjectCapability) -> Bool {
+        capabilities.contains(capability)
     }
 }

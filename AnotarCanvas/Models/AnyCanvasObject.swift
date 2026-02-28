@@ -147,28 +147,18 @@ public struct AnyCanvasObject: Identifiable {
     // ViewModel's objects array rather than caching old wrappers.
 
     /// Attempt to get the underlying object as a specific type
+    ///
+    /// This is the ONLY way to access concrete object types from AnyCanvasObject.
+    /// Library users can add new object types without modifying this file.
+    ///
+    /// Example:
+    /// ```swift
+    /// if let shape = anyObject.asType(ShapeObject.self) {
+    ///     print("Fill color: \(shape.fillColor)")
+    /// }
+    /// ```
     public func asType<T: CanvasObject>(_ type: T.Type) -> T? {
         _object as? T
-    }
-
-    /// Get as TextObject if applicable
-    public var asTextObject: TextObject? {
-        _object as? TextObject
-    }
-
-    /// Get as ShapeObject if applicable
-    public var asShapeObject: ShapeObject? {
-        _object as? ShapeObject
-    }
-
-    /// Get as ImageObject if applicable
-    public var asImageObject: ImageObject? {
-        _object as? ImageObject
-    }
-
-    /// Get as LineObject if applicable
-    public var asLineObject: LineObject? {
-        _object as? LineObject
     }
 
     // MARK: - Type-Erased Mutation
@@ -249,6 +239,10 @@ public struct AnyCanvasObject: Identifiable {
                 textContent.text = text
                 modified = true
             }
+            if let editing = attributes["isEditing"] as? Bool {
+                textContent.isEditing = editing
+                modified = true
+            }
             if let color = attributes["textColor"] as? Color {
                 textContent.textAttributes.textColor = CodableColor(color)
                 modified = true
@@ -325,6 +319,24 @@ public struct AnyCanvasObject: Identifiable {
     /// Get as CustomizableObject if applicable
     public var asCustomizable: (any CustomizableObject)? {
         _object as? any CustomizableObject
+    }
+
+    /// Get as StrokableObject if applicable
+    /// Use this instead of hard-coding specific types like ShapeObject or LineObject
+    public var asStrokable: (any StrokableObject)? {
+        _object as? any StrokableObject
+    }
+
+    /// Get as FillableObject if applicable
+    /// Use this instead of hard-coding specific types like ShapeObject
+    public var asFillable: (any FillableObject)? {
+        _object as? any FillableObject
+    }
+
+    /// Get as TextContentObject if applicable
+    /// Use this instead of hard-coding specific types like TextObject or ShapeObject
+    public var asTextContent: (any TextContentObject)? {
+        _object as? any TextContentObject
     }
 }
 

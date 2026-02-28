@@ -46,7 +46,7 @@ struct LineObjectView: View {
             }
 
             // Label at midpoint
-            if object.isEditingLabel {
+            if object.isEditing {
                 // Editable label with auto-growing, multi-line support
                 AutoGrowingTextView(
                     text: labelBinding,
@@ -59,7 +59,7 @@ struct LineObjectView: View {
                     scale: 1.0,
                     onEscape: {
                         viewModel.updateObject(withId: object.id, as: LineObject.self) { line in
-                            line.isEditingLabel = false
+                            line.isEditing = false
                         }
                     },
                     maxWidth: labelMaxWidth

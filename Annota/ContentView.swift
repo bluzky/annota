@@ -91,6 +91,7 @@ struct ContentView: View {
             keys.shape: lastShapeTool,
             keys.line: .line,
             keys.arrow: .arrow,
+            keys.pencil: .pencil,
         ]
     }
 

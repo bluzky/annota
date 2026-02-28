@@ -38,6 +38,11 @@ open class ShapeTool: CanvasTool {
         fatalError("Subclasses must override toolType")
     }
 
+    /// Shapes support stroke, fill, and shape-specific attributes (no label text)
+    open var capabilities: Set<ToolCapability> {
+        [.stroke, .fill, .shapeAttributes]
+    }
+
     // MARK: - Preview Rendering
 
     public func renderPreview(

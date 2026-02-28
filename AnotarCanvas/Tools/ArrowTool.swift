@@ -19,6 +19,13 @@ public struct ArrowTool: CanvasTool {
     public let category: ToolCategory = .drawing
     public let cursor: NSCursor = .crosshair
 
+    /// Arrow supports stroke, label text, and arrowhead controls
+    public var capabilities: Set<ToolCapability> {
+        [.stroke, .labelText, .arrowheads]
+    }
+
+    public init() {}
+
     // MARK: - Custom Attribute Keys
     // Tool-specific attribute keys (pure strings for extensibility)
     public enum CustomAttr {

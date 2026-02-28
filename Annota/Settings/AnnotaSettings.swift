@@ -114,6 +114,7 @@ struct ToolKeySettings: Codable, Equatable {
     var shape: String = "r"
     var line: String = "f"
     var arrow: String = "a"
+    var pencil: String = "d"
 }
 
 // MARK: - Command Key Bindings (modifier + key — triggers an action)

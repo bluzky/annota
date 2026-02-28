@@ -30,22 +30,40 @@ class ToolAttributeStore: ObservableObject {
         ObjectAttributes.fontFamily: "System"
     ]
 
+    /// Per-tool default overrides (merged on top of defaultAttributes)
+    static let toolDefaultOverrides: [String: ObjectAttributes] = [
+        "tool:pencil": [ObjectAttributes.strokeWidth: 3.0 as CGFloat]
+    ]
+
     // MARK: - Key Resolution
 
     /// Resolve the storage key for a tool.
-    /// Tools in the same category share one bucket (e.g. all shape tools).
+    /// Shape tools share one bucket; drawing tools (line, arrow, pencil) each get their own.
     func attributeKey(for tool: DrawingTool) -> String {
         if let resolved = ToolRegistry.shared.tool(for: tool) {
-            return "category:\(resolved.category.rawValue)"
+            switch resolved.category {
+            case .shape:
+                return "category:\(resolved.category.rawValue)"
+            default:
+                return "tool:\(tool.id)"
+            }
         }
         return tool.id
     }
 
     // MARK: - Read
 
-    /// Get the stored attributes for a tool (falls back to defaults)
+    /// Get the stored attributes for a tool (falls back to defaults with per-tool overrides)
     func attributes(for tool: DrawingTool) -> ObjectAttributes {
-        toolAttributes[attributeKey(for: tool)] ?? Self.defaultAttributes
+        let key = attributeKey(for: tool)
+        if let stored = toolAttributes[key] {
+            return stored
+        }
+        // Merge per-tool overrides on top of shared defaults
+        if let overrides = Self.toolDefaultOverrides[key] {
+            return Self.defaultAttributes.merging(overrides) { _, new in new }
+        }
+        return Self.defaultAttributes
     }
 
     // MARK: - Write

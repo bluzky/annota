@@ -52,6 +52,11 @@ public protocol CanvasTool {
         shiftHeld: Bool
     )
 
+    /// Declares capabilities this tool supports (e.g., .labelText, .fill, .stroke).
+    /// Third-party tools can declare custom capabilities using string literals.
+    /// Used by SubToolbarView to dynamically show relevant attribute controls.
+    var capabilities: Set<ToolCapability> { get }
+
     /// Optional: Tool provides custom controls for the sub-toolbar
     /// Return nil if the tool has no custom attributes
     /// Tools can use this to display their own SwiftUI controls
@@ -61,6 +66,11 @@ public protocol CanvasTool {
 // MARK: - Default Implementations
 
 public extension CanvasTool {
+    /// Default capabilities for most tools (stroke, fill, label text)
+    var capabilities: Set<ToolCapability> {
+        [.stroke, .fill, .labelText]
+    }
+
     func handleClick(
         at point: CGPoint,
         viewModel: CanvasViewModel,
@@ -97,6 +107,13 @@ public extension CanvasTool {
         shiftHeld: Bool
     ) {
         // Default: no-op
+    }
+
+    // MARK: - Convenience Capability Checks
+
+    /// Check if this tool supports a specific capability
+    func supports(_ capability: ToolCapability) -> Bool {
+        capabilities.contains(capability)
     }
 }
 
