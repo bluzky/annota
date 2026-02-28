@@ -412,6 +412,22 @@ struct ClipboardTests {
         #expect(restoredLine?.endArrowHead == .filled)
     }
 
+    // MARK: - Image Clipboard Tests
+
+    @Test func copyImageToClipboard() async throws {
+        let testImage = NSImage(size: NSSize(width: 100, height: 100))
+        testImage.lockFocus()
+        NSColor.red.setFill()
+        NSRect(x: 0, y: 0, width: 100, height: 100).fill()
+        testImage.unlockFocus()
+
+        ClipboardService.copyImage(testImage)
+
+        // Verify image was copied to clipboard
+        let pasteboard = NSPasteboard.general
+        #expect(pasteboard.data(forType: .tiff) != nil || pasteboard.data(forType: .png) != nil)
+    }
+
 }
 
 // MARK: - Helpers

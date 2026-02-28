@@ -74,6 +74,24 @@ final class AppState {
         CFRunLoopWakeUp(CFRunLoopGetMain())
     }
 
+    /// Copies the current canvas as an image to the system clipboard.
+    func copyToClipboard() {
+        exportLogger.debug("copyToClipboard called")
+
+        guard let viewModel = canvasViewModel else {
+            exportLogger.error("canvasViewModel is nil")
+            return
+        }
+        guard let image = viewModel.renderToImage() else {
+            exportLogger.error("renderToImage returned nil (no objects to render)")
+            return
+        }
+        exportLogger.debug("Image rendered for clipboard: \(image.size.debugDescription)")
+
+        ClipboardService.copyImage(image)
+        exportLogger.debug("Image copied to clipboard successfully")
+    }
+
     private func showSavePanel(image: NSImage, format: ExportFormat) {
         exportLogger.debug("Creating NSSavePanel...")
         let panel = NSSavePanel()
