@@ -121,10 +121,10 @@ struct PencilTool: CanvasTool {
 
 ### Step 2 — Register it
 
-In `Tools/ToolRegistry.swift`, add to `registerBuiltInTools()`:
+In `Annota/AnnotaApp.swift`, add to the `registerBuiltInTools()` method in `AppDelegate`:
 
 ```swift
-register(PencilTool())
+registry.register(PencilTool())
 ```
 
 Or register at runtime from anywhere:
@@ -352,10 +352,10 @@ The generic `viewModel.addObject(_:)` method works with any `CanvasObject`. No n
 
 ### Step 5 — Register the manifest
 
-In `Tools/ToolRegistry.swift`, add one line to `registerBuiltInTools()`:
+In `Annota/AnnotaApp.swift`, add one line to the `registerBuiltInTools()` method in `AppDelegate`:
 
 ```swift
-register(StickerTool.manifest)
+registry.register(StickerTool.manifest)
 ```
 
 That single call registers the tool, its interactive view, its export view, and its codable discriminator. There are no other registration sites to update.
@@ -435,7 +435,7 @@ All methods have default no-op implementations. Only override what your tool nee
 | File | Action |
 |------|--------|
 | `Tools/YourTool.swift` | **New** — tool + `DrawingTool` extension |
-| `Tools/ToolRegistry.swift` | Add `register()` call |
+| `Annota/AnnotaApp.swift` | Add `register()` call to `AppDelegate.registerBuiltInTools()` |
 | `Views/ToolbarView.swift` | Add toolbar button |
 
 ### Tool + new object type
@@ -446,7 +446,7 @@ All methods have default no-op implementations. Only override what your tool nee
 | `Views/YourObjectView.swift` | **New** — interactive view |
 | `Views/ExportYourObjectView.swift` | **New** — export view |
 | `Tools/YourTool.swift` | **New** — tool + `DrawingTool` extension + `static manifest` |
-| `Tools/ToolRegistry.swift` | Add `register(YourTool.manifest)` |
+| `Annota/AnnotaApp.swift` | Add `register(YourTool.manifest)` to `AppDelegate.registerBuiltInTools()` |
 | `Views/ToolbarView.swift` | Add toolbar button |
 
 Zero modifications to `DrawingTool`, `AnyCanvasObject`, `CanvasObjectView`, `CanvasExportView`, `CanvasViewModel`, or `CodableCanvasObject`.
