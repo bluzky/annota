@@ -143,6 +143,12 @@ struct ContentView: View {
             let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             let keys = settings.current.commandKeys
 
+            // Cmd+A: Select All
+            if matchesShortcut(event, keys.selectAll) {
+                viewModel.selectMultiple(ids: Set(viewModel.objects.map { $0.id }))
+                return nil
+            }
+
             // Cmd+C: Copy
             if matchesShortcut(event, keys.copy) {
                 viewModel.copySelection()

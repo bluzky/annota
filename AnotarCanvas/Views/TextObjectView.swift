@@ -44,10 +44,12 @@ struct TextObjectView: View {
                     alignment: object.textAttributes.horizontalAlignment.nsAlignment,
                     onFocus: { isFocused = true },
                     onSizeChange: { size in
-                        let unscaledSize = CGSize(width: size.width / scale, height: size.height / scale)
-                        viewModel.updateObject(withId: object.id, as: TextObject.self) { $0.size = unscaledSize }
+                        let unscaled = CGSize(width: size.width / scale, height: size.height / scale)
+                        viewModel.updateObject(withId: object.id, as: TextObject.self) { $0.size = unscaled }
+                        // Do NOT set width here — typing must not lock the width
                     },
-                    scale: scale
+                    scale: scale,
+                    maxWidth: object.width.map { $0 * scale }
                 )
                 .id(object.id) // Keep same view instance while editing
                 .background(Color.white.opacity(0.95))
@@ -58,17 +60,24 @@ struct TextObjectView: View {
                 )
                 .scaleEffect(1.0 / scale, anchor: .topLeading)
             } else {
-                Text(object.text.isEmpty ? "Text" : object.text)
+                let textContent = Text(object.text.isEmpty ? "Text" : object.text)
                     .font(scaledFont)
                     .foregroundColor(object.text.isEmpty ? object.color.opacity(0.5) : object.color)
                     .multilineTextAlignment(object.textAttributes.horizontalAlignment.swiftUIAlignment)
-                    .fixedSize()
                     .padding(4 * scale)
                     .background(
                         RoundedRectangle(cornerRadius: 4 * scale)
                             .fill(Color.white.opacity(0.01))
                     )
                     .scaleEffect(1.0 / scale, anchor: .topLeading)
+                if let w = object.width {
+                    textContent
+                        .frame(maxWidth: w * scale, alignment: .topLeading)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    textContent
+                        .fixedSize()
+                }
             }
         }
         .rotationEffect(.radians(object.rotation))

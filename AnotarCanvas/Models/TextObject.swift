@@ -23,7 +23,7 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
     public var isEditing: Bool
 
     // MARK: - TextObject Specific
-    public var maxWidth: CGFloat = 200
+    public var width: CGFloat? = nil   // nil = free-grow, non-nil = constrained to this width
 
     // MARK: - Backward Compatibility
 
@@ -83,7 +83,12 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
 
     private enum CodingKeys: String, CodingKey {
         case id, position, size, rotation, isLocked, zIndex
-        case text, textAttributes, maxWidth
+        case text, textAttributes, width
+    }
+
+    // Separate enum used only while decoding legacy data
+    private enum LegacyCodingKeys: String, CodingKey {
+        case maxWidth
     }
 
     public init(from decoder: Decoder) throws {
@@ -96,7 +101,17 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
         zIndex = try container.decodeIfPresent(Int.self, forKey: .zIndex) ?? 0
         text = try container.decode(String.self, forKey: .text)
         textAttributes = try container.decode(TextAttributes.self, forKey: .textAttributes)
-        maxWidth = try container.decodeIfPresent(CGFloat.self, forKey: .maxWidth) ?? 200
+        // Prefer new `width` key; fall back to legacy `maxWidth` (treat the old 200 default as nil/free-grow)
+        if let w = try container.decodeIfPresent(CGFloat.self, forKey: .width) {
+            width = w
+        } else {
+            let legacyContainer = try decoder.container(keyedBy: LegacyCodingKeys.self)
+            if let legacy = try legacyContainer.decodeIfPresent(CGFloat.self, forKey: .maxWidth), legacy != 200 {
+                width = legacy
+            } else {
+                width = nil
+            }
+        }
         isEditing = false
     }
 
@@ -116,7 +131,7 @@ public struct TextObject: CanvasObject, TextContentObject, CopyableCanvasObject 
         )
         copy.textAttributes = textAttributes
         copy.size = size
-        copy.maxWidth = maxWidth
+        copy.width = width
         return copy
     }
 

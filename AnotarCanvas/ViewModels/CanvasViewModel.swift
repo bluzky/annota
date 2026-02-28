@@ -501,6 +501,13 @@ public class CanvasViewModel: ObservableObject {
     public func updateObjectFrame(id: UUID, position: CGPoint, size: CGSize) {
         guard let index = objectIndex(withId: id) else { return }
         applyGeometry(at: index) { $0.position = position; $0.size = size }
+        // Lock text width and recalculate height to account for text wrapping
+        updateObject(withId: id, as: TextObject.self) { textObj in
+            textObj.width = size.width
+            let padding: CGFloat = 8 // matches TextObjectView padding (4pt each side)
+            let wrapped = textObj.textSize(maxWidth: size.width - padding)
+            textObj.size.height = wrapped.height + padding
+        }
     }
 
     /// Apply a geometry mutation to the object at `index`.
