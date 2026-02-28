@@ -13,12 +13,8 @@ public struct AddObjectAction: CanvasAction {
     /// The object that was added
     private let object: AnyCanvasObject
 
-    /// The z-index assigned to the object
-    private let zIndex: Int
-
-    public init(object: AnyCanvasObject, zIndex: Int) {
+    public init(object: AnyCanvasObject) {
         self.object = object
-        self.zIndex = zIndex
     }
 
     public func execute(on viewModel: CanvasViewModel) {

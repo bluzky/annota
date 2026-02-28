@@ -62,8 +62,8 @@ public enum DistributionAction: CaseIterable {
 
 @MainActor
 public class CanvasViewModel: ObservableObject {
-    public init() {
-        self.undoManager = UndoManager()
+    public init(undoManager: UndoManager? = nil) {
+        self.undoManager = undoManager ?? UndoManager()
     }
 
     // MARK: - Undo/Redo Management
@@ -219,7 +219,7 @@ public class CanvasViewModel: ObservableObject {
         let wrappedObject = AnyCanvasObject(obj)
 
         // Record undo action
-        let action = AddObjectAction(object: wrappedObject, zIndex: obj.zIndex)
+        let action = AddObjectAction(object: wrappedObject)
         undoManager?.recordWithoutExecuting(action)
 
         // Execute the addition
@@ -623,6 +623,22 @@ public class CanvasViewModel: ObservableObject {
                     objectIds: Set(beforeObjects.map { $0.id }),
                     beforeObjects: beforeObjects,
                     afterObjects: afterObjects
+                )
+                undoManager?.recordWithoutExecuting(action)
+            }
+        }
+
+        // Record undo action for empty text objects that will be deleted
+        if !idsToRemove.isEmpty {
+            let deletedObjects = objects.filter { idsToRemove.contains($0.id) }
+            if !deletedObjects.isEmpty {
+                // Use the pre-edit snapshots if available, otherwise use current state
+                let snapshotObjects = deletedObjects.map { obj in
+                    editingObjectsSnapshot[obj.id] ?? obj
+                }
+                let action = DeleteObjectsAction(
+                    deletedObjects: snapshotObjects,
+                    previousSelection: selectionState.selectedIds
                 )
                 undoManager?.recordWithoutExecuting(action)
             }

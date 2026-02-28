@@ -63,6 +63,7 @@ public struct TransformObjectsAction: CanvasAction {
             ])
             viewModel._updateObjectAtIndex(index, with: updated)
         }
+        viewModel.refreshSelectionCache()
     }
 
     public var description: String {

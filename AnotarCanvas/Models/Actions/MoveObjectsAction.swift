@@ -41,6 +41,7 @@ public struct MoveObjectsAction: CanvasAction {
             let updated = viewModel.objects[index].applying(["position": position])
             viewModel._updateObjectAtIndex(index, with: updated)
         }
+        viewModel.refreshSelectionCache()
     }
 
     public var description: String {
