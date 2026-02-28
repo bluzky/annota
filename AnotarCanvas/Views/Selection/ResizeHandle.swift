@@ -24,11 +24,11 @@ struct ResizeHandle: View {
     }
 
     var body: some View {
-        Rectangle()
+        Circle()
             .fill(fillColor)
             .frame(width: size, height: size)
             .overlay(
-                Rectangle()
+                Circle()
                     .stroke(strokeColor, lineWidth: 1)
             )
     }
