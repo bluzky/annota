@@ -161,6 +161,18 @@ struct ContentView: View {
                 return nil
             }
 
+            // Cmd+Z: Undo
+            if matchesShortcut(event, keys.undo) {
+                viewModel.undoManager?.undo(on: viewModel)
+                return nil
+            }
+
+            // Cmd+Shift+Z: Redo
+            if matchesShortcut(event, keys.redo) {
+                viewModel.undoManager?.redo(on: viewModel)
+                return nil
+            }
+
             // Z-order arrangement
             if matchesShortcut(event, keys.bringToFront) {
                 viewModel.bringToFront()
