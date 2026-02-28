@@ -17,11 +17,18 @@ public protocol TextContentObject: CanvasObject {
 
     /// Whether the text is currently being edited
     var isEditing: Bool { get set }
+
+    /// Whether this object supports text alignment controls.
+    /// Default is true. Override to return false for objects like LineObject
+    /// where text is always positioned at a fixed location (e.g. midpoint).
+    var supportsTextAlignment: Bool { get }
 }
 
 // MARK: - Default Implementations
 
 public extension TextContentObject {
+    var supportsTextAlignment: Bool { true }
+
     /// Returns true if this object has any text content
     public var hasText: Bool {
         !text.isEmpty

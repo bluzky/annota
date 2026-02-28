@@ -61,6 +61,17 @@ public enum ClipboardService {
 
         return image.size
     }
+
+    /// Copies an NSImage to the system clipboard as PNG data.
+    /// - Parameter image: The image to copy to clipboard
+    public static func copyImage(_ image: NSImage) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+
+        if let pngData = image.pngData() {
+            pasteboard.setData(pngData, forType: .png)
+        }
+    }
 }
 
 // MARK: - NSImage PNG Conversion

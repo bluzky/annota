@@ -62,7 +62,14 @@ public enum DistributionAction: CaseIterable {
 
 @MainActor
 public class CanvasViewModel: ObservableObject {
-    public init() {}
+    public init(undoManager: UndoManager? = nil) {
+        self.undoManager = undoManager ?? UndoManager()
+    }
+
+    // MARK: - Undo/Redo Management
+
+    /// Undo/redo manager for canvas actions
+    public var undoManager: UndoManager?
 
     // MARK: - Unified Object Storage
 
@@ -103,7 +110,7 @@ public class CanvasViewModel: ObservableObject {
     /// Called when selection changes or when selected-object attributes are mutated
     /// (e.g. color, stroke width). NOT called on geometry-only mutations to avoid
     /// expensive recomputation during drag/resize.
-    private func refreshSelectionCache() {
+    internal func refreshSelectionCache() {
         cachedSelectionAttributes = getSelectionAttributes()
         cachedSelectionCapabilities = SelectionCapabilities.from(objects: selectedObjects)
     }
@@ -166,6 +173,9 @@ public class CanvasViewModel: ObservableObject {
     /// key-event monitor) always read the current value instead of a stale capture.
     public var canvasSize: CGSize = .zero
 
+    /// Tracks objects being edited for undo (object snapshot before editing started)
+    private var editingObjectsSnapshot: [UUID: AnyCanvasObject] = [:]
+
     // MARK: - Computed Properties
 
     /// Check if any object is currently being edited (text or label)
@@ -206,7 +216,14 @@ public class CanvasViewModel: ObservableObject {
         var obj = object
         obj.zIndex = nextZIndex
         nextZIndex += 1
-        objects.append(AnyCanvasObject(obj))
+        let wrappedObject = AnyCanvasObject(obj)
+
+        // Record undo action
+        let action = AddObjectAction(object: wrappedObject)
+        undoManager?.recordWithoutExecuting(action)
+
+        // Execute the addition
+        objects.append(wrappedObject)
         sortObjectsByZIndex()
         refreshSelectionCache()
         return obj.id
@@ -436,6 +453,13 @@ public class CanvasViewModel: ObservableObject {
     public func startEditing(objectId: UUID) {
         guard let index = objectIndex(withId: objectId) else { return }
         guard objects[index].hasTextContent else { return }
+
+        // Capture object state before editing for undo (with isEditing = false)
+        var snapshot = objects[index]
+        // Ensure the snapshot has isEditing = false so undo doesn't re-enter editing mode
+        snapshot = snapshot.applying(["isEditing": false])
+        editingObjectsSnapshot[objectId] = snapshot
+
         mutateTextContent(at: index) { $0.isEditing = true }
         selectedObjectId = objectId
     }
@@ -553,15 +577,76 @@ public class CanvasViewModel: ObservableObject {
     public func endAllEditing() {
         // Collect IDs of text objects that are empty and should be removed
         var idsToRemove: [UUID] = []
+        var editedObjectIds: Set<UUID> = []
+
         for index in objects.indices where objects[index].isEditing {
+            let objectId = objects[index].id
+
             // Check if this is a TextObject with empty text
             if let textObj = objects[index].asType(TextObject.self),
                textObj.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                idsToRemove.append(objects[index].id)
+                idsToRemove.append(objectId)
             } else {
                 mutateTextContent(at: index) { $0.isEditing = false }
+                editedObjectIds.insert(objectId)
             }
         }
+
+        // Record undo action for text changes
+        // Skip recording if the before text was empty AND it's a TextObject (newly created text)
+        // But DO record for LineObject labels even if empty (since the line already exists)
+        if !editedObjectIds.isEmpty {
+            var beforeObjects: [AnyCanvasObject] = []
+            var afterObjects: [AnyCanvasObject] = []
+
+            for objectId in editedObjectIds {
+                if let beforeObj = editingObjectsSnapshot[objectId],
+                   let afterObj = object(withId: objectId) {
+                    if let beforeText = beforeObj.asTextContent,
+                       let afterText = afterObj.asTextContent,
+                       beforeText.text != afterText.text {
+
+                        // Check if it's a standalone TextObject with initially empty text
+                        let isNewTextObject = beforeObj.asType(TextObject.self) != nil && beforeText.text.isEmpty
+
+                        // Record the action unless it's a new empty TextObject
+                        if !isNewTextObject {
+                            beforeObjects.append(beforeObj)
+                            afterObjects.append(afterObj)
+                        }
+                    }
+                }
+            }
+
+            if !beforeObjects.isEmpty {
+                let action = UpdateAttributesAction(
+                    objectIds: Set(beforeObjects.map { $0.id }),
+                    beforeObjects: beforeObjects,
+                    afterObjects: afterObjects
+                )
+                undoManager?.recordWithoutExecuting(action)
+            }
+        }
+
+        // Record undo action for empty text objects that will be deleted
+        if !idsToRemove.isEmpty {
+            let deletedObjects = objects.filter { idsToRemove.contains($0.id) }
+            if !deletedObjects.isEmpty {
+                // Use the pre-edit snapshots if available, otherwise use current state
+                let snapshotObjects = deletedObjects.map { obj in
+                    editingObjectsSnapshot[obj.id] ?? obj
+                }
+                let action = DeleteObjectsAction(
+                    deletedObjects: snapshotObjects,
+                    previousSelection: selectionState.selectedIds
+                )
+                undoManager?.recordWithoutExecuting(action)
+            }
+        }
+
+        // Clear editing snapshot
+        editingObjectsSnapshot.removeAll()
+
         // Remove empty text objects
         for id in idsToRemove {
             objects.removeAll { $0.id == id }
@@ -683,6 +768,16 @@ public class CanvasViewModel: ObservableObject {
     public func deleteSelected() {
         let idsToRemove = selectionState.selectedIds
         guard !idsToRemove.isEmpty else { return }
+
+        // Capture objects being deleted for undo
+        let deletedObjects = objects.filter { idsToRemove.contains($0.id) }
+        let previousSelection = selectionState.selectedIds
+
+        // Record undo action
+        let action = DeleteObjectsAction(deletedObjects: deletedObjects, previousSelection: previousSelection)
+        undoManager?.recordWithoutExecuting(action)
+
+        // Execute the deletion
         objects.removeAll { idsToRemove.contains($0.id) }
         selectionState.clear()
         // selectionState.clear() triggers didSet → refreshSelectionCache()
@@ -691,7 +786,7 @@ public class CanvasViewModel: ObservableObject {
     // MARK: - Z-Order Management
 
     /// Sort objects array by zIndex
-    private func sortObjectsByZIndex() {
+    internal func sortObjectsByZIndex() {
         objects.sort { $0.zIndex < $1.zIndex }
     }
 
@@ -902,6 +997,22 @@ public class CanvasViewModel: ObservableObject {
     /// Returns nil if there are no objects to render.
     @MainActor
     public func renderToImage(scale: CGFloat = 2.0, padding: CGFloat = 40) -> NSImage? {
+        renderObjectsToImage(objects: objects, scale: scale, padding: padding)
+    }
+
+    /// Render only selected objects to an NSImage.
+    /// The image covers the bounding box of selected objects, with optional padding.
+    /// Returns nil if there are no selected objects.
+    @MainActor
+    public func renderSelectionToImage(scale: CGFloat = 2.0, padding: CGFloat = 40) -> NSImage? {
+        let selectedObjects = objects.filter { selectedIds.contains($0.id) }
+        return renderObjectsToImage(objects: selectedObjects, scale: scale, padding: padding)
+    }
+
+    /// Internal helper: renders a specific set of objects to an NSImage.
+    /// Returns nil if the objects array is empty.
+    @MainActor
+    private func renderObjectsToImage(objects: [AnyCanvasObject], scale: CGFloat, padding: CGFloat) -> NSImage? {
         guard !objects.isEmpty else { return nil }
 
         // Compute tight bounding box over all objects
@@ -934,6 +1045,40 @@ public class CanvasViewModel: ObservableObject {
         renderer.scale = scale
         guard let cgImage = renderer.cgImage else { return nil }
         return NSImage(cgImage: cgImage, size: contentRect.size)
+    }
+
+    // MARK: - Internal Helpers for Undo/Redo
+
+    /// Add an object directly without incrementing nextZIndex (for undo/redo)
+    internal func _addObjectDirectly(_ object: AnyCanvasObject) {
+        objects.append(object)
+        sortObjectsByZIndex()
+        refreshSelectionCache()
+    }
+
+    /// Remove objects by IDs (for undo/redo)
+    internal func _removeObjects(ids: Set<UUID>) {
+        objects.removeAll { ids.contains($0.id) }
+        sortObjectsByZIndex()
+        refreshSelectionCache()
+    }
+
+    /// Update object at index (for undo/redo)
+    internal func _updateObjectAtIndex(_ index: Int, with object: AnyCanvasObject) {
+        guard index < objects.count else { return }
+        objects[index] = object
+    }
+
+    /// Set objects array directly (for undo/redo batch operations)
+    internal func _setObjects(_ newObjects: [AnyCanvasObject]) {
+        objects = newObjects
+        sortObjectsByZIndex()
+        refreshSelectionCache()
+    }
+
+    /// Set selection state directly (for undo/redo)
+    internal func _setSelection(_ ids: Set<UUID>) {
+        selectionState.selectMultiple(ids)
     }
 }
 

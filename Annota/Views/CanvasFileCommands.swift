@@ -22,6 +22,14 @@ struct CanvasFileCommands: Commands {
         CommandGroup(after: .saveItem) {
             Divider()
 
+            Button("Copy Image to Clipboard") {
+                AppState.shared.copyToClipboard()
+            }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+            .disabled(!hasObjects)
+
+            Divider()
+
             Button("Export as PNG…") {
                 AppState.shared.requestExport(format: .png)
             }

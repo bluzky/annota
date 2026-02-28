@@ -40,10 +40,11 @@ struct PencilObjectView: View {
         }
         // Rotate around the content center
         .rotationEffect(.radians(object.rotation))
-        // Position at the center of the bounding box in canvas coordinates
+        // Position based on actual bounds center (not expanded contentSize)
+        // to avoid shifting perfectly horizontal/vertical strokes
         .position(
-            x: localOrigin.x + contentSize.width / 2,
-            y: localOrigin.y + contentSize.height / 2
+            x: localOrigin.x + rawSize.width / 2,
+            y: localOrigin.y + rawSize.height / 2
         )
     }
 }
@@ -68,8 +69,8 @@ struct ExportPencilObjectView: View {
             .frame(width: contentSize.width, height: contentSize.height)
             .rotationEffect(.radians(object.rotation))
             .position(
-                x: object.localOrigin.x + contentSize.width / 2,
-                y: object.localOrigin.y + contentSize.height / 2
+                x: object.localOrigin.x + rawSize.width / 2,
+                y: object.localOrigin.y + rawSize.height / 2
             )
     }
 }

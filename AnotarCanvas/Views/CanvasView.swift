@@ -307,10 +307,12 @@ public struct CanvasView: View {
                         resizeAnchor = anchorPoint(for: hitZone, in: selectionBox)
                         initialRotation = selectionBox.rotation
                         rotationCenter = selectionBox.center
-                        // Store initial frames for all selected objects
+                        // Store initial frames and rotations for all selected objects
                         initialObjectFrames = [:]
+                        initialObjectRotations = [:]
                         for obj in viewModel.selectedObjects {
                             initialObjectFrames[obj.id] = obj.boundingBox()
+                            initialObjectRotations[obj.id] = obj.rotation
                         }
                         lastDragLocation = canvasLocation
                         cursorForHitZone(hitZone).set()
@@ -335,6 +337,13 @@ public struct CanvasView: View {
                         // Start moving via selection box interior
                         draggedObjectId = viewModel.selectedIds.first
                         lastDragLocation = canvasLocation
+                        // Capture initial state for undo
+                        initialObjectFrames = [:]
+                        initialObjectRotations = [:]
+                        for obj in viewModel.selectedObjects {
+                            initialObjectFrames[obj.id] = obj.boundingBox()
+                            initialObjectRotations[obj.id] = obj.rotation
+                        }
                     }
                 } else if let objectId = viewModel.selectObject(at: canvasStart) {
                     // Dragging an object
@@ -344,6 +353,14 @@ public struct CanvasView: View {
                     // If dragging a non-selected object, select it (unless shift is held)
                     if !viewModel.isSelected(objectId) && !NSEvent.modifierFlags.contains(.shift) {
                         viewModel.selectObjectOnly(id: objectId)
+                    }
+
+                    // Capture initial state for undo
+                    initialObjectFrames = [:]
+                    initialObjectRotations = [:]
+                    for obj in viewModel.selectedObjects {
+                        initialObjectFrames[obj.id] = obj.boundingBox()
+                        initialObjectRotations[obj.id] = obj.rotation
                     }
                 } else {
                     // Started drag in empty space - begin marquee selection
@@ -672,6 +689,34 @@ public struct CanvasView: View {
                 )
             } else {
                 assertionFailure("No registered tool found for selected tool: \(viewModel.selectedTool)")
+            }
+        }
+
+        // Record undo action for geometry changes (move, resize, rotate)
+        if !initialObjectFrames.isEmpty && distance >= 5 {
+            // Capture the final state of all transformed objects
+            var beforeStates: [ObjectGeometryState] = []
+            var afterStates: [ObjectGeometryState] = []
+
+            for (id, initialFrame) in initialObjectFrames {
+                if let obj = viewModel.object(withId: id) {
+                    // Before state (from initial capture)
+                    let initialRotation = initialObjectRotations[id] ?? 0
+                    beforeStates.append(ObjectGeometryState(
+                        id: id,
+                        position: CGPoint(x: initialFrame.minX, y: initialFrame.minY),
+                        size: initialFrame.size,
+                        rotation: initialRotation
+                    ))
+
+                    // After state (current)
+                    afterStates.append(ObjectGeometryState(from: obj))
+                }
+            }
+
+            if !beforeStates.isEmpty {
+                let action = TransformObjectsAction(beforeStates: beforeStates, afterStates: afterStates)
+                viewModel.undoManager?.recordWithoutExecuting(action)
             }
         }
 

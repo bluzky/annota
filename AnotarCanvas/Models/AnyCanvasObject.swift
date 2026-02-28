@@ -50,6 +50,7 @@ public struct AnyCanvasObject: Identifiable {
 
     // Capability flags
     private let _usesControlPoints: Bool
+    private let _supportsTextAlignment: Bool
 
     /// The ObjectIdentifier for the concrete CanvasObject type stored inside this wrapper.
     /// Used by registries (ObjectViewRegistry, CodableObjectRegistry) for dynamic dispatch.
@@ -65,6 +66,9 @@ public struct AnyCanvasObject: Identifiable {
         self._object = object
         self.underlyingTypeId = ObjectIdentifier(T.self)
         self._usesControlPoints = object.usesControlPoints
+
+        // Check if object supports text alignment via protocol property
+        self._supportsTextAlignment = (object as? any TextContentObject)?.supportsTextAlignment ?? false
 
         self._getPosition = { object.position }
         self._getSize = { object.size }
@@ -137,6 +141,9 @@ public struct AnyCanvasObject: Identifiable {
 
     /// Whether the underlying object supports text editing
     public var hasTextContent: Bool { _getIsEditing != nil }
+
+    /// Whether this object supports text alignment controls (TextObject/ShapeObject yes, LineObject no)
+    public var supportsTextAlignment: Bool { _supportsTextAlignment }
 
     /// Whether this object uses control points instead of a selection box (e.g. lines)
     public var usesControlPoints: Bool { _usesControlPoints }
