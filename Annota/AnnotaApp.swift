@@ -17,12 +17,13 @@ struct AnnotaApp: App {
     )
 
     var body: some Scene {
-        WindowGroup {
+        Window("Annota", id: "main") {
             ContentView()
                 .preferredColorScheme(.light)
                 .environmentObject(settings)
         }
         .commands {
+            CommandGroup(replacing: .newItem) { }
             EditCommands()
             CanvasFileCommands()
             ArrangeCommands()

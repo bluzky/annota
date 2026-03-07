@@ -163,6 +163,14 @@ public class CanvasViewModel: ObservableObject {
 
     @Published public var viewport = ViewportState()
 
+    // MARK: - File State
+
+    /// URL of the currently open file (nil = untitled/new document)
+    @Published public var currentFileURL: URL?
+
+    /// Whether the canvas has unsaved changes
+    @Published public private(set) var isDirty: Bool = false
+
     // MARK: - Transient Drag State
 
     @Published public var dragStartPoint: CGPoint?
@@ -226,6 +234,7 @@ public class CanvasViewModel: ObservableObject {
         objects.append(wrappedObject)
         sortObjectsByZIndex()
         refreshSelectionCache()
+        isDirty = true
         return obj.id
     }
 
@@ -267,6 +276,7 @@ public class CanvasViewModel: ObservableObject {
     public func removeObject(withId id: UUID) {
         objects.removeAll { $0.id == id }
         refreshSelectionCache()
+        isDirty = true
     }
 
     // MARK: - Batch Attribute Updates
@@ -275,6 +285,7 @@ public class CanvasViewModel: ObservableObject {
     public func updateObject(_ objectId: UUID, attributes: ObjectAttributes) {
         guard let index = objectIndex(withId: objectId) else { return }
         objects[index] = objects[index].applying(attributes)
+        isDirty = true
     }
 
     /// Update attributes on all selected objects
@@ -787,6 +798,7 @@ public class CanvasViewModel: ObservableObject {
         // Execute the deletion
         objects.removeAll { idsToRemove.contains($0.id) }
         selectionState.clear()
+        isDirty = true
         // selectionState.clear() triggers didSet → refreshSelectionCache()
     }
 
@@ -1052,6 +1064,50 @@ public class CanvasViewModel: ObservableObject {
         renderer.scale = scale
         guard let cgImage = renderer.cgImage else { return nil }
         return NSImage(cgImage: cgImage, size: contentRect.size)
+    }
+
+    // MARK: - File Save/Load
+
+    /// Serialize current canvas state to JSON data for file saving.
+    public func saveToFile() -> Data? {
+        AnnotaDocument.encode(objects: objects, viewport: viewport)
+    }
+
+    /// Load canvas state from file data, replacing all current objects and viewport.
+    /// Clears selection and undo history.
+    public func loadFromFile(_ data: Data) throws {
+        let document = try AnnotaDocument.decode(from: data)
+
+        // Clear current state
+        selectionState.clear()
+        undoManager?.clear()
+
+        // Restore objects — preserve original IDs and zIndex values
+        var loadedObjects: [AnyCanvasObject] = []
+        for codable in document.objects {
+            guard let decoded = CodableObjectRegistry.decode(
+                discriminator: codable.typeDiscriminator,
+                data: codable.objectData
+            ) else { continue }
+            loadedObjects.append(AnyCanvasObject(decoded))
+        }
+
+        objects = loadedObjects
+        sortObjectsByZIndex()
+
+        // Reset nextZIndex to one past the highest loaded zIndex
+        nextZIndex = (objects.map { $0.zIndex }.max() ?? -1) + 1
+
+        // Restore viewport
+        viewport = document.viewport.toViewportState()
+
+        isDirty = false
+        refreshSelectionCache()
+    }
+
+    /// Mark the document as saved (no unsaved changes).
+    public func markClean() {
+        isDirty = false
     }
 
     // MARK: - Internal Helpers for Undo/Redo
