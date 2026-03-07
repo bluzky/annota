@@ -43,6 +43,7 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 600)
+        .navigationTitle(windowTitle)
         .focusedSceneObject(viewModel)
         .onAppear {
             AppState.shared.canvasViewModel = viewModel
@@ -66,6 +67,14 @@ struct ContentView: View {
                 keyMonitor = nil
             }
         }
+    }
+
+    private var windowTitle: String {
+        if let url = viewModel.currentFileURL {
+            let name = url.deletingPathExtension().lastPathComponent
+            return viewModel.isDirty ? "\(name) — Edited" : name
+        }
+        return "Untitled"
     }
 
     // Check if sub-toolbar should be displayed
@@ -142,6 +151,12 @@ struct ContentView: View {
 
             let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             let keys = settings.current.commandKeys
+
+            // Cmd+A: Select All
+            if matchesShortcut(event, keys.selectAll) {
+                viewModel.selectMultiple(ids: Set(viewModel.objects.map { $0.id }))
+                return nil
+            }
 
             // Cmd+C: Copy
             if matchesShortcut(event, keys.copy) {

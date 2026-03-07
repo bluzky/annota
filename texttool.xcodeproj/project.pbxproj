@@ -11,6 +11,7 @@
 		AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; };
 		AC00000500000005000000AC /* AnotarCanvas.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65031EABCDEF00310EBB /* SVGPath */; };
+		FF6916C92F553844003D2B9F /* TOML in Frameworks */ = {isa = PBXBuildFile; productRef = AC00002100000021000000AC /* TOML */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -66,8 +67,18 @@
 		};
 		FF0B343B2EEABCA300310EBB /* Annota */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FF0B34FF2EEABCA300310EFF /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			path = Annota;
 			sourceTree = "<group>";
+		};
+		FF0B34FF2EEABCA300310EFF /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FF0B34382EEABCA300310EBB /* Annota */;
 		};
 		FF0B344B2EEABCA500310EBB /* AnnotaTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -94,6 +105,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF6916C92F553844003D2B9F /* TOML in Frameworks */,
 				AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -574,6 +586,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Annota/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -607,6 +620,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Annota/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -91,9 +91,7 @@ public struct CanvasView: View {
                 .offset(x: viewModel.viewport.offset.x, y: viewModel.viewport.offset.y)
 
                 // Selection box overlay (rendered in screen coordinates, not affected by viewport)
-                // Hidden during active resize or rotation drag, and for line-only selections
-                if activeHandleZone == nil,
-                   let selectionBox = viewModel.selectionBox,
+                if let selectionBox = viewModel.selectionBox,
                    viewModel.selectedTool == .select,
                    !viewModel.isAnyObjectEditing,
                    !viewModel.isControlPointOnlySelection {
