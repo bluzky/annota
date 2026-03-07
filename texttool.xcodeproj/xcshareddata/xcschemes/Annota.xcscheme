@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2610"
+   LastUpgradeVersion = "1600"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -15,9 +15,37 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
+               BlueprintIdentifier = "72B4625D18C404F17937331F"
                BuildableName = "Annota.app"
                BlueprintName = "Annota"
+               ReferencedContainer = "container:texttool.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A5C8D1DA275DD3A202EB9F0B"
+               BuildableName = "AnnotaTests.xctest"
+               BlueprintName = "AnnotaTests"
+               ReferencedContainer = "container:texttool.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2750D78EC6B4AA5CB8A3ABE9"
+               BuildableName = "AnnotaUITests.xctest"
+               BlueprintName = "AnnotaUITests"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,29 +56,42 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "72B4625D18C404F17937331F"
+            BuildableName = "Annota.app"
+            BlueprintName = "Annota"
+            ReferencedContainer = "container:texttool.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FF0B34472EEABCA500310EBB"
+               BlueprintIdentifier = "A5C8D1DA275DD3A202EB9F0B"
                BuildableName = "AnnotaTests.xctest"
                BlueprintName = "AnnotaTests"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FF0B34512EEABCA500310EBB"
+               BlueprintIdentifier = "2750D78EC6B4AA5CB8A3ABE9"
                BuildableName = "AnnotaUITests.xctest"
                BlueprintName = "AnnotaUITests"
                ReferencedContainer = "container:texttool.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -66,12 +107,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
+            BlueprintIdentifier = "72B4625D18C404F17937331F"
             BuildableName = "Annota.app"
             BlueprintName = "Annota"
             ReferencedContainer = "container:texttool.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -83,12 +126,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FF0B34382EEABCA300310EBB"
+            BlueprintIdentifier = "72B4625D18C404F17937331F"
             BuildableName = "Annota.app"
             BlueprintName = "Annota"
             ReferencedContainer = "container:texttool.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
