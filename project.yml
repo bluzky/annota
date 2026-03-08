@@ -2,7 +2,7 @@ name: texttool
 options:
   bundleIdPrefix: co.onekg
   deploymentTarget:
-    macOS: "26.1"
+    macOS: "15.0"
   defaultConfig: Debug
   xcodeVersion: "16.0"
 
