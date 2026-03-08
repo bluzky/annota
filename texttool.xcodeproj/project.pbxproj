@@ -7,45 +7,145 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AC00000100000001000000AC /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = AC00000200000002000000AC /* SVGPath */; };
-		AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; };
-		AC00000500000005000000AC /* AnotarCanvas.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AC00000400000004000000AC /* AnotarCanvas.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = FF0B65031EABCDEF00310EBB /* SVGPath */; };
-		FF6916C92F553844003D2B9F /* TOML in Frameworks */ = {isa = PBXBuildFile; productRef = AC00002100000021000000AC /* TOML */; };
+		0127E1164F922726BB7C683F /* ResizeMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153B906D95784865C1286DCA /* ResizeMathTests.swift */; };
+		053266139006DD70C056F246 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C1786094BB61FFD8606B27 /* Item.swift */; };
+		0852ED2CA585FC647FF133DF /* DiamondTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B250B014D1B59388114A974 /* DiamondTool.swift */; };
+		0866C863C5F01C44A683D9AA /* SelectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39C6CD8A71CB2CCF902A034 /* SelectionState.swift */; };
+		0A0E2E0692F7E619E94D6485 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69B2AE41528B102CA488CA5 /* SettingsManager.swift */; };
+		0C9A4BACE043E01EDBC742FD /* PencilTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AFDC3B839D56F3D378A014B /* PencilTool.swift */; };
+		0E8653BBAD39EB8E776C11D2 /* ToolManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E361653C862DBFFB45840D /* ToolManifest.swift */; };
+		0F3B2CB29C1C1DCFA0D98559 /* TextContentObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB9678E2E42A3E0307768D3 /* TextContentObject.swift */; };
+		135C8F631706574007E6FCE3 /* ShapeObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A30F2F4E8EB5B98FC90775A /* ShapeObject.swift */; };
+		170B0CC29E0083E4E14B23A6 /* FillableObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = F62BB49CC354DF3D1E658BCF /* FillableObject.swift */; };
+		1A2C6CB3ACBD064B0804044B /* ClipboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1340D26E9985E24627E32C8 /* ClipboardService.swift */; };
+		1F7295D4D0304B8495D0D80F /* ImageObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39E2A27E6B1EBA88EA1A850D /* ImageObjectView.swift */; };
+		205284786819DE1BE5D9D0DE /* TextObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592F6FE054C499F4F4E4AC4F /* TextObject.swift */; };
+		214C1C2F5538B833B3BED638 /* Capabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 385F76CCD6B9C3CC5B6F789F /* Capabilities.swift */; };
+		239A31EC150CE22085F80EC8 /* TOML in Frameworks */ = {isa = PBXBuildFile; productRef = A9301E547A076ADC73EEB47C /* TOML */; };
+		2703E1C8D4C35503EF1AB601 /* AnotarCanvas.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4DD71F9772F1B3E1BB04305A /* AnotarCanvas.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		284CB6C4A85754486A566E0D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA5C18244C538AF63979F87E /* Assets.xcassets */; };
+		29A2AD08FA81632AED5B29BA /* LineTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA9C4E2A2AC4D379DFA895C /* LineTool.swift */; };
+		2C814504657DFF52ADEBB85B /* AnnotaUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7329AF9BE3393A5F82D35D6E /* AnnotaUITestsLaunchTests.swift */; };
+		2C95D9F66B42D966815C11C7 /* ValueInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7364B81C1C6E83BB1BD52642 /* ValueInputView.swift */; };
+		2CABFB2E12A2D3D3A2C3F568 /* TextObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE315E18C166C14AB6D8E92 /* TextObjectView.swift */; };
+		2CB6221E134B36D9346A5255 /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = 1F47503772E0648B587F362A /* SVGPath */; };
+		2CDB9593CE3ED8F106A7E703 /* TransformObjectsAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 426EAC99A67FDD7562804509 /* TransformObjectsAction.swift */; };
+		2E2E6551FDCA1483682E9A57 /* ScrollGestureModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF673CDB597E7C2526B7368 /* ScrollGestureModifier.swift */; };
+		32BC1892F2DE9021AE30C2F7 /* TriangleTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F0030089AD972F806C99848 /* TriangleTool.swift */; };
+		32F08782C1CFA20B36299CA5 /* LineObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E8F90B63C038B3EB5A84CBC /* LineObject.swift */; };
+		3317BAFA91C5282EB1E51A62 /* StrokableObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B09EF3CA02BE583738F96E /* StrokableObject.swift */; };
+		36133575228CA6EF35566633 /* CanvasAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D94DF825C04D00D31949D3B /* CanvasAction.swift */; };
+		36760C9A1057049EB11CD3F7 /* AnnotaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09E61190C8044BF4C90358B4 /* AnnotaApp.swift */; };
+		36D307665F96750806013F85 /* MarqueeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 729D04B1A6510B6CD8A20B12 /* MarqueeView.swift */; };
+		399C0CE0810C32C392594306 /* DeleteObjectsAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E08E040995CA4E77796E97A /* DeleteObjectsAction.swift */; };
+		3EB03B315EF97B5F95DD7C78 /* ImageObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CA01653B439BF803DDDE86 /* ImageObject.swift */; };
+		3EBC6898E9DFF6A5C47E147E /* PencilObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFCF932E7E2AF9EB822B497 /* PencilObject.swift */; };
+		3F856A68B5CF6D46D7CAC736 /* ToolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65FE4A04F7840972CD91F6F1 /* ToolTests.swift */; };
+		43067032E3037E0358D262E5 /* PencilObjectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF285366CE517942C9C47D1 /* PencilObjectTests.swift */; };
+		449A512226BE5EB02FC6357D /* DrawingTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B686028B11DD992DA83C5AF /* DrawingTool.swift */; };
+		461F990730A425B54ED8DDE2 /* SubToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D1FC16232CCD47D0B68AC9 /* SubToolbarView.swift */; };
+		468734D0E3830F9EB0595566 /* AnnotaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71847ACCD63C37F604B1E4E /* AnnotaUITests.swift */; };
+		46874321CD8AFDEA733E9133 /* PencilObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C87FA1556AE2209BF4C9551 /* PencilObjectView.swift */; };
+		488E54D28DCE8425D192B45C /* RotationMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71ECC854C628104D871D2BFF /* RotationMathTests.swift */; };
+		4BE1A9E3019FA44F40B878AF /* SelectionCapabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967193F2527A646B51895589 /* SelectionCapabilities.swift */; };
+		4E61DD7FF2D30A54CF766FA8 /* ShapePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D510B2D83D9158CE9722AFE /* ShapePickerView.swift */; };
+		4E92FF11277AEBFF6231B1F4 /* AnyCanvasObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1CCFEF380034A9612B469EA /* AnyCanvasObject.swift */; };
+		4F13368E8058A8A90831A523 /* CodableCanvasObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D2ED1E1F708DB0F41E2429 /* CodableCanvasObject.swift */; };
+		5059CD553DED74F6DB846E64 /* SettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A148D0D5998DDA4889945A75 /* SettingsTests.swift */; };
+		548A73B453A0AFCDC3510117 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = F362D7F4F85FFAF884475405 /* FileWatcher.swift */; };
+		549F61A473C153F2B1BDC315 /* SettingsWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56B7B51E756C8AC44E94673 /* SettingsWindowView.swift */; };
+		54A20856BC7591F39B4AD878 /* ResizeHandle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 032DEEA89812942B9B6D1849 /* ResizeHandle.swift */; };
+		5E4BE23595905EC75EF98AD6 /* AnnotaSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26D3340C0B87E1E0CD468DA /* AnnotaSettings.swift */; };
+		62AB04E54B64D3BB1B09D8F8 /* RectangleTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC539E432FFA7FB5601F0BE4 /* RectangleTool.swift */; };
+		672FE6CB54A8355159530F33 /* ClipboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BEF048B95F91DA626B90C99 /* ClipboardTests.swift */; };
+		6B26B8BD2AB345A555CB873E /* SelectionBoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B95CE179214FDE6AAF229C2 /* SelectionBoxTests.swift */; };
+		6FD499B005B2EBD3E3475633 /* ColorPresetPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B655BC08EEBD77DF1F3884 /* ColorPresetPicker.swift */; };
+		73026BF904382DFB3C445DD8 /* UpdateAttributesAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033D8F3CFBB66EEDD784B82D /* UpdateAttributesAction.swift */; };
+		76113FCBD5EB77800AF837AA /* UndoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E457F8CB94558623DCA0377B /* UndoManager.swift */; };
+		7ACCE22BB8C3CA348832AFD6 /* ObjectAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E5054648C7F51E4B118CA91 /* ObjectAttributes.swift */; };
+		7DC8B4C3EAEFEB8459F1F2E8 /* OvalTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = F60E32616E62153AA22484F4 /* OvalTool.swift */; };
+		7E1A12B4D4A10A7F097B62F1 /* SettingsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0A75A94ABC5223A3A5AE2C6 /* SettingsStorage.swift */; };
+		832B970BCD73556C5896881D /* EditCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC3E85125FF4657E3FE31B70 /* EditCommands.swift */; };
+		845F73431824B6699E97649F /* LineObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26E2A7A330959E6AE9136A0B /* LineObjectView.swift */; };
+		84FF4BB5E480B03D87F109DF /* CanvasObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8A5D04D2A7DC33EE6227F3 /* CanvasObject.swift */; };
+		89FE3E709EDDDC03A264CD8B /* CanvasTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C538364E9559B3DA214CC60 /* CanvasTool.swift */; };
+		8B763FF4EF8490CE25258482 /* LineToolHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D0EC9D43DAA8E866BC1D5C6 /* LineToolHelpers.swift */; };
+		910AE847421AD3D672E5D33A /* HitTestResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624381753999FCA9599A9618 /* HitTestResult.swift */; };
+		957F22FCBA8F6D569682F866 /* AnotarCanvas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DD71F9772F1B3E1BB04305A /* AnotarCanvas.framework */; };
+		9781692E7574EA8BB7F8C12E /* ShapeObjectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7112DC15CB8B66A3CE59936B /* ShapeObjectTests.swift */; };
+		98E3C52BA1D10767F5CD0024 /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = 85A80280B06DDD904DB25447 /* SVGPath */; };
+		9BC778C48E0783DB2F4B458C /* ArrowTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2467A8507F493EA04F1324B /* ArrowTool.swift */; };
+		9D07125590D643C0C35FC85D /* HandTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2079B41EF01CBC9E4C3A6D7 /* HandTool.swift */; };
+		9D4EE9DDDB5D074D37D29A70 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76D9C2EF28B3271E11D31B11 /* CanvasView.swift */; };
+		A19C02B44CD27CB4646E1E9F /* ToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95A4CA23CA2C4C2914AF1CF /* ToolbarView.swift */; };
+		A4251F6C6F711CDA949B8861 /* ViewportStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D37034480E7A2543D768EE29 /* ViewportStateTests.swift */; };
+		A98A2103376D5C2409906E64 /* StrokeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E152C5168995C33C196A31 /* StrokeStyle.swift */; };
+		AA70F5E30DE4E2B3E6C62266 /* SelectionBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663C51EC9ED72B441AE5FA79 /* SelectionBoxView.swift */; };
+		B570A550972CEAA5A86304EA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110D7E4B141810FA63CEE86C /* ContentView.swift */; };
+		B7D8993B47583AEA7B7D377B /* ArrangeCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53BD42BB528F8B5F9D8E78E /* ArrangeCommands.swift */; };
+		B87154C4FF104E4545D98BD5 /* SelectionBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE057D4C6F4CB4EA71CD615A /* SelectionBox.swift */; };
+		BC73BD634962286287D238F1 /* CanvasViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C90EE37F552EFCF19CC2CCE /* CanvasViewModel.swift */; };
+		C02B1F4AC6CA53DF6B802700 /* TOMLSettingsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 660640BD25CB5E5B2946A74B /* TOMLSettingsStorage.swift */; };
+		C5E544C4273677A17A61C7FF /* ToolRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09042BEAD98AC15596E23750 /* ToolRegistry.swift */; };
+		C732BAD3613DD8A1D29E40A7 /* CanvasFileCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48B882F9D527A6524C0DA10 /* CanvasFileCommands.swift */; };
+		C7ED5564B6F8FB221C9820AC /* TooltipModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCDD6AEB4E2041D43166F1BE /* TooltipModifier.swift */; };
+		CA8ED2C06D9EA2EA2C4A3ED4 /* CustomizableObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19073EA116F9283817890A1C /* CustomizableObject.swift */; };
+		CAEED28392ED3062D7E6F531 /* FloatingFormatBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04A2A8699C92310975DDF494 /* FloatingFormatBar.swift */; };
+		CCAA2691928AC887DBFB5828 /* TextAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BBD73541F21CB58C61B63F9 /* TextAttributes.swift */; };
+		CE33F9CA90EE6E808CC79658 /* LineObjectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD073BB5E98FCF51413A029 /* LineObjectTests.swift */; };
+		CE35FF6A2D4913AB9F625494 /* DrawingTool+Shapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F61B93FAE67002F58FFDAF /* DrawingTool+Shapes.swift */; };
+		D0790FAD52544BD0AB810CC1 /* SelectTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8879CA14C5FE155C29763B1 /* SelectTool.swift */; };
+		D0D74AB5E862FFE1C01CE8AF /* AddObjectAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C3DB04F3BAC3F14FB3CEC3 /* AddObjectAction.swift */; };
+		D179CD388847F978DD541E4C /* AnnotaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF5A4B898F7C1E1EA58E0D7 /* AnnotaTests.swift */; };
+		D713A0439F12F3F43E1F9AA0 /* CanvasObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28DE23642B0203544D18F4FF /* CanvasObjectView.swift */; };
+		DC74C9CCE3E85924C9E5661A /* AnnotaDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A27E0C20A3553E2A7EF14 /* AnnotaDocument.swift */; };
+		DD8AD45C603D4ED49F882C8B /* ToolAttributeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73196984F9D2AA676BD31D78 /* ToolAttributeStore.swift */; };
+		DEC901EC30415AC6749DBA95 /* ViewportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FD59D201011124942F2AF11 /* ViewportState.swift */; };
+		E509FB7321C8B981D27B3631 /* ObjectViewRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCB3E3F8BC76EEEBD69B97D8 /* ObjectViewRegistry.swift */; };
+		E9EA9A5119284D7E55B2381F /* InfiniteGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29B100F8364D457BE2DE163 /* InfiniteGridView.swift */; };
+		EA37E27F8616B667D4824E9B /* UTType+Annota.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624357ED240E3021148CF496 /* UTType+Annota.swift */; };
+		EBBF9A2D4F6BE133F0E0841A /* StarTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64529340F22AC2C5957FFCE7 /* StarTool.swift */; };
+		ECCC07A2A552FC2BE400D766 /* AutoGrowingTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5032A69BA11AB9A7C710357 /* AutoGrowingTextView.swift */; };
+		ECDE4A61B18EF398E7937D07 /* MoveObjectsAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233C3FB0DC7C7F2ED8236D21 /* MoveObjectsAction.swift */; };
+		ED02446BA13B68771D433C7E /* CanvasExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC222E2C9871D4DCC0AE27E /* CanvasExportView.swift */; };
+		EDFA943D9F7722CB5FD75181 /* TextTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F37F2551E55F5A1827A26E /* TextTool.swift */; };
+		FAA84CDDBD2501AAF1AFE87B /* BaseShapeTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44D76B970574D13446B0B01E /* BaseShapeTool.swift */; };
+		FAD70EED0FE1325D5228BDAA /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF652BEE6CC7D436CBBB9BFD /* AppState.swift */; };
+		FF8690C9F624740F47DD2800 /* ShapeObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E978C6EBE1A0ABD987D896 /* ShapeObjectView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AC00000600000006000000AC /* PBXContainerItemProxy */ = {
+		31F1BEACDB17BE4A41914917 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
+			containerPortal = 54448E40971722782BEAE47A /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AC00000700000007000000AC;
+			remoteGlobalIDString = 72B4625D18C404F17937331F;
+			remoteInfo = Annota;
+		};
+		6210FE5DF2C71BB0CB08DC6A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54448E40971722782BEAE47A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 72B4625D18C404F17937331F;
+			remoteInfo = Annota;
+		};
+		A46B31DBD4E1E0F94285FA5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54448E40971722782BEAE47A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 15DC05687EE8EA5AD1947C81;
 			remoteInfo = AnotarCanvas;
-		};
-		FF0B34492EEABCA500310EBB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = FF0B34382EEABCA300310EBB;
-			remoteInfo = Annota;
-		};
-		FF0B34532EEABCA500310EBB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = FF0B34312EEABCA300310EBB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = FF0B34382EEABCA300310EBB;
-			remoteInfo = Annota;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		AC00000800000008000000AC /* Embed Frameworks */ = {
+		748CAE3E5FFD6BF934F046AF /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				AC00000500000005000000AC /* AnotarCanvas.framework in Embed Frameworks */,
+				2703E1C8D4C35503EF1AB601 /* AnotarCanvas.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -53,476 +153,791 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		AC00000400000004000000AC /* AnotarCanvas.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnotarCanvas.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34392EEABCA300310EBB /* Annota.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Annota.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		032DEEA89812942B9B6D1849 /* ResizeHandle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeHandle.swift; sourceTree = "<group>"; };
+		033D8F3CFBB66EEDD784B82D /* UpdateAttributesAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAttributesAction.swift; sourceTree = "<group>"; };
+		04A2A8699C92310975DDF494 /* FloatingFormatBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingFormatBar.swift; sourceTree = "<group>"; };
+		09042BEAD98AC15596E23750 /* ToolRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRegistry.swift; sourceTree = "<group>"; };
+		09E61190C8044BF4C90358B4 /* AnnotaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaApp.swift; sourceTree = "<group>"; };
+		0E5054648C7F51E4B118CA91 /* ObjectAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectAttributes.swift; sourceTree = "<group>"; };
+		110D7E4B141810FA63CEE86C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		153B906D95784865C1286DCA /* ResizeMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeMathTests.swift; sourceTree = "<group>"; };
+		19073EA116F9283817890A1C /* CustomizableObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomizableObject.swift; sourceTree = "<group>"; };
+		1B686028B11DD992DA83C5AF /* DrawingTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingTool.swift; sourceTree = "<group>"; };
+		1F0030089AD972F806C99848 /* TriangleTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriangleTool.swift; sourceTree = "<group>"; };
+		233C3FB0DC7C7F2ED8236D21 /* MoveObjectsAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveObjectsAction.swift; sourceTree = "<group>"; };
+		26E2A7A330959E6AE9136A0B /* LineObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineObjectView.swift; sourceTree = "<group>"; };
+		27B655BC08EEBD77DF1F3884 /* ColorPresetPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPresetPicker.swift; sourceTree = "<group>"; };
+		28DE23642B0203544D18F4FF /* CanvasObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasObjectView.swift; sourceTree = "<group>"; };
+		2B250B014D1B59388114A974 /* DiamondTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiamondTool.swift; sourceTree = "<group>"; };
+		2B95CE179214FDE6AAF229C2 /* SelectionBoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionBoxTests.swift; sourceTree = "<group>"; };
+		2C87FA1556AE2209BF4C9551 /* PencilObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilObjectView.swift; sourceTree = "<group>"; };
+		2CFCF932E7E2AF9EB822B497 /* PencilObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilObject.swift; sourceTree = "<group>"; };
+		2D510B2D83D9158CE9722AFE /* ShapePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapePickerView.swift; sourceTree = "<group>"; };
+		2DA9C4E2A2AC4D379DFA895C /* LineTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineTool.swift; sourceTree = "<group>"; };
+		30D1FC16232CCD47D0B68AC9 /* SubToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubToolbarView.swift; sourceTree = "<group>"; };
+		37AAFEEC174B72AA4316569D /* Annota.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Annota.entitlements; sourceTree = "<group>"; };
+		385F76CCD6B9C3CC5B6F789F /* Capabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capabilities.swift; sourceTree = "<group>"; };
+		39E2A27E6B1EBA88EA1A850D /* ImageObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObjectView.swift; sourceTree = "<group>"; };
+		3CE75C07139CECF40D6FEC41 /* Annota.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Annota.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3EC222E2C9871D4DCC0AE27E /* CanvasExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasExportView.swift; sourceTree = "<group>"; };
+		426EAC99A67FDD7562804509 /* TransformObjectsAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransformObjectsAction.swift; sourceTree = "<group>"; };
+		44D76B970574D13446B0B01E /* BaseShapeTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseShapeTool.swift; sourceTree = "<group>"; };
+		4BBD73541F21CB58C61B63F9 /* TextAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextAttributes.swift; sourceTree = "<group>"; };
+		4DD71F9772F1B3E1BB04305A /* AnotarCanvas.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AnotarCanvas.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		50F61B93FAE67002F58FFDAF /* DrawingTool+Shapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DrawingTool+Shapes.swift"; sourceTree = "<group>"; };
+		592F6FE054C499F4F4E4AC4F /* TextObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextObject.swift; sourceTree = "<group>"; };
+		5C538364E9559B3DA214CC60 /* CanvasTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasTool.swift; sourceTree = "<group>"; };
+		5D0EC9D43DAA8E866BC1D5C6 /* LineToolHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineToolHelpers.swift; sourceTree = "<group>"; };
+		5D94DF825C04D00D31949D3B /* CanvasAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasAction.swift; sourceTree = "<group>"; };
+		61CA01653B439BF803DDDE86 /* ImageObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageObject.swift; sourceTree = "<group>"; };
+		624357ED240E3021148CF496 /* UTType+Annota.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UTType+Annota.swift"; sourceTree = "<group>"; };
+		624381753999FCA9599A9618 /* HitTestResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HitTestResult.swift; sourceTree = "<group>"; };
+		64529340F22AC2C5957FFCE7 /* StarTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarTool.swift; sourceTree = "<group>"; };
+		65FE4A04F7840972CD91F6F1 /* ToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTests.swift; sourceTree = "<group>"; };
+		660640BD25CB5E5B2946A74B /* TOMLSettingsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TOMLSettingsStorage.swift; sourceTree = "<group>"; };
+		663C51EC9ED72B441AE5FA79 /* SelectionBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionBoxView.swift; sourceTree = "<group>"; };
+		66E978C6EBE1A0ABD987D896 /* ShapeObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeObjectView.swift; sourceTree = "<group>"; };
+		6A30F2F4E8EB5B98FC90775A /* ShapeObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeObject.swift; sourceTree = "<group>"; };
+		6AF673CDB597E7C2526B7368 /* ScrollGestureModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollGestureModifier.swift; sourceTree = "<group>"; };
+		6BEF048B95F91DA626B90C99 /* ClipboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTests.swift; sourceTree = "<group>"; };
+		6E8F90B63C038B3EB5A84CBC /* LineObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineObject.swift; sourceTree = "<group>"; };
+		6FD59D201011124942F2AF11 /* ViewportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportState.swift; sourceTree = "<group>"; };
+		7112DC15CB8B66A3CE59936B /* ShapeObjectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeObjectTests.swift; sourceTree = "<group>"; };
+		71ECC854C628104D871D2BFF /* RotationMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationMathTests.swift; sourceTree = "<group>"; };
+		729D04B1A6510B6CD8A20B12 /* MarqueeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeView.swift; sourceTree = "<group>"; };
+		73196984F9D2AA676BD31D78 /* ToolAttributeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolAttributeStore.swift; sourceTree = "<group>"; };
+		7329AF9BE3393A5F82D35D6E /* AnnotaUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		7364B81C1C6E83BB1BD52642 /* ValueInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValueInputView.swift; sourceTree = "<group>"; };
+		74E361653C862DBFFB45840D /* ToolManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolManifest.swift; sourceTree = "<group>"; };
+		76D9C2EF28B3271E11D31B11 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
+		7AD073BB5E98FCF51413A029 /* LineObjectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineObjectTests.swift; sourceTree = "<group>"; };
+		7AFDC3B839D56F3D378A014B /* PencilTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilTool.swift; sourceTree = "<group>"; };
+		7E08E040995CA4E77796E97A /* DeleteObjectsAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteObjectsAction.swift; sourceTree = "<group>"; };
+		8C90EE37F552EFCF19CC2CCE /* CanvasViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasViewModel.swift; sourceTree = "<group>"; };
+		92C1786094BB61FFD8606B27 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		967193F2527A646B51895589 /* SelectionCapabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionCapabilities.swift; sourceTree = "<group>"; };
+		A0A75A94ABC5223A3A5AE2C6 /* SettingsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStorage.swift; sourceTree = "<group>"; };
+		A1340D26E9985E24627E32C8 /* ClipboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardService.swift; sourceTree = "<group>"; };
+		A148D0D5998DDA4889945A75 /* SettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTests.swift; sourceTree = "<group>"; };
+		A2079B41EF01CBC9E4C3A6D7 /* HandTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandTool.swift; sourceTree = "<group>"; };
+		A7D2ED1E1F708DB0F41E2429 /* CodableCanvasObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableCanvasObject.swift; sourceTree = "<group>"; };
+		A8879CA14C5FE155C29763B1 /* SelectTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectTool.swift; sourceTree = "<group>"; };
+		A903FF466CD1B0CC9BA72163 /* AnnotaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC539E432FFA7FB5601F0BE4 /* RectangleTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectangleTool.swift; sourceTree = "<group>"; };
+		AE9A27E0C20A3553E2A7EF14 /* AnnotaDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaDocument.swift; sourceTree = "<group>"; };
+		AFF5A4B898F7C1E1EA58E0D7 /* AnnotaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaTests.swift; sourceTree = "<group>"; };
+		B26D3340C0B87E1E0CD468DA /* AnnotaSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaSettings.swift; sourceTree = "<group>"; };
+		B4E152C5168995C33C196A31 /* StrokeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeStyle.swift; sourceTree = "<group>"; };
+		BC3E85125FF4657E3FE31B70 /* EditCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditCommands.swift; sourceTree = "<group>"; };
+		BEF285366CE517942C9C47D1 /* PencilObjectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilObjectTests.swift; sourceTree = "<group>"; };
+		C2467A8507F493EA04F1324B /* ArrowTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrowTool.swift; sourceTree = "<group>"; };
+		C53BD42BB528F8B5F9D8E78E /* ArrangeCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArrangeCommands.swift; sourceTree = "<group>"; };
+		C56B7B51E756C8AC44E94673 /* SettingsWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowView.swift; sourceTree = "<group>"; };
+		C7B09EF3CA02BE583738F96E /* StrokableObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokableObject.swift; sourceTree = "<group>"; };
+		CCB3E3F8BC76EEEBD69B97D8 /* ObjectViewRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectViewRegistry.swift; sourceTree = "<group>"; };
+		CF652BEE6CC7D436CBBB9BFD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		D29B100F8364D457BE2DE163 /* InfiniteGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfiniteGridView.swift; sourceTree = "<group>"; };
+		D37034480E7A2543D768EE29 /* ViewportStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportStateTests.swift; sourceTree = "<group>"; };
+		D69B2AE41528B102CA488CA5 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		D71847ACCD63C37F604B1E4E /* AnnotaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnotaUITests.swift; sourceTree = "<group>"; };
+		D95A4CA23CA2C4C2914AF1CF /* ToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarView.swift; sourceTree = "<group>"; };
+		DA5C18244C538AF63979F87E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DA8A5D04D2A7DC33EE6227F3 /* CanvasObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasObject.swift; sourceTree = "<group>"; };
+		DBB9678E2E42A3E0307768D3 /* TextContentObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextContentObject.swift; sourceTree = "<group>"; };
+		DCDD6AEB4E2041D43166F1BE /* TooltipModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TooltipModifier.swift; sourceTree = "<group>"; };
+		E1CCFEF380034A9612B469EA /* AnyCanvasObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCanvasObject.swift; sourceTree = "<group>"; };
+		E39C6CD8A71CB2CCF902A034 /* SelectionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionState.swift; sourceTree = "<group>"; };
+		E457F8CB94558623DCA0377B /* UndoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoManager.swift; sourceTree = "<group>"; };
+		E4C3DB04F3BAC3F14FB3CEC3 /* AddObjectAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddObjectAction.swift; sourceTree = "<group>"; };
+		E4F37F2551E55F5A1827A26E /* TextTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextTool.swift; sourceTree = "<group>"; };
+		EE057D4C6F4CB4EA71CD615A /* SelectionBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionBox.swift; sourceTree = "<group>"; };
+		F1D9C77627CED23F289B580C /* AnnotaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnnotaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F362D7F4F85FFAF884475405 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
+		F48B882F9D527A6524C0DA10 /* CanvasFileCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasFileCommands.swift; sourceTree = "<group>"; };
+		F5032A69BA11AB9A7C710357 /* AutoGrowingTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoGrowingTextView.swift; sourceTree = "<group>"; };
+		F60E32616E62153AA22484F4 /* OvalTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OvalTool.swift; sourceTree = "<group>"; };
+		F62BB49CC354DF3D1E658BCF /* FillableObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillableObject.swift; sourceTree = "<group>"; };
+		FCE315E18C166C14AB6D8E92 /* TextObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextObjectView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		AC00000900000009000000AC /* AnotarCanvas */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AnotarCanvas;
-			sourceTree = "<group>";
-		};
-		FF0B343B2EEABCA300310EBB /* Annota */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FF0B34FF2EEABCA300310EFF /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			path = Annota;
-			sourceTree = "<group>";
-		};
-		FF0B34FF2EEABCA300310EFF /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = FF0B34382EEABCA300310EBB /* Annota */;
-		};
-		FF0B344B2EEABCA500310EBB /* AnnotaTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AnnotaTests;
-			sourceTree = "<group>";
-		};
-		FF0B34552EEABCA500310EBB /* AnnotaUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = AnnotaUITests;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
-		AC0000100000001000000AC0 /* Frameworks */ = {
+		0D91CCCF42CD7C021EDED001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC00000100000001000000AC /* SVGPath in Frameworks */,
+				2CB6221E134B36D9346A5255 /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0B34362EEABCA300310EBB /* Frameworks */ = {
+		247AC82FA1747A687D551354 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FF6916C92F553844003D2B9F /* TOML in Frameworks */,
-				AC00000300000003000000AC /* AnotarCanvas.framework in Frameworks */,
+				98E3C52BA1D10767F5CD0024 /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0B34452EEABCA500310EBB /* Frameworks */ = {
+		4F76C9801139364EDF21F50A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FF0B65021EABCDEF00310EBB /* SVGPath in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF0B344F2EEABCA500310EBB /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				957F22FCBA8F6D569682F866 /* AnotarCanvas.framework in Frameworks */,
+				239A31EC150CE22085F80EC8 /* TOML in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		FF0B34302EEABCA300310EBB = {
+		09E5EE70B75FA4DD2FF72C6D /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				AC00000900000009000000AC /* AnotarCanvas */,
-				FF0B343B2EEABCA300310EBB /* Annota */,
-				FF0B344B2EEABCA500310EBB /* AnnotaTests */,
-				FF0B34552EEABCA500310EBB /* AnnotaUITests */,
-				FF0B343A2EEABCA300310EBB /* Products */,
+				C56B7B51E756C8AC44E94673 /* SettingsWindowView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		26338F0B50FEAE7EA716E949 /* AnotarCanvas */ = {
+			isa = PBXGroup;
+			children = (
+				DD491027A886D6B50ECD9A51 /* Models */,
+				583F4AE4F3BFE56AA3974020 /* Services */,
+				C46D620FBDA1DF78029A2BDB /* Tools */,
+				F3FA56F733A59E26E9D96F77 /* ViewModels */,
+				F7A2942953456DD38C2FB2DF /* Views */,
+			);
+			path = AnotarCanvas;
+			sourceTree = "<group>";
+		};
+		49E1A0E985FE876C9989462C /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				B26D3340C0B87E1E0CD468DA /* AnnotaSettings.swift */,
+				F362D7F4F85FFAF884475405 /* FileWatcher.swift */,
+				D69B2AE41528B102CA488CA5 /* SettingsManager.swift */,
+				A0A75A94ABC5223A3A5AE2C6 /* SettingsStorage.swift */,
+				660640BD25CB5E5B2946A74B /* TOMLSettingsStorage.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		583F4AE4F3BFE56AA3974020 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A1340D26E9985E24627E32C8 /* ClipboardService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		68F26812F4CAA70BBDB88DC0 /* Protocols */ = {
+			isa = PBXGroup;
+			children = (
+				DA8A5D04D2A7DC33EE6227F3 /* CanvasObject.swift */,
+				5C538364E9559B3DA214CC60 /* CanvasTool.swift */,
+				19073EA116F9283817890A1C /* CustomizableObject.swift */,
+				F62BB49CC354DF3D1E658BCF /* FillableObject.swift */,
+				C7B09EF3CA02BE583738F96E /* StrokableObject.swift */,
+				DBB9678E2E42A3E0307768D3 /* TextContentObject.swift */,
+			);
+			path = Protocols;
+			sourceTree = "<group>";
+		};
+		75DECF6C85C2C69DFE457101 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C53BD42BB528F8B5F9D8E78E /* ArrangeCommands.swift */,
+				F48B882F9D527A6524C0DA10 /* CanvasFileCommands.swift */,
+				27B655BC08EEBD77DF1F3884 /* ColorPresetPicker.swift */,
+				BC3E85125FF4657E3FE31B70 /* EditCommands.swift */,
+				04A2A8699C92310975DDF494 /* FloatingFormatBar.swift */,
+				2D510B2D83D9158CE9722AFE /* ShapePickerView.swift */,
+				30D1FC16232CCD47D0B68AC9 /* SubToolbarView.swift */,
+				D95A4CA23CA2C4C2914AF1CF /* ToolbarView.swift */,
+				DCDD6AEB4E2041D43166F1BE /* TooltipModifier.swift */,
+				7364B81C1C6E83BB1BD52642 /* ValueInputView.swift */,
+				09E5EE70B75FA4DD2FF72C6D /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7B49979DC3D486E47A7CCA9C /* Selection */ = {
+			isa = PBXGroup;
+			children = (
+				032DEEA89812942B9B6D1849 /* ResizeHandle.swift */,
+				663C51EC9ED72B441AE5FA79 /* SelectionBoxView.swift */,
+			);
+			path = Selection;
+			sourceTree = "<group>";
+		};
+		8E893384C4442E16D4121A05 /* AnnotaUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D71847ACCD63C37F604B1E4E /* AnnotaUITests.swift */,
+				7329AF9BE3393A5F82D35D6E /* AnnotaUITestsLaunchTests.swift */,
+			);
+			path = AnnotaUITests;
+			sourceTree = "<group>";
+		};
+		95EF84DE6667A0C7B68E38E9 /* AnnotaTests */ = {
+			isa = PBXGroup;
+			children = (
+				AFF5A4B898F7C1E1EA58E0D7 /* AnnotaTests.swift */,
+				6BEF048B95F91DA626B90C99 /* ClipboardTests.swift */,
+				7AD073BB5E98FCF51413A029 /* LineObjectTests.swift */,
+				BEF285366CE517942C9C47D1 /* PencilObjectTests.swift */,
+				153B906D95784865C1286DCA /* ResizeMathTests.swift */,
+				71ECC854C628104D871D2BFF /* RotationMathTests.swift */,
+				2B95CE179214FDE6AAF229C2 /* SelectionBoxTests.swift */,
+				A148D0D5998DDA4889945A75 /* SettingsTests.swift */,
+				7112DC15CB8B66A3CE59936B /* ShapeObjectTests.swift */,
+				65FE4A04F7840972CD91F6F1 /* ToolTests.swift */,
+				D37034480E7A2543D768EE29 /* ViewportStateTests.swift */,
+			);
+			path = AnnotaTests;
+			sourceTree = "<group>";
+		};
+		BD4D5A59DD318680D721F970 /* Shapes */ = {
+			isa = PBXGroup;
+			children = (
+				44D76B970574D13446B0B01E /* BaseShapeTool.swift */,
+				2B250B014D1B59388114A974 /* DiamondTool.swift */,
+				F60E32616E62153AA22484F4 /* OvalTool.swift */,
+				AC539E432FFA7FB5601F0BE4 /* RectangleTool.swift */,
+				64529340F22AC2C5957FFCE7 /* StarTool.swift */,
+				1F0030089AD972F806C99848 /* TriangleTool.swift */,
+			);
+			path = Shapes;
+			sourceTree = "<group>";
+		};
+		C3CFEB72E1A16CA1C090A743 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				73196984F9D2AA676BD31D78 /* ToolAttributeStore.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C46D620FBDA1DF78029A2BDB /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				C2467A8507F493EA04F1324B /* ArrowTool.swift */,
+				A2079B41EF01CBC9E4C3A6D7 /* HandTool.swift */,
+				2DA9C4E2A2AC4D379DFA895C /* LineTool.swift */,
+				5D0EC9D43DAA8E866BC1D5C6 /* LineToolHelpers.swift */,
+				CCB3E3F8BC76EEEBD69B97D8 /* ObjectViewRegistry.swift */,
+				7AFDC3B839D56F3D378A014B /* PencilTool.swift */,
+				A8879CA14C5FE155C29763B1 /* SelectTool.swift */,
+				E4F37F2551E55F5A1827A26E /* TextTool.swift */,
+				74E361653C862DBFFB45840D /* ToolManifest.swift */,
+				09042BEAD98AC15596E23750 /* ToolRegistry.swift */,
+				BD4D5A59DD318680D721F970 /* Shapes */,
+			);
+			path = Tools;
+			sourceTree = "<group>";
+		};
+		CA57867AAD0C8B2A9E5377C3 /* Actions */ = {
+			isa = PBXGroup;
+			children = (
+				E4C3DB04F3BAC3F14FB3CEC3 /* AddObjectAction.swift */,
+				7E08E040995CA4E77796E97A /* DeleteObjectsAction.swift */,
+				233C3FB0DC7C7F2ED8236D21 /* MoveObjectsAction.swift */,
+				426EAC99A67FDD7562804509 /* TransformObjectsAction.swift */,
+				033D8F3CFBB66EEDD784B82D /* UpdateAttributesAction.swift */,
+			);
+			path = Actions;
+			sourceTree = "<group>";
+		};
+		DD491027A886D6B50ECD9A51 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AE9A27E0C20A3553E2A7EF14 /* AnnotaDocument.swift */,
+				E1CCFEF380034A9612B469EA /* AnyCanvasObject.swift */,
+				5D94DF825C04D00D31949D3B /* CanvasAction.swift */,
+				385F76CCD6B9C3CC5B6F789F /* Capabilities.swift */,
+				A7D2ED1E1F708DB0F41E2429 /* CodableCanvasObject.swift */,
+				1B686028B11DD992DA83C5AF /* DrawingTool.swift */,
+				50F61B93FAE67002F58FFDAF /* DrawingTool+Shapes.swift */,
+				624381753999FCA9599A9618 /* HitTestResult.swift */,
+				61CA01653B439BF803DDDE86 /* ImageObject.swift */,
+				6E8F90B63C038B3EB5A84CBC /* LineObject.swift */,
+				0E5054648C7F51E4B118CA91 /* ObjectAttributes.swift */,
+				2CFCF932E7E2AF9EB822B497 /* PencilObject.swift */,
+				EE057D4C6F4CB4EA71CD615A /* SelectionBox.swift */,
+				967193F2527A646B51895589 /* SelectionCapabilities.swift */,
+				E39C6CD8A71CB2CCF902A034 /* SelectionState.swift */,
+				6A30F2F4E8EB5B98FC90775A /* ShapeObject.swift */,
+				B4E152C5168995C33C196A31 /* StrokeStyle.swift */,
+				4BBD73541F21CB58C61B63F9 /* TextAttributes.swift */,
+				592F6FE054C499F4F4E4AC4F /* TextObject.swift */,
+				6FD59D201011124942F2AF11 /* ViewportState.swift */,
+				CA57867AAD0C8B2A9E5377C3 /* Actions */,
+				68F26812F4CAA70BBDB88DC0 /* Protocols */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E2C24D50E2E881E00B63A353 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3CE75C07139CECF40D6FEC41 /* Annota.app */,
+				A903FF466CD1B0CC9BA72163 /* AnnotaTests.xctest */,
+				F1D9C77627CED23F289B580C /* AnnotaUITests.xctest */,
+				4DD71F9772F1B3E1BB04305A /* AnotarCanvas.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E7F4A197036ECD141C52A682 = {
+			isa = PBXGroup;
+			children = (
+				E97630C94BF069DF43C6E5BC /* Annota */,
+				95EF84DE6667A0C7B68E38E9 /* AnnotaTests */,
+				8E893384C4442E16D4121A05 /* AnnotaUITests */,
+				26338F0B50FEAE7EA716E949 /* AnotarCanvas */,
+				E2C24D50E2E881E00B63A353 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		FF0B343A2EEABCA300310EBB /* Products */ = {
+		E97630C94BF069DF43C6E5BC /* Annota */ = {
 			isa = PBXGroup;
 			children = (
-				AC00000400000004000000AC /* AnotarCanvas.framework */,
-				FF0B34392EEABCA300310EBB /* Annota.app */,
-				FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */,
-				FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */,
+				37AAFEEC174B72AA4316569D /* Annota.entitlements */,
+				09E61190C8044BF4C90358B4 /* AnnotaApp.swift */,
+				CF652BEE6CC7D436CBBB9BFD /* AppState.swift */,
+				DA5C18244C538AF63979F87E /* Assets.xcassets */,
+				110D7E4B141810FA63CEE86C /* ContentView.swift */,
+				92C1786094BB61FFD8606B27 /* Item.swift */,
+				624357ED240E3021148CF496 /* UTType+Annota.swift */,
+				C3CFEB72E1A16CA1C090A743 /* Models */,
+				49E1A0E985FE876C9989462C /* Settings */,
+				75DECF6C85C2C69DFE457101 /* Views */,
 			);
-			name = Products;
+			path = Annota;
+			sourceTree = "<group>";
+		};
+		F3FA56F733A59E26E9D96F77 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				8C90EE37F552EFCF19CC2CCE /* CanvasViewModel.swift */,
+				E457F8CB94558623DCA0377B /* UndoManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		F7A2942953456DD38C2FB2DF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F5032A69BA11AB9A7C710357 /* AutoGrowingTextView.swift */,
+				3EC222E2C9871D4DCC0AE27E /* CanvasExportView.swift */,
+				28DE23642B0203544D18F4FF /* CanvasObjectView.swift */,
+				76D9C2EF28B3271E11D31B11 /* CanvasView.swift */,
+				39E2A27E6B1EBA88EA1A850D /* ImageObjectView.swift */,
+				D29B100F8364D457BE2DE163 /* InfiniteGridView.swift */,
+				26E2A7A330959E6AE9136A0B /* LineObjectView.swift */,
+				729D04B1A6510B6CD8A20B12 /* MarqueeView.swift */,
+				2C87FA1556AE2209BF4C9551 /* PencilObjectView.swift */,
+				6AF673CDB597E7C2526B7368 /* ScrollGestureModifier.swift */,
+				66E978C6EBE1A0ABD987D896 /* ShapeObjectView.swift */,
+				FCE315E18C166C14AB6D8E92 /* TextObjectView.swift */,
+				7B49979DC3D486E47A7CCA9C /* Selection */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AC00000700000007000000AC /* AnotarCanvas */ = {
+		15DC05687EE8EA5AD1947C81 /* AnotarCanvas */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AC0000110000001100000AC0 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */;
+			buildConfigurationList = 06053E9EB034FD7E276EB269 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */;
 			buildPhases = (
-				AC0000120000001200000AC0 /* Sources */,
-				AC0000100000001000000AC0 /* Frameworks */,
-				AC0000130000001300000AC0 /* Resources */,
+				56FF2656F46B35A833DE675F /* Sources */,
+				0D91CCCF42CD7C021EDED001 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				AC00000900000009000000AC /* AnotarCanvas */,
 			);
 			name = AnotarCanvas;
 			packageProductDependencies = (
-				AC00000200000002000000AC /* SVGPath */,
+				1F47503772E0648B587F362A /* SVGPath */,
 			);
 			productName = AnotarCanvas;
-			productReference = AC00000400000004000000AC /* AnotarCanvas.framework */;
+			productReference = 4DD71F9772F1B3E1BB04305A /* AnotarCanvas.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		FF0B34382EEABCA300310EBB /* Annota */ = {
+		2750D78EC6B4AA5CB8A3ABE9 /* AnnotaUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "Annota" */;
+			buildConfigurationList = 65C0080D80EAEA376E923E15 /* Build configuration list for PBXNativeTarget "AnnotaUITests" */;
 			buildPhases = (
-				FF0B34352EEABCA300310EBB /* Sources */,
-				FF0B34362EEABCA300310EBB /* Frameworks */,
-				FF0B34372EEABCA300310EBB /* Resources */,
-				AC00000800000008000000AC /* Embed Frameworks */,
+				DEFB6DA7E2FBD69A9124AF17 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				AC0000140000001400000AC0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				FF0B343B2EEABCA300310EBB /* Annota */,
-			);
-			name = Annota;
-			packageProductDependencies = (
-				AC00002100000021000000AC /* TOML */,
-			);
-			productName = Annota;
-			productReference = FF0B34392EEABCA300310EBB /* Annota.app */;
-			productType = "com.apple.product-type.application";
-		};
-		FF0B34472EEABCA500310EBB /* AnnotaTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaTests" */;
-			buildPhases = (
-				FF0B34442EEABCA500310EBB /* Sources */,
-				FF0B34452EEABCA500310EBB /* Frameworks */,
-				FF0B34462EEABCA500310EBB /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF0B344A2EEABCA500310EBB /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				FF0B344B2EEABCA500310EBB /* AnnotaTests */,
-			);
-			name = AnnotaTests;
-			packageProductDependencies = (
-				FF0B65031EABCDEF00310EBB /* SVGPath */,
-			);
-			productName = AnnotaTests;
-			productReference = FF0B34482EEABCA500310EBB /* AnnotaTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		FF0B34512EEABCA500310EBB /* AnnotaUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaUITests" */;
-			buildPhases = (
-				FF0B344E2EEABCA500310EBB /* Sources */,
-				FF0B344F2EEABCA500310EBB /* Frameworks */,
-				FF0B34502EEABCA500310EBB /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF0B34542EEABCA500310EBB /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				FF0B34552EEABCA500310EBB /* AnnotaUITests */,
+				830E4CCA8ACB9B01E86758E7 /* PBXTargetDependency */,
 			);
 			name = AnnotaUITests;
 			packageProductDependencies = (
 			);
 			productName = AnnotaUITests;
-			productReference = FF0B34522EEABCA500310EBB /* AnnotaUITests.xctest */;
+			productReference = F1D9C77627CED23F289B580C /* AnnotaUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		72B4625D18C404F17937331F /* Annota */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B45C8CF2CA64D333BD698C1C /* Build configuration list for PBXNativeTarget "Annota" */;
+			buildPhases = (
+				0ADE4B7E1BD798A607BFEA14 /* Sources */,
+				195457C1B1C78DBB110555A9 /* Resources */,
+				4F76C9801139364EDF21F50A /* Frameworks */,
+				748CAE3E5FFD6BF934F046AF /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				55B2C3E043352FD2A325259C /* PBXTargetDependency */,
+			);
+			name = Annota;
+			packageProductDependencies = (
+				A9301E547A076ADC73EEB47C /* TOML */,
+			);
+			productName = Annota;
+			productReference = 3CE75C07139CECF40D6FEC41 /* Annota.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A5C8D1DA275DD3A202EB9F0B /* AnnotaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 772AB3EE1B3D4A5AA781F808 /* Build configuration list for PBXNativeTarget "AnnotaTests" */;
+			buildPhases = (
+				CA771A434441AE301994C364 /* Sources */,
+				247AC82FA1747A687D551354 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A7E30BD8AAD23330686BD0C3 /* PBXTargetDependency */,
+			);
+			name = AnnotaTests;
+			packageProductDependencies = (
+				85A80280B06DDD904DB25447 /* SVGPath */,
+			);
+			productName = AnnotaTests;
+			productReference = A903FF466CD1B0CC9BA72163 /* AnnotaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		FF0B34312EEABCA300310EBB /* Project object */ = {
+		54448E40971722782BEAE47A /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
-				LastUpgradeCheck = 2610;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					AC00000700000007000000AC = {
-						CreatedOnToolsVersion = 26.1.1;
+					15DC05687EE8EA5AD1947C81 = {
+						DevelopmentTeam = 965F2J8B9J;
+						ProvisioningStyle = Automatic;
 					};
-					FF0B34382EEABCA300310EBB = {
-						CreatedOnToolsVersion = 26.1.1;
+					2750D78EC6B4AA5CB8A3ABE9 = {
+						DevelopmentTeam = 965F2J8B9J;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 72B4625D18C404F17937331F;
 					};
-					FF0B34472EEABCA500310EBB = {
-						CreatedOnToolsVersion = 26.1.1;
-						TestTargetID = FF0B34382EEABCA300310EBB;
+					72B4625D18C404F17937331F = {
+						DevelopmentTeam = 965F2J8B9J;
+						ProvisioningStyle = Automatic;
 					};
-					FF0B34512EEABCA500310EBB = {
-						CreatedOnToolsVersion = 26.1.1;
-						TestTargetID = FF0B34382EEABCA300310EBB;
+					A5C8D1DA275DD3A202EB9F0B = {
+						DevelopmentTeam = 965F2J8B9J;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
-			buildConfigurationList = FF0B34342EEABCA300310EBB /* Build configuration list for PBXProject "texttool" */;
+			buildConfigurationList = 658AF24D76C4E35BEEDF1C32 /* Build configuration list for PBXProject "texttool" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				en,
 			);
-			mainGroup = FF0B34302EEABCA300310EBB;
+			mainGroup = E7F4A197036ECD141C52A682;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */,
-				FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */,
+				29750CA7FDC1F82D382DBBD8 /* XCRemoteSwiftPackageReference "SVGPath" */,
+				7E34BF90F54FF85411AC7A98 /* XCRemoteSwiftPackageReference "swift-toml" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = FF0B343A2EEABCA300310EBB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AC00000700000007000000AC /* AnotarCanvas */,
-				FF0B34382EEABCA300310EBB /* Annota */,
-				FF0B34472EEABCA500310EBB /* AnnotaTests */,
-				FF0B34512EEABCA500310EBB /* AnnotaUITests */,
+				72B4625D18C404F17937331F /* Annota */,
+				A5C8D1DA275DD3A202EB9F0B /* AnnotaTests */,
+				2750D78EC6B4AA5CB8A3ABE9 /* AnnotaUITests */,
+				15DC05687EE8EA5AD1947C81 /* AnotarCanvas */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AC0000130000001300000AC0 /* Resources */ = {
+		195457C1B1C78DBB110555A9 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF0B34372EEABCA300310EBB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF0B34462EEABCA500310EBB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FF0B34502EEABCA500310EBB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				284CB6C4A85754486A566E0D /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AC0000120000001200000AC0 /* Sources */ = {
+		0ADE4B7E1BD798A607BFEA14 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36760C9A1057049EB11CD3F7 /* AnnotaApp.swift in Sources */,
+				5E4BE23595905EC75EF98AD6 /* AnnotaSettings.swift in Sources */,
+				FAD70EED0FE1325D5228BDAA /* AppState.swift in Sources */,
+				B7D8993B47583AEA7B7D377B /* ArrangeCommands.swift in Sources */,
+				C732BAD3613DD8A1D29E40A7 /* CanvasFileCommands.swift in Sources */,
+				6FD499B005B2EBD3E3475633 /* ColorPresetPicker.swift in Sources */,
+				B570A550972CEAA5A86304EA /* ContentView.swift in Sources */,
+				832B970BCD73556C5896881D /* EditCommands.swift in Sources */,
+				548A73B453A0AFCDC3510117 /* FileWatcher.swift in Sources */,
+				CAEED28392ED3062D7E6F531 /* FloatingFormatBar.swift in Sources */,
+				053266139006DD70C056F246 /* Item.swift in Sources */,
+				0A0E2E0692F7E619E94D6485 /* SettingsManager.swift in Sources */,
+				7E1A12B4D4A10A7F097B62F1 /* SettingsStorage.swift in Sources */,
+				549F61A473C153F2B1BDC315 /* SettingsWindowView.swift in Sources */,
+				4E61DD7FF2D30A54CF766FA8 /* ShapePickerView.swift in Sources */,
+				461F990730A425B54ED8DDE2 /* SubToolbarView.swift in Sources */,
+				C02B1F4AC6CA53DF6B802700 /* TOMLSettingsStorage.swift in Sources */,
+				DD8AD45C603D4ED49F882C8B /* ToolAttributeStore.swift in Sources */,
+				A19C02B44CD27CB4646E1E9F /* ToolbarView.swift in Sources */,
+				C7ED5564B6F8FB221C9820AC /* TooltipModifier.swift in Sources */,
+				EA37E27F8616B667D4824E9B /* UTType+Annota.swift in Sources */,
+				2C95D9F66B42D966815C11C7 /* ValueInputView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0B34352EEABCA300310EBB /* Sources */ = {
+		56FF2656F46B35A833DE675F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0D74AB5E862FFE1C01CE8AF /* AddObjectAction.swift in Sources */,
+				DC74C9CCE3E85924C9E5661A /* AnnotaDocument.swift in Sources */,
+				4E92FF11277AEBFF6231B1F4 /* AnyCanvasObject.swift in Sources */,
+				9BC778C48E0783DB2F4B458C /* ArrowTool.swift in Sources */,
+				ECCC07A2A552FC2BE400D766 /* AutoGrowingTextView.swift in Sources */,
+				FAA84CDDBD2501AAF1AFE87B /* BaseShapeTool.swift in Sources */,
+				36133575228CA6EF35566633 /* CanvasAction.swift in Sources */,
+				ED02446BA13B68771D433C7E /* CanvasExportView.swift in Sources */,
+				84FF4BB5E480B03D87F109DF /* CanvasObject.swift in Sources */,
+				D713A0439F12F3F43E1F9AA0 /* CanvasObjectView.swift in Sources */,
+				89FE3E709EDDDC03A264CD8B /* CanvasTool.swift in Sources */,
+				9D4EE9DDDB5D074D37D29A70 /* CanvasView.swift in Sources */,
+				BC73BD634962286287D238F1 /* CanvasViewModel.swift in Sources */,
+				214C1C2F5538B833B3BED638 /* Capabilities.swift in Sources */,
+				1A2C6CB3ACBD064B0804044B /* ClipboardService.swift in Sources */,
+				4F13368E8058A8A90831A523 /* CodableCanvasObject.swift in Sources */,
+				CA8ED2C06D9EA2EA2C4A3ED4 /* CustomizableObject.swift in Sources */,
+				399C0CE0810C32C392594306 /* DeleteObjectsAction.swift in Sources */,
+				0852ED2CA585FC647FF133DF /* DiamondTool.swift in Sources */,
+				CE35FF6A2D4913AB9F625494 /* DrawingTool+Shapes.swift in Sources */,
+				449A512226BE5EB02FC6357D /* DrawingTool.swift in Sources */,
+				170B0CC29E0083E4E14B23A6 /* FillableObject.swift in Sources */,
+				9D07125590D643C0C35FC85D /* HandTool.swift in Sources */,
+				910AE847421AD3D672E5D33A /* HitTestResult.swift in Sources */,
+				3EB03B315EF97B5F95DD7C78 /* ImageObject.swift in Sources */,
+				1F7295D4D0304B8495D0D80F /* ImageObjectView.swift in Sources */,
+				E9EA9A5119284D7E55B2381F /* InfiniteGridView.swift in Sources */,
+				32F08782C1CFA20B36299CA5 /* LineObject.swift in Sources */,
+				845F73431824B6699E97649F /* LineObjectView.swift in Sources */,
+				29A2AD08FA81632AED5B29BA /* LineTool.swift in Sources */,
+				8B763FF4EF8490CE25258482 /* LineToolHelpers.swift in Sources */,
+				36D307665F96750806013F85 /* MarqueeView.swift in Sources */,
+				ECDE4A61B18EF398E7937D07 /* MoveObjectsAction.swift in Sources */,
+				7ACCE22BB8C3CA348832AFD6 /* ObjectAttributes.swift in Sources */,
+				E509FB7321C8B981D27B3631 /* ObjectViewRegistry.swift in Sources */,
+				7DC8B4C3EAEFEB8459F1F2E8 /* OvalTool.swift in Sources */,
+				3EBC6898E9DFF6A5C47E147E /* PencilObject.swift in Sources */,
+				46874321CD8AFDEA733E9133 /* PencilObjectView.swift in Sources */,
+				0C9A4BACE043E01EDBC742FD /* PencilTool.swift in Sources */,
+				62AB04E54B64D3BB1B09D8F8 /* RectangleTool.swift in Sources */,
+				54A20856BC7591F39B4AD878 /* ResizeHandle.swift in Sources */,
+				2E2E6551FDCA1483682E9A57 /* ScrollGestureModifier.swift in Sources */,
+				D0790FAD52544BD0AB810CC1 /* SelectTool.swift in Sources */,
+				B87154C4FF104E4545D98BD5 /* SelectionBox.swift in Sources */,
+				AA70F5E30DE4E2B3E6C62266 /* SelectionBoxView.swift in Sources */,
+				4BE1A9E3019FA44F40B878AF /* SelectionCapabilities.swift in Sources */,
+				0866C863C5F01C44A683D9AA /* SelectionState.swift in Sources */,
+				135C8F631706574007E6FCE3 /* ShapeObject.swift in Sources */,
+				FF8690C9F624740F47DD2800 /* ShapeObjectView.swift in Sources */,
+				EBBF9A2D4F6BE133F0E0841A /* StarTool.swift in Sources */,
+				3317BAFA91C5282EB1E51A62 /* StrokableObject.swift in Sources */,
+				A98A2103376D5C2409906E64 /* StrokeStyle.swift in Sources */,
+				CCAA2691928AC887DBFB5828 /* TextAttributes.swift in Sources */,
+				0F3B2CB29C1C1DCFA0D98559 /* TextContentObject.swift in Sources */,
+				205284786819DE1BE5D9D0DE /* TextObject.swift in Sources */,
+				2CABFB2E12A2D3D3A2C3F568 /* TextObjectView.swift in Sources */,
+				EDFA943D9F7722CB5FD75181 /* TextTool.swift in Sources */,
+				0E8653BBAD39EB8E776C11D2 /* ToolManifest.swift in Sources */,
+				C5E544C4273677A17A61C7FF /* ToolRegistry.swift in Sources */,
+				2CDB9593CE3ED8F106A7E703 /* TransformObjectsAction.swift in Sources */,
+				32BC1892F2DE9021AE30C2F7 /* TriangleTool.swift in Sources */,
+				76113FCBD5EB77800AF837AA /* UndoManager.swift in Sources */,
+				73026BF904382DFB3C445DD8 /* UpdateAttributesAction.swift in Sources */,
+				DEC901EC30415AC6749DBA95 /* ViewportState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0B34442EEABCA500310EBB /* Sources */ = {
+		CA771A434441AE301994C364 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D179CD388847F978DD541E4C /* AnnotaTests.swift in Sources */,
+				672FE6CB54A8355159530F33 /* ClipboardTests.swift in Sources */,
+				CE33F9CA90EE6E808CC79658 /* LineObjectTests.swift in Sources */,
+				43067032E3037E0358D262E5 /* PencilObjectTests.swift in Sources */,
+				0127E1164F922726BB7C683F /* ResizeMathTests.swift in Sources */,
+				488E54D28DCE8425D192B45C /* RotationMathTests.swift in Sources */,
+				6B26B8BD2AB345A555CB873E /* SelectionBoxTests.swift in Sources */,
+				5059CD553DED74F6DB846E64 /* SettingsTests.swift in Sources */,
+				9781692E7574EA8BB7F8C12E /* ShapeObjectTests.swift in Sources */,
+				3F856A68B5CF6D46D7CAC736 /* ToolTests.swift in Sources */,
+				A4251F6C6F711CDA949B8861 /* ViewportStateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		FF0B344E2EEABCA500310EBB /* Sources */ = {
+		DEFB6DA7E2FBD69A9124AF17 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				468734D0E3830F9EB0595566 /* AnnotaUITests.swift in Sources */,
+				2C814504657DFF52ADEBB85B /* AnnotaUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		AC0000140000001400000AC0 /* PBXTargetDependency */ = {
+		55B2C3E043352FD2A325259C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AC00000700000007000000AC /* AnotarCanvas */;
-			targetProxy = AC00000600000006000000AC /* PBXContainerItemProxy */;
+			target = 15DC05687EE8EA5AD1947C81 /* AnotarCanvas */;
+			targetProxy = A46B31DBD4E1E0F94285FA5F /* PBXContainerItemProxy */;
 		};
-		FF0B344A2EEABCA500310EBB /* PBXTargetDependency */ = {
+		830E4CCA8ACB9B01E86758E7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FF0B34382EEABCA300310EBB /* Annota */;
-			targetProxy = FF0B34492EEABCA500310EBB /* PBXContainerItemProxy */;
+			target = 72B4625D18C404F17937331F /* Annota */;
+			targetProxy = 6210FE5DF2C71BB0CB08DC6A /* PBXContainerItemProxy */;
 		};
-		FF0B34542EEABCA500310EBB /* PBXTargetDependency */ = {
+		A7E30BD8AAD23330686BD0C3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = FF0B34382EEABCA300310EBB /* Annota */;
-			targetProxy = FF0B34532EEABCA500310EBB /* PBXContainerItemProxy */;
+			target = 72B4625D18C404F17937331F /* Annota */;
+			targetProxy = 31F1BEACDB17BE4A41914917 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		AC0000150000001500000AC0 /* Debug */ = {
+		137D40135087A25E3E8A8C3A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnotarCanvas;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
-		AC0000160000001600000AC0 /* Release */ = {
+		22BA8BAFA1C90CFE453158EB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Annota/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
-					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MARKETING_VERSION = 1.0;
-				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnotarCanvas;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SKIP_INSTALL = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
+				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Release;
 		};
-		FF0B345A2EEABCA500310EBB /* Debug */ = {
+		50774F7A74DD3E077D36DCBD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
 				SDKROOT = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TEST_TARGET_NAME = Annota;
+			};
+			name = Release;
+		};
+		5189A8B61F3D7720028C438C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Annota/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
 			};
 			name = Debug;
 		};
-		FF0B345B2EEABCA500310EBB /* Release */ = {
+		62E1ADE77CDE27E9D2CE0DAE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -548,13 +963,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 965F2J8B9J;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -562,223 +977,220 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
-		FF0B345D2EEABCA500310EBB /* Debug */ = {
+		726A5231DA5C86EC93AE1031 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/Contents/MacOS/Annota";
+			};
+			name = Release;
+		};
+		84855DF621A8B1746BE6DE6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
+				SDKROOT = macosx;
+				TEST_TARGET_NAME = Annota;
+			};
+			name = Debug;
+		};
+		9FA17DEACE5DAF472B96E493 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 965F2J8B9J;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readwrite;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B6F94D222B94424A22FE86EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/Contents/MacOS/Annota";
+			};
+			name = Debug;
+		};
+		C92DCE562BC5C65A98DCB8D3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Annota/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnotarCanvas;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		FF0B345E2EEABCA500310EBB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Annota/Annota.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readwrite;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Annota/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.Annota;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		FF0B34602EEABCA500310EBB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Annota";
-			};
-			name = Debug;
-		};
-		FF0B34612EEABCA500310EBB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Annota.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Annota";
-			};
-			name = Release;
-		};
-		FF0B34632EEABCA500310EBB /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Annota;
-			};
-			name = Debug;
-		};
-		FF0B34642EEABCA500310EBB /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 965F2J8B9J;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.onekg.AnnotaUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = Annota;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AC0000110000001100000AC0 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */ = {
+		06053E9EB034FD7E276EB269 /* Build configuration list for PBXNativeTarget "AnotarCanvas" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AC0000150000001500000AC0 /* Debug */,
-				AC0000160000001600000AC0 /* Release */,
+				137D40135087A25E3E8A8C3A /* Debug */,
+				C92DCE562BC5C65A98DCB8D3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		FF0B34342EEABCA300310EBB /* Build configuration list for PBXProject "texttool" */ = {
+		658AF24D76C4E35BEEDF1C32 /* Build configuration list for PBXProject "texttool" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FF0B345A2EEABCA500310EBB /* Debug */,
-				FF0B345B2EEABCA500310EBB /* Release */,
+				9FA17DEACE5DAF472B96E493 /* Debug */,
+				62E1ADE77CDE27E9D2CE0DAE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		FF0B345C2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "Annota" */ = {
+		65C0080D80EAEA376E923E15 /* Build configuration list for PBXNativeTarget "AnnotaUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FF0B345D2EEABCA500310EBB /* Debug */,
-				FF0B345E2EEABCA500310EBB /* Release */,
+				84855DF621A8B1746BE6DE6D /* Debug */,
+				50774F7A74DD3E077D36DCBD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		FF0B345F2EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaTests" */ = {
+		772AB3EE1B3D4A5AA781F808 /* Build configuration list for PBXNativeTarget "AnnotaTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FF0B34602EEABCA500310EBB /* Debug */,
-				FF0B34612EEABCA500310EBB /* Release */,
+				B6F94D222B94424A22FE86EA /* Debug */,
+				726A5231DA5C86EC93AE1031 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		FF0B34622EEABCA500310EBB /* Build configuration list for PBXNativeTarget "AnnotaUITests" */ = {
+		B45C8CF2CA64D333BD698C1C /* Build configuration list for PBXNativeTarget "Annota" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				FF0B34632EEABCA500310EBB /* Debug */,
-				FF0B34642EEABCA500310EBB /* Release */,
+				5189A8B61F3D7720028C438C /* Debug */,
+				22BA8BAFA1C90CFE453158EB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mattt/swift-toml.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
-		};
-		FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */ = {
+		29750CA7FDC1F82D382DBBD8 /* XCRemoteSwiftPackageReference "SVGPath" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/nicklockwood/SVGPath.git";
 			requirement = {
@@ -786,25 +1198,33 @@
 				minimumVersion = 1.3.0;
 			};
 		};
+		7E34BF90F54FF85411AC7A98 /* XCRemoteSwiftPackageReference "swift-toml" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mattt/swift-toml.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		AC00000200000002000000AC /* SVGPath */ = {
+		1F47503772E0648B587F362A /* SVGPath */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
+			package = 29750CA7FDC1F82D382DBBD8 /* XCRemoteSwiftPackageReference "SVGPath" */;
 			productName = SVGPath;
 		};
-		AC00002100000021000000AC /* TOML */ = {
+		85A80280B06DDD904DB25447 /* SVGPath */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = AC00002000000020000000AC /* XCRemoteSwiftPackageReference "swift-toml" */;
+			package = 29750CA7FDC1F82D382DBBD8 /* XCRemoteSwiftPackageReference "SVGPath" */;
+			productName = SVGPath;
+		};
+		A9301E547A076ADC73EEB47C /* TOML */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E34BF90F54FF85411AC7A98 /* XCRemoteSwiftPackageReference "swift-toml" */;
 			productName = TOML;
-		};
-		FF0B65031EABCDEF00310EBB /* SVGPath */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FF0B65041EABCDEF00310EBB /* XCRemoteSwiftPackageReference "SVGPath" */;
-			productName = SVGPath;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = FF0B34312EEABCA300310EBB /* Project object */;
+	rootObject = 54448E40971722782BEAE47A /* Project object */;
 }
