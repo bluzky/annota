@@ -131,7 +131,7 @@ public struct TextAttributes: Codable, Hashable {
             fontWeight: .regular,
             isItalic: false,
             textColor: CodableColor(.black),
-            horizontalAlignment: .center,
+            horizontalAlignment: .leading,
             verticalAlignment: .center
         )
     }
@@ -143,7 +143,7 @@ public struct TextAttributes: Codable, Hashable {
         fontWeight: FontWeight = .regular,
         isItalic: Bool = false,
         textColor: CodableColor = CodableColor(.black),
-        horizontalAlignment: HorizontalTextAlignment = .center,
+        horizontalAlignment: HorizontalTextAlignment = .leading,
         verticalAlignment: VerticalTextAlignment = .center
     ) {
         self.fontFamily = fontFamily

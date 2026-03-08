@@ -24,7 +24,7 @@ class ToolAttributeStore: ObservableObject {
         ObjectAttributes.strokeWidth: 2.0 as CGFloat,
         ObjectAttributes.strokeStyle: StrokeStyleType.solid,
         ObjectAttributes.fillColor: Color.white,
-        ObjectAttributes.fillOpacity: 1.0 as CGFloat,
+        ObjectAttributes.fillOpacity: 0.0 as CGFloat,
         ObjectAttributes.textColor: Color.black,
         ObjectAttributes.fontSize: 16.0 as CGFloat,
         ObjectAttributes.fontFamily: "System"

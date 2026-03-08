@@ -2,7 +2,7 @@
 //  CanvasFileCommands.swift
 //  Annota
 //
-//  Adds "Export as PNG…" and "Export as JPEG…" items to the File menu.
+//  Adds Save/Open and Export items to the File menu.
 //
 
 import SwiftUI
@@ -19,6 +19,28 @@ struct CanvasFileCommands: Commands {
     }
 
     var body: some Commands {
+        // Replace the default Save item with our own Save/Open commands
+        CommandGroup(replacing: .saveItem) {
+            Button("Open…") {
+                AppState.shared.openFile()
+            }
+            .keyboardShortcut("o", modifiers: .command)
+
+            Divider()
+
+            Button("Save") {
+                AppState.shared.saveFile()
+            }
+            .keyboardShortcut("s", modifiers: .command)
+            .disabled(!hasObjects)
+
+            Button("Save As…") {
+                AppState.shared.saveFileAs()
+            }
+            .keyboardShortcut("s", modifiers: [.command, .shift])
+            .disabled(!hasObjects)
+        }
+
         CommandGroup(after: .saveItem) {
             Divider()
 

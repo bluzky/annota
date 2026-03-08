@@ -104,6 +104,122 @@ final class AppState {
         exportLogger.debug("Image copied to clipboard successfully")
     }
 
+    // MARK: - File Save/Open
+
+    /// Save to the current file, or show Save As if no file is set.
+    func saveFile() {
+        guard let viewModel = canvasViewModel else { return }
+
+        if let url = viewModel.currentFileURL {
+            // Save directly to existing file
+            guard let data = viewModel.saveToFile() else {
+                exportLogger.error("Failed to serialize canvas data")
+                return
+            }
+            do {
+                try data.write(to: url, options: .atomic)
+                viewModel.markClean()
+                exportLogger.debug("Saved to: \(url.path)")
+            } catch {
+                exportLogger.error("Failed to save file: \(error.localizedDescription)")
+                showErrorAlert(title: "Save Failed", message: error.localizedDescription)
+            }
+        } else {
+            saveFileAs()
+        }
+    }
+
+    /// Show Save As panel and write to the chosen location.
+    func saveFileAs() {
+        guard let viewModel = canvasViewModel else { return }
+        guard let data = viewModel.saveToFile() else {
+            exportLogger.error("Failed to serialize canvas data for Save As")
+            return
+        }
+
+        CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue) { [weak self] in
+            self?.showSaveAsPanel(data: data)
+        }
+        CFRunLoopWakeUp(CFRunLoopGetMain())
+    }
+
+    /// Show Open panel and load the selected file.
+    func openFile() {
+        CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue) { [weak self] in
+            self?.showOpenPanel()
+        }
+        CFRunLoopWakeUp(CFRunLoopGetMain())
+    }
+
+    private func showSaveAsPanel(data: Data) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "canvas.annota"
+        panel.allowedContentTypes = [.annota]
+        panel.canCreateDirectories = true
+
+        guard let window = NSApp.keyWindow else {
+            showErrorAlert(title: "Save Unavailable", message: "The canvas window could not be found.")
+            return
+        }
+
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                try data.write(to: url, options: .atomic)
+                self?.canvasViewModel?.currentFileURL = url
+                self?.canvasViewModel?.markClean()
+                self?.updateWindowTitle()
+                exportLogger.debug("Saved As: \(url.path)")
+            } catch {
+                exportLogger.error("Save As failed: \(error.localizedDescription)")
+                self?.showErrorAlert(title: "Save Failed", message: error.localizedDescription)
+            }
+        }
+    }
+
+    private func showOpenPanel() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.annota]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+
+        guard let window = NSApp.keyWindow else {
+            showErrorAlert(title: "Open Unavailable", message: "The canvas window could not be found.")
+            return
+        }
+
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                let data = try Data(contentsOf: url)
+                try self?.canvasViewModel?.loadFromFile(data)
+                self?.canvasViewModel?.currentFileURL = url
+                self?.updateWindowTitle()
+                exportLogger.debug("Opened: \(url.path)")
+            } catch {
+                exportLogger.error("Open failed: \(error.localizedDescription)")
+                self?.showErrorAlert(title: "Open Failed", message: error.localizedDescription)
+            }
+        }
+    }
+
+    func updateWindowTitle() {
+        guard let window = NSApp.keyWindow else { return }
+        if let url = canvasViewModel?.currentFileURL {
+            window.title = url.deletingPathExtension().lastPathComponent
+        } else {
+            window.title = "Untitled"
+        }
+    }
+
+    private func showErrorAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = title
+        alert.informativeText = message
+        alert.runModal()
+    }
+
     private func showSavePanel(image: NSImage, format: ExportFormat) {
         exportLogger.debug("Creating NSSavePanel...")
         let panel = NSSavePanel()
