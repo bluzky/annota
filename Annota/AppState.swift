@@ -168,7 +168,6 @@ final class AppState {
                 try data.write(to: url, options: .atomic)
                 self?.canvasViewModel?.currentFileURL = url
                 self?.canvasViewModel?.markClean()
-                self?.updateWindowTitle()
                 exportLogger.debug("Saved As: \(url.path)")
             } catch {
                 exportLogger.error("Save As failed: \(error.localizedDescription)")
@@ -194,7 +193,6 @@ final class AppState {
                 let data = try Data(contentsOf: url)
                 try self?.canvasViewModel?.loadFromFile(data)
                 self?.canvasViewModel?.currentFileURL = url
-                self?.updateWindowTitle()
                 exportLogger.debug("Opened: \(url.path)")
             } catch {
                 exportLogger.error("Open failed: \(error.localizedDescription)")
@@ -203,21 +201,17 @@ final class AppState {
         }
     }
 
-    func updateWindowTitle() {
-        guard let window = NSApp.keyWindow else { return }
-        if let url = canvasViewModel?.currentFileURL {
-            window.title = url.deletingPathExtension().lastPathComponent
-        } else {
-            window.title = "Untitled"
-        }
-    }
-
     private func showErrorAlert(title: String, message: String) {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = title
         alert.informativeText = message
-        alert.runModal()
+
+        if let window = NSApp.keyWindow {
+            alert.beginSheetModal(for: window, completionHandler: nil)
+        } else {
+            alert.runModal()
+        }
     }
 
     private func showSavePanel(image: NSImage, format: ExportFormat) {
